@@ -1,0 +1,6 @@
+nul
+*.bak
+
+# External libs (added dynamically in release)
+Libs/LibSharedMedia-3.0/
+Libs/LibRangeCheck-3.0/
