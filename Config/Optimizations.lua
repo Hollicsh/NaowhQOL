@@ -4,12 +4,6 @@ local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
 
-local OptEngine = {
-    isOptimized = false,
-    lastFPSCheck = 0,
-    performanceData = {},
-}
-
 -- Optimal FPS Settings based on client specifications
 local OPTIMAL_FPS_CVARS = {
     -- Render & Display
@@ -239,14 +233,9 @@ local CATEGORY_INFO = {
 
 local SetCVar = SetCVar
 local GetCVar = GetCVar
-local ConsoleExec = ConsoleExec
-local GetFramerate = GetFramerate
-local GetNetStats = GetNetStats
-local collectgarbage = collectgarbage
 local print = print
 local C_Timer = C_Timer
 local C_AddOnProfiler = C_AddOnProfiler
-local math_floor = math.floor
 local string_format = string.format
 local tonumber = tonumber
 
@@ -314,8 +303,6 @@ function ns:ApplyFPSOptimization()
     C_Timer.After(0.5, function()
         StaticPopup_Show("NAOWH_QOL_FPS_RELOAD")
     end)
-
-    OptEngine.isOptimized = true
 end
 
 function ns:ApplySingleCVar(cvar, value)
@@ -564,74 +551,6 @@ function ns:GetCVarStatus(cvar, optimal)
     end
     
     return displayValue, isOptimal, displayOptimal
-end
-
-function ns:SupremeMemoryPurge()
-    local memBefore = collectgarbage("count")
-    collectgarbage("collect")
-    local memAfter = collectgarbage("count")
-    local freed = memBefore - memAfter
-
-    print(W.Colorize("MEMORY PURGE:", C.ORANGE) .. " "
-        .. W.Colorize(string_format("%.2f MB freed", freed / 1024), C.SUCCESS))
-end
-
-function ns:CombatOptimization()
-    SetCVar("graphicsSpellDensity", "0")
-    SetCVar("graphicsProjectedTextures", "0")
-    SetCVar("graphicsParticleDensity", "0")
-    SetCVar("nameplateMaxDistance", "45")
-
-    print(W.Colorize("COMBAT OPTIMIZATION:", C.ORANGE) .. " "
-        .. W.Colorize("Spell density and particle effects minimized.", C.SUCCESS))
-end
-
-function ns:AllPerformanceOptimizations()
-    SaveCurrentSettings()
-    ns:CombatOptimization()
-    ns:SupremeMemoryPurge()
-
-    print(W.Colorize("ALL PERFORMANCE OPTIMIZATIONS:", C.ORANGE) .. " "
-        .. W.Colorize("Combat density optimized.", C.SUCCESS))
-end
-
-function ns:LowEndOptimization()
-    SaveCurrentSettings()
-
-    SetCVar("graphicsQuality",          "1")
-    SetCVar("graphicsTextureResolution", "0")
-    SetCVar("graphicsProjectedTextures", "0")
-    SetCVar("graphicsShadowQuality",     "0")
-    SetCVar("graphicsLiquidDetail",      "0")
-    SetCVar("graphicsParticleDensity",   "0")
-    SetCVar("graphicsSSAO",              "0")
-    SetCVar("graphicsDepthEffects",      "0")
-    SetCVar("graphicsComputeEffects",    "0")
-    SetCVar("graphicsOutlineMode",       "0")
-    SetCVar("graphicsSpellDensity",      "0")
-    SetCVar("graphicsViewDistance",      "3")
-    SetCVar("graphicsEnvironmentDetail", "3")
-    SetCVar("graphicsGroundClutter",     "3")
-    SetCVar("graphicsTextureFiltering",  "0")
-    SetCVar("ffxAntiAliasingMode",       "0")
-    SetCVar("MSAAQuality",               "0")
-    SetCVar("shadowRt",                 "0")
-    SetCVar("ffxVRS",                    "0")
-    SetCVar("renderScale",               "0.75")
-    SetCVar("VSync",                    "0")
-    SetCVar("maxFPSToggle",              "1")
-    SetCVar("maxFPS",                    "60")
-    SetCVar("GxApi",                     "D3D11")
-    SetCVar("maxFPSBk",                "30")
-    SetCVar("useMaxFPSBk",             "1")
-
-
-    print(W.Colorize("LOW-END MODE:", C.ORANGE) .. " "
-        .. W.Colorize("Optimized for low-end hardware. Reloading UI...", C.SUCCESS))
-
-    C_Timer.After(0.5, function()
-        StaticPopup_Show("NAOWH_QOL_FPS_RELOAD")
-    end)
 end
 
 function ns:RestorePreviousSettings()
