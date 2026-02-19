@@ -28,6 +28,13 @@ local OPTIMAL_FPS_CVARS = {
         category = "render",
     },
     {
+        cvar = "GxMaxFrameLatency",
+        optimal = "2",
+        name = "Max Frame Latency",
+        desc = "Low latency (2)",
+        category = "render",
+    },
+    {
         cvar = "LowLatencyMode",
         optimal = "3",
         name = "Low Latency Mode",
@@ -38,17 +45,9 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "ffxAntiAliasingMode",
         optimal = "4",
         name = "Anti-Aliasing",
-        desc = "CMAA2",
+        desc = "Advanced (CMAA2)",
         category = "render",
     },
-    {
-        cvar = "MSAAQuality",
-        optimal = "0",
-        name = "MSAA Quality",
-        desc = "Disabled",
-        category = "render",
-    },
-    
     -- Graphics Quality
     {
         cvar = "graphicsShadowQuality",
@@ -146,30 +145,16 @@ local OPTIMAL_FPS_CVARS = {
     
     -- Advanced Settings
     {
-        cvar = "gxMaximize",
-        optimal = "0",
-        name = "Triple Buffering",
-        desc = "Disabled",
-        category = "advanced",
-    },
-    {
-        cvar = "textureFilteringMode",
+        cvar = "TextureFilteringMode",
         optimal = "5",
         name = "Texture Filtering",
         desc = "16x Anisotropic",
         category = "advanced",
     },
     {
-        cvar = "rtShadowQuality",
+        cvar = "shadowRt",
         optimal = "0",
         name = "Ray Traced Shadows",
-        desc = "Disabled",
-        category = "advanced",
-    },
-    {
-        cvar = "ffxVRS",
-        optimal = "0",
-        name = "VRS Mode",
         desc = "Disabled",
         category = "advanced",
     },
@@ -190,17 +175,24 @@ local OPTIMAL_FPS_CVARS = {
     
     -- FPS Settings
     {
-        cvar = "maxFPSBk",
-        optimal = "30",
-        name = "Max Background FPS",
-        desc = "30 FPS",
-        category = "fps",
-    },
-    {
         cvar = "useTargetFPS",
         optimal = "0",
         name = "Target FPS",
         desc = "Disabled",
+        category = "fps",
+    },
+    {
+        cvar = "useMaxFPSBk",
+        optimal = "1",
+        name = "Turn on Background FPS",
+        desc = "Enabled",
+        category = "fps",
+    },
+        {
+        cvar = "maxFPSBk",
+        optimal = "30",
+        name = "Set Background FPS to 30",
+        desc = "Default 30 FPS when out of focus",
         category = "fps",
     },
     
@@ -210,6 +202,13 @@ local OPTIMAL_FPS_CVARS = {
         optimal = "0",
         name = "Resample Sharpness",
         desc = "0 (neutral)",
+        category = "post",
+    },
+    {
+        cvar = "ResampleQuality",
+        optimal = "3",
+        name = "Resample Quality",
+        desc = "Point (3)",
         category = "post",
     },
     {
@@ -269,35 +268,33 @@ end
 
 function ns:ApplyFPSOptimization()
     SaveCurrentSettings()
-    
+
+    -- Preserve display/window mode so applying optimal settings never changes it
+    -- gxWindow: 0 = fullscreen, 1 = windowed / borderless (paired with gxMaximize)
+    -- gxMaximize: 1 = maximized/borderless when gxWindow is 1
+    local displayCVars = { "gxWindow", "gxMaximize" }
+    local displayBackup = {}
+    for _, cv in ipairs(displayCVars) do
+        local ok, val = pcall(GetCVar, cv)
+        if ok and val then
+            displayBackup[cv] = val
+        end
+    end
+
     local successCount = 0
     local failCount = 0
     
     for _, setting in ipairs(OPTIMAL_FPS_CVARS) do
-        -- Special handling for maxFPS
-        if setting.cvar == "maxFPS" then
-            if setting.optimal == "0" then
-                -- Unlimited: turn OFF the toggle
-                pcall(SetCVar, "maxFPSToggle", "0")
-                pcall(SetCVar, "maxFPS", "0")
-            else
-                -- Limited: turn ON the toggle and set value
-                pcall(SetCVar, "maxFPSToggle", "1")
-                pcall(SetCVar, "maxFPS", setting.optimal)
-            end
+        if pcall(SetCVar, setting.cvar, setting.optimal) then
             successCount = successCount + 1
         else
-            local success = pcall(SetCVar, setting.cvar, setting.optimal)
-            if success then
-                successCount = successCount + 1
-            else
-                failCount = failCount + 1
-            end
+            failCount = failCount + 1
         end
     end
 
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.fpsOptimizationApplied = true
+    for cv, val in pairs(displayBackup) do
+        pcall(SetCVar, cv, val)
+    end
 
     print(W.Colorize("OPTIMAL FPS SETTINGS:", C.ORANGE) .. " "
         .. W.Colorize(string_format("Applied %d settings! Reloading UI...", successCount), C.SUCCESS))
@@ -442,8 +439,8 @@ function ns:GetCVarStatus(cvar, optimal)
         
         displayOptimal = (optimal == "0") and "Unlimited" or (optimal .. " FPS")
         
-        -- Now compare the REAL current value with optimal
         local realCurrentNum = tonumber(realCurrentValue)
+        local isOptimal
         if realCurrentNum and optimalNum then
             isOptimal = (realCurrentNum == optimalNum)
         else
@@ -462,8 +459,8 @@ function ns:GetCVarStatus(cvar, optimal)
     elseif cvar == "maxFPSBk" or cvar == "targetFPS" then
         displayValue = current .. " FPS"
         displayOptimal = optimal .. " FPS"
-    elseif cvar == "useTargetFPS" or cvar == "gxVSync" or cvar == "gxMaximize" or 
-           cvar == "rtShadowQuality" or cvar == "ffxVRS" or
+    elseif cvar == "useTargetFPS" or cvar == "gxVSync" or
+           cvar == "shadowRt" or cvar == "ffxVRS" or
            cvar == "graphicsSSAO" or cvar == "graphicsDepthEffects" or 
            cvar == "graphicsComputeEffects" or cvar == "graphicsProjectedTextures" then
         displayValue = (current == "1" or current == "true") and "Enabled" or "Disabled"
@@ -475,13 +472,13 @@ function ns:GetCVarStatus(cvar, optimal)
         elseif current == "3" then displayValue = "Reflex+Boost"
         else displayValue = "Off" end
         if optimal == "3" then displayOptimal = "Reflex+Boost" end
-    elseif cvar == "ffxAntiAliasingMode" then
+	    elseif cvar == "ffxAntiAliasingMode" then
         if current == "0" then displayValue = "None"
-        elseif current == "1" then displayValue = "FXAA"
-        elseif current == "2" then displayValue = "CMAA2"
-        elseif current == "4" then displayValue = "CMAA2"
+        elseif current == "1" then displayValue = "Image-Based"
+        elseif current == "2" then displayValue = "Multisample"
+        elseif current == "4" then displayValue = "Advanced"
         else displayValue = "None" end
-        if optimal == "2" or optimal == "4" then displayOptimal = "CMAA2" end
+        if optimal == "4" then displayOptimal = "Advanced" end
     elseif cvar == "MSAAQuality" then
         if current == "0" then displayValue = "Off"
         elseif current == "1" then displayValue = "2x MSAA"
@@ -489,7 +486,7 @@ function ns:GetCVarStatus(cvar, optimal)
         elseif current == "3" then displayValue = "8x MSAA"
         else displayValue = "Off" end
         if optimal == "0" then displayOptimal = "Off" end
-    elseif cvar == "textureFilteringMode" then
+    elseif cvar == "graphicsTextureFiltering" then
         if current == "0" then displayValue = "Bilinear"
         elseif current == "1" then displayValue = "Trilinear"
         elseif current == "2" then displayValue = "2x"
@@ -526,187 +523,69 @@ function ns:GetCVarStatus(cvar, optimal)
     return displayValue, isOptimal, displayOptimal
 end
 
-function ns:OptimizeNetwork()
-    SetCVar("advancedCombatLogging", "0")
-    SetCVar("chatBubbles", "0")
-    SetCVar("chatBubblesParty", "0")
-
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.networkOptimizationApplied = true
-
-    print(W.Colorize("NETWORK OPTIMIZATION:", C.BLUE) .. " "
-        .. W.Colorize("Network settings optimized!", C.SUCCESS))
-end
-
-function ns:OptimizeNameplates()
-    SetCVar("nameplateShowAll", "1")
-    SetCVar("nameplateShowEnemies", "1")
-    SetCVar("nameplateShowFriends", "0")
-    SetCVar("nameplateMaxDistance", "45")
-    SetCVar("nameplateMinAlpha", "0.5")
-    SetCVar("nameplateMaxAlpha", "1")
-    SetCVar("nameplateMinScale", "0.8")
-    SetCVar("nameplateMaxScale", "1")
-    SetCVar("nameplateSelectedScale", "1.2")
-
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.nameplateOptimizationApplied = true
-
-    print(W.Colorize("NAMEPLATE OPTIMIZATION:", C.ORANGE) .. " "
-        .. W.Colorize("Nameplates optimized for performance!", C.SUCCESS))
-end
-
 function ns:SupremeMemoryPurge()
     local memBefore = collectgarbage("count")
-
-    collectgarbage("stop")
-    for i = 1, 3 do
-        collectgarbage("collect")
-    end
-
-    if CombatLogClearEntries then
-        CombatLogClearEntries()
-    end
-
-    for i = 1, NUM_CHAT_WINDOWS do
-        local frame = _G["ChatFrame"..i]
-        if frame then
-            frame:Clear()
-        end
-    end
-
-    collectgarbage("restart")
     collectgarbage("collect")
-
     local memAfter = collectgarbage("count")
     local freed = memBefore - memAfter
 
     print(W.Colorize("MEMORY PURGE:", C.ORANGE) .. " "
-        .. W.Colorize(string_format("%.2f MB freed successfully", freed / 1024), C.SUCCESS))
+        .. W.Colorize(string_format("%.2f MB freed", freed / 1024), C.SUCCESS))
 end
 
 function ns:CombatOptimization()
     SetCVar("graphicsSpellDensity", "0")
-    SetCVar("projectedTextures", "0")
+    SetCVar("graphicsProjectedTextures", "0")
     SetCVar("graphicsParticleDensity", "0")
     SetCVar("nameplateMaxDistance", "45")
 
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.combatOptimizationApplied = true
-
     print(W.Colorize("COMBAT OPTIMIZATION:", C.ORANGE) .. " "
-        .. W.Colorize("Combat performance maximized!", C.SUCCESS))
+        .. W.Colorize("Spell density and particle effects minimized.", C.SUCCESS))
 end
 
 function ns:AllPerformanceOptimizations()
     SaveCurrentSettings()
     ns:CombatOptimization()
-    ns:OptimizeNetwork()
-    ns:OptimizeNameplates()
     ns:SupremeMemoryPurge()
 
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.allPerformanceApplied = true
-
     print(W.Colorize("ALL PERFORMANCE OPTIMIZATIONS:", C.ORANGE) .. " "
-        .. W.Colorize("All performance settings maximized!", C.SUCCESS))
+        .. W.Colorize("Combat density optimized.", C.SUCCESS))
 end
 
 function ns:LowEndOptimization()
     SaveCurrentSettings()
-    
-    -- Base Graphics Quality (1 = Low)
-    SetCVar("graphicsQuality", "1")
-    SetCVar("graphicsTextureQuality", "1")
-    SetCVar("graphicsProjectedTextures", "0")
-    
-    -- Shadow Quality (0 = Low)
-    SetCVar("graphicsShadowQuality", "0")
-    
-    -- Liquid Detail (0 = Low)
-    SetCVar("graphicsLiquidDetail", "0")
-    
-    -- Particle Density (0 = Low)
-    SetCVar("graphicsParticleDensity", "0")
-    
-    -- SSAO (0 = Disabled)
-    SetCVar("graphicsSSAO", "0")
-    
-    -- Depth Effects (0 = Low)
-    SetCVar("graphicsDepthEffects", "0")
-    
-    -- Compute Effects (0 = Disabled)
-    SetCVar("graphicsComputeEffects", "0")
-    
-    -- Outline Mode (0 = Disabled)
-    SetCVar("graphicsOutlineMode", "0")
-    
-    -- Texture Resolution (0 = Low)
+
+    SetCVar("graphicsQuality",          "1")
     SetCVar("graphicsTextureResolution", "0")
-    
-    -- Spell Density (0 = Essential)
-    SetCVar("graphicsSpellDensity", "0")
-    
-    -- Projected Textures (0 = Disabled)
-    SetCVar("projectedTextures", "0")
-    
-    -- View Distance (3 = Low)
-    SetCVar("graphicsViewDistance", "3")
-    
-    -- Environment Detail (3 = Low)
+    SetCVar("graphicsProjectedTextures", "0")
+    SetCVar("graphicsShadowQuality",     "0")
+    SetCVar("graphicsLiquidDetail",      "0")
+    SetCVar("graphicsParticleDensity",   "0")
+    SetCVar("graphicsSSAO",              "0")
+    SetCVar("graphicsDepthEffects",      "0")
+    SetCVar("graphicsComputeEffects",    "0")
+    SetCVar("graphicsOutlineMode",       "0")
+    SetCVar("graphicsSpellDensity",      "0")
+    SetCVar("graphicsViewDistance",      "3")
     SetCVar("graphicsEnvironmentDetail", "3")
-    
-    -- Ground Clutter (3 = Low)
-    SetCVar("graphicsGroundClutter", "3")
-    
-    -- Texture Filtering (0 = Bilinear - Lowest)
-    SetCVar("graphicsTextureFiltering", "0")
-    
-    -- Anti-Aliasing (0 = None)
-    SetCVar("MSAAQuality", "0")
-    SetCVar("ffxAntiAliasingMode", "0")
-    
-    -- Resample Quality (0 = Bilinear)
-    SetCVar("ResampleQuality", "0")
-    
-    -- Graphics API
-    SetCVar("gxApi", "D3D11")
-    
-    -- Weather Density (0 = Disabled)
-    SetCVar("weatherDensity", "0")
-    
-    -- Reflections (0 = Disabled)
-    SetCVar("reflectionMode", "0")
-    
-    -- Sunshafts (0 = Disabled)
-    SetCVar("sunshafts", "0")
-    
-    -- Refraction (0 = Disabled)
-    SetCVar("refraction", "0")
-    
-    -- Lighting Quality (0 = Low)
-    SetCVar("lightingQuality", "0")
-    
-    -- Render Scale (0.75 = 75%)
-    SetCVar("renderScale", "0.75")
-    
-    -- FPS Cap
-    SetCVar("maxFPSToggle", "1")
-    SetCVar("maxFPS", "60")
-    SetCVar("maxFPSLoading", "30")
-    
-    -- VSync
-    SetCVar("gxVSync", "0")
-    
-    -- Triple Buffering
-    SetCVar("gxTripleBuffer", "0")
-    
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.lowEndApplied = true
+    SetCVar("graphicsGroundClutter",     "3")
+    SetCVar("graphicsTextureFiltering",  "0")
+    SetCVar("ffxAntiAliasingMode",       "0")
+    SetCVar("MSAAQuality",               "0")
+    SetCVar("shadowRt",                 "0")
+    SetCVar("ffxVRS",                    "0")
+    SetCVar("renderScale",               "0.75")
+    SetCVar("gxVSync",                   "0")
+    SetCVar("maxFPSToggle",              "1")
+    SetCVar("maxFPS",                    "60")
+    SetCVar("GxApi",                     "D3D11")
+    SetCVar("maxFPSBk",                "30")
+    SetCVar("useMaxFPSBk",             "1")
+
 
     print(W.Colorize("LOW-END MODE:", C.ORANGE) .. " "
-        .. W.Colorize("Optimized for low-end PCs! Reloading UI...", C.SUCCESS))
-    
+        .. W.Colorize("Optimized for low-end hardware. Reloading UI...", C.SUCCESS))
+
     C_Timer.After(0.5, function()
         StaticPopup_Show("NAOWH_QOL_FPS_RELOAD")
     end)
@@ -742,163 +621,57 @@ end
 
 function ns:UltraQualityOptimization()
     SaveCurrentSettings()
-    
-    local successCount = 0
-    local failCount = 0
-    
-    -- Ultra Graphics CVars - Everything maxed out
+
+    local successCount, failCount = 0, 0
+
     local ultraSettings = {
-        -- Base Quality
-        ["graphicsQuality"] = "10",
-        ["graphicsTextureQuality"] = "2",
-        
-        -- Render Scale
-        ["renderScale"] = "1",
-        
-        -- VSync & Display
-        ["gxVSync"] = "0",
-        ["gxMaximize"] = "0",
-        
-        -- Low Latency
-        ["LowLatencyMode"] = "3",
-        
-        -- Anti-Aliasing
-        ["ffxAntiAliasingMode"] = "2",
-        ["MSAAQuality"] = "8",
-        ["MSAAAlphaCoverage"] = "1",
-        
-        -- Shadow Quality
-        ["graphicsShadowQuality"] = "6",
-        ["shadowTextureSize"] = "2048",
-        ["shadowMode"] = "4",
-        
-        -- Liquid Detail
-        ["graphicsLiquidDetail"] = "3",
-        ["waterDetail"] = "3",
-        ["reflectionMode"] = "3",
-        ["refraction"] = "1",
-        ["rippleDetail"] = "2",
-        
-        -- Particle Density
-        ["graphicsParticleDensity"] = "10",
-        ["particleDensity"] = "100",
-        ["weatherDensity"] = "3",
-        
-        -- SSAO
-        ["graphicsSSAO"] = "4",
-        ["ssao"] = "3",
-        
-        -- Depth Effects
-        ["graphicsDepthEffects"] = "3",
-        ["depthEffects"] = "2",
-        
-        -- Compute Effects
-        ["graphicsComputeEffects"] = "3",
-        
-        -- Outline Mode
-        ["graphicsOutlineMode"] = "3",
-        ["OutlineEngineMode"] = "2",
-        
-        -- Texture Resolution
-        ["graphicsTextureResolution"] = "2",
-        
-        -- Spell Density
-        ["graphicsSpellDensity"] = "10",
-        ["spellClutter"] = "200",
-        
-        -- Projected Textures
-        ["graphicsProjectedTextures"] = "2",
-        ["projectedTextures"] = "2",
-        
-        -- View Distance
-        ["graphicsViewDistance"] = "10",
-        ["farclip"] = "2600",
-        ["horizonStart"] = "3000",
-        ["horizonClip"] = "6000",
-        
-        -- Environment Detail
-        ["graphicsEnvironmentDetail"] = "10",
-        ["environmentDetail"] = "2",
-        
-        -- Ground Clutter
-        ["graphicsGroundClutter"] = "10",
-        ["groundEffectDensity"] = "256",
-        ["groundEffectDist"] = "260",
-        
-        -- Texture Filtering
-        ["textureFilteringMode"] = "5",
-        ["graphicsTextureFiltering"] = "5",
-        
-        -- Ray Traced Shadows
-        ["rtShadowQuality"] = "3",
-        
-        -- VRS Mode
-        ["ffxVRS"] = "0",
-        
-        -- Graphics API
-        ["GxApi"] = "D3D12",
-        ["gxApi"] = "D3D12",
-        
-        -- Physics
-        ["physicsLevel"] = "2",
-        
-        -- FPS Settings - Unlimited
-        ["maxFPSToggle"] = "0",
-        ["maxFPS"] = "0",
-        ["maxFPSBk"] = "30",
-        ["useTargetFPS"] = "0",
-        
-        -- Post Processing
-        ["ResampleSharpness"] = "0.5",
-        ["ResampleQuality"] = "3",
-        ["ffxSuperResolution"] = "0",
-        ["Contrast"] = "50",
-        ["Brightness"] = "50",
-        ["Gamma"] = "1",
-        
-        -- Effects
-        ["ffxGlow"] = "1",
-        ["ffxDeath"] = "1",
-        ["ffxNether"] = "1",
-        ["sunShafts"] = "2",
-        
-        -- Camera
-        ["cameraShake"] = "1",
-        ["cameraDistanceMaxZoomFactor"] = "2.6",
-        
-        -- LOD
-        ["terrainLodDist"] = "400",
-        ["terrainMipLevel"] = "0",
-        ["lodObjectCullSize"] = "5",
-        ["lodObjectFadeScale"] = "100",
-        ["entityLodDist"] = "100",
-        
-        -- Other
-        ["particulatesEnabled"] = "1",
-        ["clusteredShading"] = "1",
-        ["volumeFogLevel"] = "3",
+        graphicsQuality             = "10",
+        graphicsTextureResolution   = "2",
+        graphicsProjectedTextures   = "2",
+        graphicsShadowQuality       = "6",
+        graphicsLiquidDetail        = "3",
+        graphicsParticleDensity     = "10",
+        graphicsSSAO                = "4",
+        graphicsDepthEffects        = "3",
+        graphicsComputeEffects      = "3",
+        graphicsOutlineMode         = "3",
+        graphicsSpellDensity        = "10",
+        graphicsViewDistance        = "10",
+        graphicsEnvironmentDetail   = "10",
+        graphicsGroundClutter       = "10",
+        graphicsTextureFiltering    = "5",
+        shadowRt                    = "3",
+        ffxAntiAliasingMode         = "4",
+        MSAAQuality                 = "2",
+        ffxVRS                      = "0",
+        LowLatencyMode              = "3",
+        physicsLevel                = "2",
+        renderScale                 = "1",
+        gxVSync                     = "0",
+        maxFPSToggle                = "0",
+        maxFPSBk                    = "30",
+        useMaxFPSBk                 = "1",
+        cameraShake                 = "1",
+        ResampleSharpness           = "0.5",
+        GxApi                       = "D3D12",
     }
-    
+
     for cvar, value in pairs(ultraSettings) do
-        local success = pcall(SetCVar, cvar, value)
-        if success then
+        if pcall(SetCVar, cvar, value) then
             successCount = successCount + 1
         else
             failCount = failCount + 1
         end
     end
 
-    if not NaowhQOL then NaowhQOL = {} end
-    NaowhQOL.ultraQualityApplied = true
-
     print(W.Colorize("ULTRA SETTINGS:", C.BLUE) .. " "
-        .. W.Colorize(string_format("Applied %d ultra settings! Reloading UI...", successCount), C.SUCCESS))
-    
+        .. W.Colorize(string_format("Applied %d settings! Reloading UI...", successCount), C.SUCCESS))
+
     if failCount > 0 then
         print(W.Colorize("Note:", C.ORANGE) .. " "
-            .. W.Colorize(string_format("%d settings may require game restart.", failCount), C.GRAY))
+            .. W.Colorize(string_format("%d settings could not be applied.", failCount), C.GRAY))
     end
-    
+
     C_Timer.After(0.5, function()
         StaticPopup_Show("NAOWH_QOL_FPS_RELOAD")
     end)
@@ -907,10 +680,11 @@ end
 -- Slash command for sharpening toggle
 SLASH_NAOWHSHARP1 = "/naowhsharp"
 SlashCmdList["NAOWHSHARP"] = function()
-    local current = GetCVarBool("ResampleAlwaysSharpen")
-    SetCVar("ResampleAlwaysSharpen", not current and "1" or "0")
-    print(W.Colorize("Naowh QOL:", C.BLUE) .. " Sharpening is now " 
-        .. W.Colorize(current and "OFF" or "ON", current and C.ERROR or C.SUCCESS))
+    local current = tonumber(GetCVar("ResampleSharpness")) or 0
+    local next = current > 0 and 0 or 0.5
+    SetCVar("ResampleSharpness", next)
+    print(W.Colorize("Naowh QOL:", C.BLUE) .. " Sharpening is now "
+        .. W.Colorize(next > 0 and "ON (0.5)" or "OFF", next > 0 and C.SUCCESS or C.ERROR))
 end
 
 local function AddTooltip(button, title, description, features)
@@ -1239,8 +1013,10 @@ function ns:InitOptOptions()
         PlaceSlider(queueSlider, advContent, 110, -5)
 
         local recommendText = advContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        recommendText:SetPoint("TOP", queueSlider:GetParent(), "BOTTOM", 0, 5)
-        recommendText:SetText(W.Colorize("Recommended: 200-400ms, casters should use a slightly higher value", C.GRAY))
+        recommendText:SetPoint("TOPLEFT", advContent, "TOPLEFT", 10, -55)
+        recommendText:SetPoint("TOPRIGHT", advContent, "TOPRIGHT", -10, -55)
+        recommendText:SetJustifyH("LEFT")
+        recommendText:SetText(W.Colorize("Recommended: 100-400ms. Lower = more responsive, higher = more forgiving of latency.", C.GRAY))
 
         advContent:SetHeight(75)
         advWrap:RecalcHeight()

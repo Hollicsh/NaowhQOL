@@ -128,8 +128,6 @@ This project includes third-party libraries under their original licenses
 
 These libraries are **not covered** by the NaowhQOL proprietary license.
 
-See `THIRD_PARTY_LICENSES.md` for details.
-
 ## Contact
 
 For:
