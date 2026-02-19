@@ -53,21 +53,21 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsShadowQuality",
         optimal = "1",
         name = "Shadow Quality",
-        desc = "Fair (1)",
+        desc = "Low",
         category = "graphics",
     },
     {
         cvar = "graphicsLiquidDetail",
         optimal = "2",
         name = "Liquid Detail",
-        desc = "Fair (2)",
+        desc = "Fair",
         category = "graphics",
     },
     {
         cvar = "graphicsParticleDensity",
         optimal = "3",
         name = "Particle Density",
-        desc = "Good (3)",
+        desc = "Good",
         category = "graphics",
     },
     {
@@ -95,14 +95,14 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsOutlineMode",
         optimal = "2",
         name = "Outline Mode",
-        desc = "High (2)",
+        desc = "High",
         category = "graphics",
     },
     {
         cvar = "graphicsTextureResolution",
         optimal = "2",
         name = "Texture Resolution",
-        desc = "High (2)",
+        desc = "High",
         category = "graphics",
     },
     {
@@ -450,57 +450,75 @@ function ns:GetCVarStatus(cvar, optimal)
         return displayValue, isOptimal, displayOptimal
     end
     
-    -- SPECIAL CASE: View Distance, Environment Detail, Ground Clutter (0-indexed to 1-indexed)
+    -- SPECIAL CASE: View Distance, Environment Detail, Ground Clutter (0-indexed to 1-indexed slider)
     if cvar == "graphicsViewDistance" or cvar == "graphicsEnvironmentDetail" or cvar == "graphicsGroundClutter" then
         local levelCurrent = (tonumber(current) or 0) + 1
         local levelOptimal = (tonumber(optimal) or 0) + 1
-        displayValue = "" .. levelCurrent
-        displayOptimal = "" .. levelOptimal
+        displayValue = "Level " .. levelCurrent
+        displayOptimal = "Level " .. levelOptimal
     elseif cvar == "maxFPSBk" or cvar == "targetFPS" then
         displayValue = current .. " FPS"
         displayOptimal = optimal .. " FPS"
     elseif cvar == "useTargetFPS" or cvar == "gxVSync" or
-           cvar == "shadowRt" or cvar == "ffxVRS" or
-           cvar == "graphicsSSAO" or cvar == "graphicsDepthEffects" or 
-           cvar == "graphicsComputeEffects" or cvar == "graphicsProjectedTextures" then
+           cvar == "ffxVRS" or cvar == "graphicsProjectedTextures" then
         displayValue = (current == "1" or current == "true") and "Enabled" or "Disabled"
         displayOptimal = (optimal == "1" or optimal == "true") and "Enabled" or "Disabled"
+    elseif cvar == "graphicsShadowQuality" then
+        local L = {[1]="Low",[2]="Fair",[3]="Good",[4]="High",[5]="Ultra",[6]="Ultra High"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "graphicsLiquidDetail" then
+        local L = {[1]="Low",[2]="Fair",[3]="Good",[4]="High"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "graphicsParticleDensity" then
+        local L = {[1]="Low",[2]="Fair",[3]="Good",[4]="High",[5]="Ultra"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "graphicsSSAO" then
+        local L = {[0]="Disabled",[1]="Low",[2]="Good",[3]="High",[4]="Ultra"}
+        displayValue  = L[tonumber(current)] or "Disabled"
+        displayOptimal = L[tonumber(optimal)] or "Disabled"
+    elseif cvar == "graphicsDepthEffects" or cvar == "graphicsComputeEffects" then
+        local L = {[0]="Disabled",[1]="Low",[2]="Good",[3]="High"}
+        displayValue  = L[tonumber(current)] or "Disabled"
+        displayOptimal = L[tonumber(optimal)] or "Disabled"
+    elseif cvar == "graphicsOutlineMode" then
+        local L = {[1]="Low",[2]="High",[3]="Ultra High"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "graphicsTextureResolution" then
+        local L = {[1]="Low",[2]="High",[3]="Ultra"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "graphicsSpellDensity" then
+        local L = {[0]="Essential",[1]="Low",[2]="Fair",[3]="Good",[4]="High",[5]="Ultra"}
+        displayValue  = L[tonumber(current)] or current
+        displayOptimal = L[tonumber(optimal)] or optimal
+    elseif cvar == "shadowRt" then
+        local L = {[0]="Disabled",[1]="Low",[2]="High",[3]="Ultra"}
+        displayValue  = L[tonumber(current)] or "Disabled"
+        displayOptimal = L[tonumber(optimal)] or "Disabled"
     elseif cvar == "LowLatencyMode" then
-        if current == "0" then displayValue = "Off"
-        elseif current == "1" then displayValue = "On"
-        elseif current == "2" then displayValue = "Reflex"
-        elseif current == "3" then displayValue = "Reflex+Boost"
-        else displayValue = "Off" end
-        if optimal == "3" then displayOptimal = "Reflex+Boost" end
-	    elseif cvar == "ffxAntiAliasingMode" then
-        if current == "0" then displayValue = "None"
-        elseif current == "1" then displayValue = "Image-Based"
-        elseif current == "2" then displayValue = "Multisample"
-        elseif current == "4" then displayValue = "Advanced"
-        else displayValue = "None" end
-        if optimal == "4" then displayOptimal = "Advanced" end
+        local L = {[0]="None",[1]="Built-In",[2]="Reflex",[3]="Reflex+Boost",[4]="XeLL"}
+        displayValue  = L[tonumber(current)] or "None"
+        displayOptimal = L[tonumber(optimal)] or "None"
+    elseif cvar == "ffxAntiAliasingMode" then
+        local L = {[0]="None",[1]="Image-Based",[2]="Multisample",[4]="Advanced (CMAA2)"}
+        displayValue  = L[tonumber(current)] or "None"
+        displayOptimal = L[tonumber(optimal)] or "None"
     elseif cvar == "MSAAQuality" then
-        if current == "0" then displayValue = "Off"
-        elseif current == "1" then displayValue = "2x MSAA"
-        elseif current == "2" then displayValue = "4x MSAA"
-        elseif current == "3" then displayValue = "8x MSAA"
-        else displayValue = "Off" end
-        if optimal == "0" then displayOptimal = "Off" end
-    elseif cvar == "graphicsTextureFiltering" then
-        if current == "0" then displayValue = "Bilinear"
-        elseif current == "1" then displayValue = "Trilinear"
-        elseif current == "2" then displayValue = "2x"
-        elseif current == "3" then displayValue = "4x"
-        elseif current == "4" then displayValue = "8x"
-        elseif current == "5" then displayValue = "16x"
-        else displayValue = "Bilinear" end
-        if optimal == "5" then displayOptimal = "16x Aniso" end
+        local L = {[0]="Off",[1]="2x MSAA",[2]="4x MSAA",[3]="8x MSAA"}
+        displayValue  = L[tonumber(current)] or "Off"
+        displayOptimal = L[tonumber(optimal)] or "Off"
+    elseif cvar == "TextureFilteringMode" then
+        local L = {[0]="Bilinear",[1]="Trilinear",[2]="2x Aniso",[3]="4x Aniso",[4]="8x Aniso",[5]="16x Aniso"}
+        displayValue  = L[tonumber(current)] or "Bilinear"
+        displayOptimal = L[tonumber(optimal)] or "Bilinear"
     elseif cvar == "physicsLevel" then
-        if current == "0" then displayValue = "None"
-        elseif current == "1" then displayValue = "Player Only"
-        elseif current == "2" then displayValue = "Full"
-        else displayValue = "None" end
-        if optimal == "1" then displayOptimal = "Player Only" end
+        local L = {[0]="None",[1]="Player Only",[2]="Full"}
+        displayValue  = L[tonumber(current)] or "None"
+        displayOptimal = L[tonumber(optimal)] or "None"
     elseif cvar == "cameraShake" then
         displayValue = (current == "0") and "Off" or "On"
         displayOptimal = (optimal == "0") and "Off" or "On"
@@ -817,7 +835,9 @@ local function CreateCVarRow(parent, setting, yOffset)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(W.Colorize(setting.name, C.ORANGE), 1, 1, 1, 1, true)
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(setting.desc, 0.7, 0.7, 0.7)
+        local displayCurrent, _, displayOptimal = ns:GetCVarStatus(setting.cvar, setting.optimal)
+        GameTooltip:AddLine(W.Colorize("Current: ", C.GRAY) .. W.Colorize(displayCurrent, C.WHITE), 1, 1, 1)
+        GameTooltip:AddLine(W.Colorize("Recommended: ", C.GRAY) .. W.Colorize(displayOptimal, C.SUCCESS), 1, 1, 1)
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("CVar: " .. setting.cvar, 0.5, 0.5, 0.5)
         GameTooltip:Show()
