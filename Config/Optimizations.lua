@@ -166,6 +166,13 @@ local OPTIMAL_FPS_CVARS = {
         category = "advanced",
     },
     {
+        cvar = "ResampleQuality",
+        optimal = "3",
+        name = "Resample Quality",
+        desc = "FidelityFX SR 1.0",
+        category = "advanced",
+    },
+    {
         cvar = "GxApi",
         optimal = "D3D12",
         name = "Graphics API",
@@ -177,13 +184,6 @@ local OPTIMAL_FPS_CVARS = {
         optimal = "1",
         name = "Physics Integration",
         desc = "Player Only",
-        category = "advanced",
-    },
-    {
-        cvar = "ResampleQuality",
-        optimal = "3",
-        name = "Resample Quality",
-        desc = "FidelityFX SR 1.0",
         category = "advanced",
     },
     
@@ -493,7 +493,7 @@ function ns:GetCVarStatus(cvar, optimal)
         displayValue  = L[tonumber(current)] or current
         displayOptimal = L[tonumber(optimal)] or optimal
     elseif cvar == "graphicsParticleDensity" then
-        local L = {[0]="Low",[1]="Fair",[2]="Good",[3]="High",[4]="Ultra"}
+        local L = {[0]="Disabled",[1]="Low",[2]="Fair",[3]="Good",[4]="High",[5]="Ultra"}
         displayValue  = L[tonumber(current)] or current
         displayOptimal = L[tonumber(optimal)] or optimal
     elseif cvar == "graphicsSSAO" then
