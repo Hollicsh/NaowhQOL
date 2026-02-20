@@ -54,6 +54,11 @@ StaticPopupDialogs["NAOWHQOL_COMBATLOG_PROMPT"] = {
             diffName = data.difficultyName or "",
         }
 
+        -- Auto-sync choice to active profile
+        if ns.SettingsIO then
+            ns.SettingsIO:SaveProfile(ns.SettingsIO:GetActiveProfile())
+        end
+
         if CheckAdvancedLogging() then
             LoggingCombat(true)
             isLogging = true
@@ -73,6 +78,11 @@ StaticPopupDialogs["NAOWHQOL_COMBATLOG_PROMPT"] = {
             name     = data.zoneName or "",
             diffName = data.difficultyName or "",
         }
+
+        -- Auto-sync choice to active profile
+        if ns.SettingsIO then
+            ns.SettingsIO:SaveProfile(ns.SettingsIO:GetActiveProfile())
+        end
 
         if isLogging then
             LoggingCombat(false)
