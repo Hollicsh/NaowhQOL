@@ -200,19 +200,8 @@ function ns:InitModuleOptions()
             label = L["MODULES_AUTO_GOSSIP"], db = db, key = "autoGossipSelect",
             x = 10, y = -65, template = "ChatConfigCheckButtonTemplate",
         })
-        W:CreateCheckbox(questContent, {
-            label = L["MODULES_INTERACT_RANGE"], db = db, key = "enhancedInteractRange",
-            x = 10, y = -95, template = "ChatConfigCheckButtonTemplate",
-            description = L["MODULES_INTERACT_RANGE_DESC"],
-            descWidth = 350,
-            onChange = function(enabled)
-                if enabled and ns.QuestAutomation then
-                    ns.QuestAutomation.ApplyInteractRange()
-                end
-            end,
-        })
 
-        questContent:SetHeight(125)
+        questContent:SetHeight(95)
         questWrap:RecalcHeight()
 
         -- ============================================================

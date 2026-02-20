@@ -11,21 +11,10 @@ local function GetDB()
     return NaowhQOL.misc
 end
 
-local function ApplyInteractRange()
-    local db = GetDB()
-    if db.enhancedInteractRange then
-        SetCVar("SoftTargetInteractArc", 2)
-        SetCVar("SoftTargetInteractRange", 30)
-    end
-end
-
 frame:SetScript("OnEvent", function(self, event, ...)
     local db = GetDB()
 
     if event == "PLAYER_LOGIN" then
-        -- Apply enhanced interact range on login if enabled
-        ApplyInteractRange()
-
         -- Register quest events
         self:RegisterEvent("QUEST_DETAIL")
         self:RegisterEvent("QUEST_PROGRESS")
@@ -130,7 +119,3 @@ frame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- Export for config to call when toggle changes
-ns.QuestAutomation = {
-    ApplyInteractRange = ApplyInteractRange,
-}

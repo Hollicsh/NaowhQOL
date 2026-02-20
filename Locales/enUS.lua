@@ -365,8 +365,6 @@ ns:RegisterLocale("enUS", {
     MODULES_AUTO_ACCEPT = "Auto Accept Quests (Alt to bypass)",
     MODULES_AUTO_TURNIN = "Auto Turn-in Quests (Alt to bypass)",
     MODULES_AUTO_GOSSIP = "Auto Select Gossip Quests (Alt to bypass)",
-    MODULES_INTERACT_RANGE = "Enhanced Interact Range",
-    MODULES_INTERACT_RANGE_DESC = "Increase NPC/object interact range",
 
     ---------------------------------------------------------------------------
     -- OPTIMIZATIONS

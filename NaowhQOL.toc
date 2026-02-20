@@ -1,9 +1,10 @@
 ## Interface: 120001, 120000, 110207
 ## Title: |cff0091edNaowh|r|cffffa300QOL|r
 ## Notes: Quality of Life improvements
+## Notes-ruRU: Высокопроизводительный аддон для World of Warcraft, улучшающий качество игры и ориентированный на оптимизацию и стабильность
 ## Version: 1.1.0
 ## SavedVariablesPerCharacter: NaowhQOL
-## SavedVariables: NaowhQOL_Profiles
+## SavedVariables: NaowhQOLDB, NaowhQOL_Profiles
 ## AddonCompartmentFunc: NaowhQOL_OnAddonCompartmentClick
 ## IconTexture: Interface\AddOns\NaowhQOL\Assets\LogoAddon.tga
 ## Category: Quality of Life
@@ -15,10 +16,12 @@ Libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
 Libs/LibDBIcon-1.0/LibDBIcon-1.0.lua
 Libs/LibSharedMedia-3.0/lib.xml
 Libs/LibRangeCheck-3.0/LibRangeCheck-3.0.lua
+Libs/Ace3/AceDB-3.0/AceDB-3.0.xml
 Version.lua
 Core.lua
 Core/Localization.lua
 Locales/enUS.lua
+Locales/ruRU.lua
 Data/Widgets.lua
 Data/SoundList.lua
 Data/FontList.lua
