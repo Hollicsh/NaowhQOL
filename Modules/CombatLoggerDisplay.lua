@@ -54,9 +54,10 @@ StaticPopupDialogs["NAOWHQOL_COMBATLOG_PROMPT"] = {
             diffName = data.difficultyName or "",
         }
 
-        LoggingCombat(true)
-        isLogging = true
-        CheckAdvancedLogging()
+        if CheckAdvancedLogging() then
+            LoggingCombat(true)
+            isLogging = true
+        end
     end,
     OnCancel = function(self)
         local data = self.data
@@ -72,6 +73,11 @@ StaticPopupDialogs["NAOWHQOL_COMBATLOG_PROMPT"] = {
             name     = data.zoneName or "",
             diffName = data.difficultyName or "",
         }
+
+        if isLogging then
+            LoggingCombat(false)
+            isLogging = false
+        end
     end,
     timeout = 0,
     whileDead = false,
@@ -110,9 +116,10 @@ local function OnZoneChanged(zoneData)
 
     if saved and saved.enabled == true then
         if not isLogging then
-            LoggingCombat(true)
-            isLogging = true
-            CheckAdvancedLogging()
+            if CheckAdvancedLogging() then
+                LoggingCombat(true)
+                isLogging = true
+            end
         end
     elseif saved and saved.enabled == false then
         if isLogging then
@@ -120,7 +127,14 @@ local function OnZoneChanged(zoneData)
             isLogging = false
         end
     else
-        -- First time in this instance+difficulty, ask the user
+        -- start logging before the prompt so CHALLENGE_MODE_START is captured
+        if not isLogging then
+            if CheckAdvancedLogging() then
+                LoggingCombat(true)
+                isLogging = true
+            end
+        end
+
         local promptText = "|cff" .. COLORS.BLUE .. "Naowh QOL|r\n\n"
             .. string.format(
                 L["COMBATLOGGER_POPUP"],
@@ -142,8 +156,33 @@ end
 
 local loader = CreateFrame("Frame", "NaowhQOL_CombatLogger")
 loader:RegisterEvent("PLAYER_LOGIN")
+loader:RegisterEvent("CHALLENGE_MODE_START")
+loader:RegisterEvent("CHALLENGE_MODE_RESET")
 
 loader:SetScript("OnEvent", function(self, event)
+    if event == "CHALLENGE_MODE_START" then
+        local db = NaowhQOL.combatLogger
+        if db and db.enabled and not isLogging then
+            if CheckAdvancedLogging() then
+                LoggingCombat(true)
+                isLogging = true
+            end
+        end
+        return
+    end
+
+    if event == "CHALLENGE_MODE_RESET" then
+        if isLogging then
+            C_Timer.After(2, function()
+                if isLogging then
+                    LoggingCombat(false)
+                    isLogging = false
+                end
+            end)
+        end
+        return
+    end
+
     if event == "PLAYER_LOGIN" then
         if not NaowhQOL.combatLogger then
             NaowhQOL.combatLogger = { enabled = true, instances = {} }
@@ -152,17 +191,14 @@ loader:SetScript("OnEvent", function(self, event)
         if db.enabled == nil then db.enabled = true end
         db.instances = db.instances or {}
 
-        -- Sync with WoW's logging state (handles /reload)
         isLogging = LoggingCombat()
 
-        -- If the module is enabled, prompt for ACL right away regardless of zone
         if db.enabled then
             CheckAdvancedLogging()
         end
 
         if ns.ZoneUtil and ns.ZoneUtil.RegisterCallback then
             ns.ZoneUtil.RegisterCallback("CombatLogger", OnZoneChanged)
-            -- ZoneUtil already has cached data from PLAYER_ENTERING_WORLD
             C_Timer.After(0.5, function()
                 OnZoneChanged(ns.ZoneUtil.GetCurrentZone())
             end)
@@ -174,10 +210,7 @@ end)
 
 ns.CombatLogger = loader
 
--- Expose so the config UI can force a zone re-check (e.g. when the module is enabled
--- while the player is already inside a trackable instance).
 ns.CombatLogger.ForceZoneCheck = function()
-    -- Prompt for ACL whenever the module is enabled
     CheckAdvancedLogging()
     if ns.ZoneUtil then
         OnZoneChanged(ns.ZoneUtil.GetCurrentZone())
