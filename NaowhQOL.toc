@@ -2,7 +2,7 @@
 ## Title: |cff0091edNaowh|r|cffffa300QOL|r
 ## Notes: Quality of Life improvements
 ## Notes-ruRU: Высокопроизводительный аддон для World of Warcraft, улучшающий качество игры и ориентированный на оптимизацию и стабильность
-## Version: 1.1.0
+## Version: 1.2.0
 ## SavedVariablesPerCharacter: NaowhQOL
 ## SavedVariables: NaowhQOLDB, NaowhQOL_Profiles
 ## AddonCompartmentFunc: NaowhQOL_OnAddonCompartmentClick
