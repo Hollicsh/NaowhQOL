@@ -489,7 +489,7 @@ function ns:InitImportExport()
                     -- Spec icon
                     local icon = sc:CreateTexture(nil, "ARTWORK")
                     icon:SetSize(20, 20)
-                    icon:SetPoint("TOPLEFT", 35, yOffset)
+                    icon:SetPoint("TOPLEFT", 35, yOffset - 5)
                     icon:SetTexture(specIcon)
                     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
@@ -502,7 +502,7 @@ function ns:InitImportExport()
                             ns.SettingsIO:SetSpecProfileEnabled(specIndex, checked)
                         end
                     })
-                    cb:SetPoint("LEFT", icon, "RIGHT", 6, 0)
+                    cb:SetPoint("LEFT", icon, "RIGHT", 6, -2)
                     cb.Text:SetText(specName)
 
                     -- Profile dropdown
@@ -514,7 +514,7 @@ function ns:InitImportExport()
                             ns.SettingsIO:SetSpecProfile(specIndex, profileName)
                         end
                     })
-                    dropdown:SetPoint("LEFT", cb, "RIGHT", 100, 0)
+                    dropdown:SetPoint("LEFT", cb, "RIGHT", 100, -2)
                     specDropdowns[specIndex] = dropdown
 
                     specRows[i] = { icon = icon, checkbox = cb, dropdown = dropdown }

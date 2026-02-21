@@ -197,7 +197,7 @@ function ns:InitBuffTracker()
             { db = db, key = "maxIconsPerRow", moduleName = "buffTracker" })
         PlaceSlider(rowSlider, dspContent, G:Col(2), G:Row(5))
 
-        local reset = W:CreateButton(dspContent, { text = "Reset to Defaults", onClick = function() StaticPopup_Show("NAOWH_BUFFTRACKER_RESET") end })
+        local reset = W:CreateButton(dspContent, { text = L["COMMON_RESET_DEFAULTS"], onClick = function() StaticPopup_Show("NAOWH_BUFFTRACKER_RESET") end })
         reset:SetPoint("TOPLEFT", G:Col(1), G:Row(6) + 20)
 
         dspContent:SetHeight(G:Height(6))

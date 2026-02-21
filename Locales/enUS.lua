@@ -394,6 +394,75 @@ ns:RegisterLocale("enUS", {
     OPT_PEAK = "Peak:",
     OPT_ENCOUNTER_AVG = "Encounter Avg:",
 
+    -- Category headers
+    OPT_CAT_RENDER    = "Render & Display",
+    OPT_CAT_GRAPHICS  = "Graphics Quality",
+    OPT_CAT_DETAIL    = "View Distance & Detail",
+    OPT_CAT_ADVANCED  = "Advanced Settings",
+    OPT_CAT_FPS       = "FPS Limits",
+    OPT_CAT_POST      = "Post Processing",
+
+    -- CVar names (displayed in the settings table)
+    OPT_CVAR_RENDER_SCALE       = "Render Scale",
+    OPT_CVAR_VSYNC              = "VSync",
+    OPT_CVAR_MSAA               = "Multisampling",
+    OPT_CVAR_LOW_LATENCY        = "Low Latency Mode",
+    OPT_CVAR_ANTI_ALIASING      = "Anti-Aliasing",
+    OPT_CVAR_SHADOW             = "Shadow Quality",
+    OPT_CVAR_LIQUID             = "Liquid Detail",
+    OPT_CVAR_PARTICLE           = "Particle Density",
+    OPT_CVAR_SSAO               = "SSAO",
+    OPT_CVAR_DEPTH              = "Depth Effects",
+    OPT_CVAR_COMPUTE            = "Compute Effects",
+    OPT_CVAR_OUTLINE            = "Outline Mode",
+    OPT_CVAR_TEXTURE_RES        = "Texture Resolution",
+    OPT_CVAR_SPELL_DENSITY      = "Spell Density",
+    OPT_CVAR_PROJECTED          = "Projected Textures",
+    OPT_CVAR_VIEW_DISTANCE      = "View Distance",
+    OPT_CVAR_ENV_DETAIL         = "Environment Detail",
+    OPT_CVAR_GROUND             = "Ground Clutter",
+    OPT_CVAR_TRIPLE_BUFFERING   = "Triple Buffering",
+    OPT_CVAR_TEXTURE_FILTERING  = "Texture Filtering",
+    OPT_CVAR_RT_SHADOWS         = "Ray Traced Shadows",
+    OPT_CVAR_RESAMPLE_QUALITY   = "Resample Quality",
+    OPT_CVAR_GFX_API            = "Graphics API",
+    OPT_CVAR_PHYSICS            = "Physics Integration",
+    OPT_CVAR_TARGET_FPS         = "Target FPS",
+    OPT_CVAR_BG_FPS_ENABLE      = "Turn on Background FPS",
+    OPT_CVAR_BG_FPS             = "Set Background FPS to 30",
+    OPT_CVAR_RESAMPLE_SHARPNESS = "Resample Sharpness",
+    OPT_CVAR_CAMERA_SHAKE       = "Camera Shake",
+
+    -- Quality-level display labels
+    OPT_QL_UNLIMITED = "Unlimited",
+    OPT_QL_LEVEL     = "Level %d",
+
+    -- Row buttons & tooltip labels
+    OPT_BTN_APPLY           = "Apply",
+    OPT_BTN_REVERT          = "Revert",
+    OPT_TOOLTIP_CURRENT     = "Current:",
+    OPT_TOOLTIP_RECOMMENDED = "Recommended:",
+
+    -- Spell Queue Window detail text
+    OPT_SQW_DETAIL = "Recommended: 100-400ms. Lower = more responsive, higher = more forgiving of latency.",
+
+    -- Print / notification messages
+    OPT_MSG_SAVED            = "Current settings saved! You can restore them anytime.",
+    OPT_MSG_APPLIED          = "Applied %d settings! Reloading UI...",
+    OPT_MSG_FAILED_APPLY     = "%d settings could not be applied.",
+    OPT_MSG_RESTORED         = "Restored %d settings! Reloading UI...",
+    OPT_MSG_NO_SAVED         = "No saved settings found!",
+    OPT_MSG_MAXFPS_SET       = "maxFPS set to %s",
+    OPT_MSG_MAXFPS_REVERTED  = "maxFPS reverted to %s",
+    OPT_MSG_CVAR_SET         = "%s set to %s",
+    OPT_MSG_CVAR_FAILED      = "Failed to set %s",
+    OPT_MSG_CVAR_NO_BACKUP   = "No backup found for %s",
+    OPT_MSG_CVAR_REVERTED    = "%s reverted to %s",
+    OPT_MSG_CVAR_REVERT_FAILED = "Failed to revert %s",
+    OPT_MSG_SHARPENING_PREFIX = "Sharpening is now ",
+    OPT_SHARP_ON             = "ON (0.5)",
+    OPT_SHARP_OFF            = "OFF",
+
     ---------------------------------------------------------------------------
     -- RAID ALERTS
     ---------------------------------------------------------------------------
@@ -810,4 +879,29 @@ ns:RegisterLocale("enUS", {
     COTANK_NAME_USE_CLASS_COLOR = "Use Class Color",
     COTANK_NAME_COLOR = "Name Color",
     COTANK_PREVIEW_NAME = "TankName",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_ENABLE               = "Enable Equipment Reminder",
+    EQUIPMENTREMINDER_SECTION_TRIGGERS     = "TRIGGERS",
+    EQUIPMENTREMINDER_TRIGGER_DESC         = "Choose when to show the equipment reminder",
+    EQUIPMENTREMINDER_SHOW_INSTANCE        = "Show on instance entry",
+    EQUIPMENTREMINDER_SHOW_INSTANCE_DESC   = "Display equipment when entering dungeons, raids, or scenarios",
+    EQUIPMENTREMINDER_SHOW_READYCHECK      = "Show on ready check",
+    EQUIPMENTREMINDER_SHOW_READYCHECK_DESC = "Display equipment when a ready check is initiated",
+    EQUIPMENTREMINDER_AUTOHIDE             = "Auto-Hide Delay",
+    EQUIPMENTREMINDER_AUTOHIDE_DESC        = "Seconds before auto-hiding (0 = manual close only)",
+    EQUIPMENTREMINDER_ICON_SIZE_DESC       = "Size of equipment icons",
+    EQUIPMENTREMINDER_SECTION_PREVIEW      = "PREVIEW",
+    EQUIPMENTREMINDER_SHOW_FRAME           = "Show Equipment Frame",
+    EQUIPMENTREMINDER_SECTION_ENCHANT      = "ENCHANT CHECKER",
+    EQUIPMENTREMINDER_ENCHANT_DESC         = "Show enchant status in the equipment reminder frame",
+    EQUIPMENTREMINDER_ENCHANT_ENABLE       = "Enable Enchant Checker",
+    EQUIPMENTREMINDER_ENCHANT_ENABLE_DESC  = "Show enchant status row in equipment reminder",
+    EQUIPMENTREMINDER_ALL_SPECS            = "Use same rules for all specs",
+    EQUIPMENTREMINDER_ALL_SPECS_DESC       = "When enabled, enchant rules apply to all specializations",
+    EQUIPMENTREMINDER_CAPTURE              = "Capture Current",
+    EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "Expected Enchant",
+    EQUIPMENTREMINDER_CAPTURED             = "Captured %d enchant(s) from equipped gear",
 })

@@ -3,6 +3,7 @@ local addonName, ns = ...
 local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
+local L = ns.L
 
 function ns:InitEquipmentReminder()
     local p = ns.MainFrame.Content
@@ -23,7 +24,7 @@ function ns:InitEquipmentReminder()
         toggleArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
 
         local masterCB = W:CreateCheckbox(toggleArea, {
-            label = "Enable Equipment Reminder",
+            label = L["EQUIPMENTREMINDER_ENABLE"],
             db = db, key = "enabled",
             x = 15, y = -8,
             isMaster = true,
@@ -39,25 +40,25 @@ function ns:InitEquipmentReminder()
 
         -- TRIGGERS section
         local triggerWrap, triggerContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "TRIGGERS",
+            text = L["EQUIPMENTREMINDER_SECTION_TRIGGERS"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         local triggerDesc = triggerContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         triggerDesc:SetPoint("TOPLEFT", 0, -5)
-        triggerDesc:SetText(W.Colorize("Choose when to show the equipment reminder", C.GRAY))
+        triggerDesc:SetText(W.Colorize(L["EQUIPMENTREMINDER_TRIGGER_DESC"], C.GRAY))
 
         W:CreateCheckbox(triggerContent, {
-            label = "Show on instance entry",
-            tooltip = "Display equipment when entering dungeons, raids, or scenarios",
+            label = L["EQUIPMENTREMINDER_SHOW_INSTANCE"],
+            tooltip = L["EQUIPMENTREMINDER_SHOW_INSTANCE_DESC"],
             db = db, key = "showOnInstance",
             x = 0, y = -30,
         })
 
         W:CreateCheckbox(triggerContent, {
-            label = "Show on ready check",
-            tooltip = "Display equipment when a ready check is initiated",
+            label = L["EQUIPMENTREMINDER_SHOW_READYCHECK"],
+            tooltip = L["EQUIPMENTREMINDER_SHOW_READYCHECK_DESC"],
             db = db, key = "showOnReadyCheck",
             x = 0, y = -55,
         })
@@ -67,28 +68,28 @@ function ns:InitEquipmentReminder()
 
         -- DISPLAY section
         local displayWrap, displayContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "DISPLAY",
+            text = L["COMMON_SECTION_DISPLAY"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         W:CreateSlider(displayContent, {
-            label = "Auto-Hide Delay",
+            label = L["EQUIPMENTREMINDER_AUTOHIDE"],
             min = 0, max = 30, step = 1,
             db = db, key = "autoHideDelay",
             x = 0, y = -10,
             width = 200,
-            tooltip = "Seconds before auto-hiding (0 = manual close only)",
+            tooltip = L["EQUIPMENTREMINDER_AUTOHIDE_DESC"],
             onChange = function(val) db.autoHideDelay = val end,
         })
 
         W:CreateSlider(displayContent, {
-            label = "Icon Size",
+            label = L["COMMON_LABEL_ICON_SIZE"],
             min = 32, max = 64, step = 2,
             db = db, key = "iconSize",
             x = 0, y = -70,
             width = 200,
-            tooltip = "Size of equipment icons",
+            tooltip = L["EQUIPMENTREMINDER_ICON_SIZE_DESC"],
             onChange = function(val)
                 db.iconSize = val
                 -- Force recreation of frame on next show
@@ -104,13 +105,13 @@ function ns:InitEquipmentReminder()
 
         -- PREVIEW section
         local previewWrap, previewContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "PREVIEW",
+            text = L["EQUIPMENTREMINDER_SECTION_PREVIEW"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         local previewBtn = W:CreateButton(previewContent, {
-            text = "Show Equipment Frame",
+            text = L["EQUIPMENTREMINDER_SHOW_FRAME"],
             onClick = function()
                 if ns.EquipmentReminder and ns.EquipmentReminder.ShowFrame then
                     ns.EquipmentReminder.ShowFrame()
@@ -124,27 +125,27 @@ function ns:InitEquipmentReminder()
 
         -- ENCHANT CHECKER section
         local enchantWrap, enchantContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "ENCHANT CHECKER",
+            text = L["EQUIPMENTREMINDER_SECTION_ENCHANT"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         local enchantDesc = enchantContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         enchantDesc:SetPoint("TOPLEFT", 0, -5)
-        enchantDesc:SetText(W.Colorize("Show enchant status in the equipment reminder frame", C.GRAY))
+        enchantDesc:SetText(W.Colorize(L["EQUIPMENTREMINDER_ENCHANT_DESC"], C.GRAY))
 
         -- Enable checkbox
         local ecEnableCB = W:CreateCheckbox(enchantContent, {
-            label = "Enable Enchant Checker",
-            tooltip = "Show enchant status row in equipment reminder",
+            label = L["EQUIPMENTREMINDER_ENCHANT_ENABLE"],
+            tooltip = L["EQUIPMENTREMINDER_ENCHANT_ENABLE_DESC"],
             db = db, key = "ecEnabled",
             x = 0, y = -30,
         })
 
         -- Use all specs checkbox
         local useAllSpecsCB = W:CreateCheckbox(enchantContent, {
-            label = "Use same rules for all specs",
-            tooltip = "When enabled, enchant rules apply to all specializations",
+            label = L["EQUIPMENTREMINDER_ALL_SPECS"],
+            tooltip = L["EQUIPMENTREMINDER_ALL_SPECS_DESC"],
             db = db, key = "ecUseAllSpecs",
             x = 0, y = -55,
         })
@@ -154,7 +155,7 @@ function ns:InitEquipmentReminder()
 
         -- Capture Current button
         local captureBtn = W:CreateButton(enchantContent, {
-            text = "Capture Current",
+            text = L["EQUIPMENTREMINDER_CAPTURE"],
             onClick = function()
                 local specIndex = GetSpecialization()
                 local specID = specIndex and GetSpecializationInfo(specIndex)
@@ -191,7 +192,7 @@ function ns:InitEquipmentReminder()
                 end
 
                 if BuildEnchantGrid then BuildEnchantGrid() end
-                print("|cff00ff00NaowhQOL:|r Captured " .. captured .. " enchant(s) from equipped gear")
+                print("|cff00ff00NaowhQOL:|r " .. string.format(L["EQUIPMENTREMINDER_CAPTURED"], captured))
             end,
         })
         captureBtn:SetPoint("TOPLEFT", 0, -80)
@@ -268,7 +269,7 @@ function ns:InitEquipmentReminder()
             if useAllSpecs then
                 local header = gridContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
                 header:SetPoint("TOPLEFT", labelWidth + 10, -yOffset)
-                header:SetText("Expected Enchant")
+                header:SetText(L["EQUIPMENTREMINDER_EXPECTED_ENCHANT"])
                 header:SetTextColor(0.8, 0.8, 0.8)
                 table.insert(gridElements, header)
             else

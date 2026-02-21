@@ -3,6 +3,7 @@ local addonName, ns = ...
 local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
+local L = ns.L
 
 -- Optimal FPS Settings based on client specifications
 local OPTIMAL_FPS_CVARS = {
@@ -11,6 +12,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "renderScale",
         optimal = "1",
         name = "Render Scale",
+        nameKey = "OPT_CVAR_RENDER_SCALE",
         desc = "100% native resolution",
         category = "render",
     },
@@ -18,6 +20,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "VSync",
         optimal = "0",
         name = "VSync",
+        nameKey = "OPT_CVAR_VSYNC",
         desc = "Disabled for maximum FPS",
         category = "render",
     },
@@ -25,6 +28,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "MSAAQuality",
         optimal = "0",
         name = "Multisampling",
+        nameKey = "OPT_CVAR_MSAA",
         desc = "None",
         category = "render",
     },
@@ -32,6 +36,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "LowLatencyMode",
         optimal = "3",
         name = "Low Latency Mode",
+        nameKey = "OPT_CVAR_LOW_LATENCY",
         desc = "Reflex + Boost enabled",
         category = "render",
     },
@@ -39,6 +44,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "ffxAntiAliasingMode",
         optimal = "4",
         name = "Anti-Aliasing",
+        nameKey = "OPT_CVAR_ANTI_ALIASING",
         desc = "Advanced (CMAA2)",
         category = "render",
     },
@@ -47,6 +53,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsShadowQuality",
         optimal = "1",
         name = "Shadow Quality",
+        nameKey = "OPT_CVAR_SHADOW",
         desc = "Low",
         category = "graphics",
     },
@@ -54,6 +61,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsLiquidDetail",
         optimal = "2",
         name = "Liquid Detail",
+        nameKey = "OPT_CVAR_LIQUID",
         desc = "Fair",
         category = "graphics",
     },
@@ -61,6 +69,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsParticleDensity",
         optimal = "3",
         name = "Particle Density",
+        nameKey = "OPT_CVAR_PARTICLE",
         desc = "Good",
         category = "graphics",
     },
@@ -68,6 +77,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsSSAO",
         optimal = "0",
         name = "SSAO",
+        nameKey = "OPT_CVAR_SSAO",
         desc = "Disabled",
         category = "graphics",
     },
@@ -75,6 +85,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsDepthEffects",
         optimal = "0",
         name = "Depth Effects",
+        nameKey = "OPT_CVAR_DEPTH",
         desc = "Disabled",
         category = "graphics",
     },
@@ -82,6 +93,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsComputeEffects",
         optimal = "0",
         name = "Compute Effects",
+        nameKey = "OPT_CVAR_COMPUTE",
         desc = "Disabled",
         category = "graphics",
     },
@@ -89,6 +101,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsOutlineMode",
         optimal = "2",
         name = "Outline Mode",
+        nameKey = "OPT_CVAR_OUTLINE",
         desc = "High",
         category = "graphics",
     },
@@ -96,6 +109,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsTextureResolution",
         optimal = "2",
         name = "Texture Resolution",
+        nameKey = "OPT_CVAR_TEXTURE_RES",
         desc = "High",
         category = "graphics",
     },
@@ -103,6 +117,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsSpellDensity",
         optimal = "0",
         name = "Spell Density",
+        nameKey = "OPT_CVAR_SPELL_DENSITY",
         desc = "Essential",
         category = "graphics",
     },
@@ -110,6 +125,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsProjectedTextures",
         optimal = "1",
         name = "Projected Textures",
+        nameKey = "OPT_CVAR_PROJECTED",
         desc = "Enabled",
         category = "graphics",
     },
@@ -119,6 +135,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsViewDistance",
         optimal = "3",
         name = "View Distance",
+        nameKey = "OPT_CVAR_VIEW_DISTANCE",
         desc = "Level 4",
         category = "detail",
     },
@@ -126,6 +143,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsEnvironmentDetail",
         optimal = "3",
         name = "Environment Detail",
+        nameKey = "OPT_CVAR_ENV_DETAIL",
         desc = "Level 4",
         category = "detail",
     },
@@ -133,6 +151,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "graphicsGroundClutter",
         optimal = "0",
         name = "Ground Clutter",
+        nameKey = "OPT_CVAR_GROUND",
         desc = "Level 1",
         category = "detail",
     },
@@ -142,6 +161,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "GxMaxFrameLatency",
         optimal = "2",
         name = "Triple Buffering",
+        nameKey = "OPT_CVAR_TRIPLE_BUFFERING",
         desc = "Disabled",
         category = "advanced",
     },
@@ -149,6 +169,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "TextureFilteringMode",
         optimal = "5",
         name = "Texture Filtering",
+        nameKey = "OPT_CVAR_TEXTURE_FILTERING",
         desc = "16x Anisotropic",
         category = "advanced",
     },
@@ -156,6 +177,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "shadowRt",
         optimal = "0",
         name = "Ray Traced Shadows",
+        nameKey = "OPT_CVAR_RT_SHADOWS",
         desc = "Disabled",
         category = "advanced",
     },
@@ -163,6 +185,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "ResampleQuality",
         optimal = "3",
         name = "Resample Quality",
+        nameKey = "OPT_CVAR_RESAMPLE_QUALITY",
         desc = "FidelityFX SR 1.0",
         category = "advanced",
     },
@@ -170,6 +193,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "GxApi",
         optimal = "D3D12",
         name = "Graphics API",
+        nameKey = "OPT_CVAR_GFX_API",
         desc = "DirectX 12",
         category = "advanced",
     },
@@ -177,6 +201,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "physicsLevel",
         optimal = "1",
         name = "Physics Integration",
+        nameKey = "OPT_CVAR_PHYSICS",
         desc = "Player Only",
         category = "advanced",
     },
@@ -186,6 +211,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "useTargetFPS",
         optimal = "0",
         name = "Target FPS",
+        nameKey = "OPT_CVAR_TARGET_FPS",
         desc = "Disabled",
         category = "fps",
     },
@@ -193,6 +219,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "useMaxFPSBk",
         optimal = "1",
         name = "Turn on Background FPS",
+        nameKey = "OPT_CVAR_BG_FPS_ENABLE",
         desc = "Enabled",
         category = "fps",
     },
@@ -200,6 +227,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "maxFPSBk",
         optimal = "30",
         name = "Set Background FPS to 30",
+        nameKey = "OPT_CVAR_BG_FPS",
         desc = "Default 30 FPS when out of focus",
         category = "fps",
     },
@@ -209,6 +237,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "ResampleSharpness",
         optimal = "0",
         name = "Resample Sharpness",
+        nameKey = "OPT_CVAR_RESAMPLE_SHARPNESS",
         desc = "0 (neutral)",
         category = "post",
     },
@@ -216,6 +245,7 @@ local OPTIMAL_FPS_CVARS = {
         cvar = "cameraShake",
         optimal = "0",
         name = "Camera Shake",
+        nameKey = "OPT_CVAR_CAMERA_SHAKE",
         desc = "Disabled",
         category = "post",
     },
@@ -223,12 +253,12 @@ local OPTIMAL_FPS_CVARS = {
 
 -- Category display names and order
 local CATEGORY_INFO = {
-    render = { name = "Render & Display", order = 1 },
-    graphics = { name = "Graphics Quality", order = 2 },
-    detail = { name = "View Distance & Detail", order = 3 },
-    advanced = { name = "Advanced Settings", order = 4 },
-    fps = { name = "FPS Limits", order = 5 },
-    post = { name = "Post Processing", order = 6 },
+    render   = { name = "Render & Display",       nameKey = "OPT_CAT_RENDER",    order = 1 },
+    graphics = { name = "Graphics Quality",        nameKey = "OPT_CAT_GRAPHICS",  order = 2 },
+    detail   = { name = "View Distance & Detail",  nameKey = "OPT_CAT_DETAIL",    order = 3 },
+    advanced = { name = "Advanced Settings",       nameKey = "OPT_CAT_ADVANCED",  order = 4 },
+    fps      = { name = "FPS Limits",              nameKey = "OPT_CAT_FPS",       order = 5 },
+    post     = { name = "Post Processing",         nameKey = "OPT_CAT_POST",      order = 6 },
 }
 
 local SetCVar = SetCVar
@@ -258,7 +288,7 @@ local function SaveCurrentSettings()
         end
         
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("Current settings saved! You can restore them anytime.", C.SUCCESS))
+            .. W.Colorize(L["OPT_MSG_SAVED"], C.SUCCESS))
     end
 end
 
@@ -293,11 +323,11 @@ function ns:ApplyFPSOptimization()
     end
 
     print(W.Colorize("OPTIMAL FPS SETTINGS:", C.ORANGE) .. " "
-        .. W.Colorize(string_format("Applied %d settings! Reloading UI...", successCount), C.SUCCESS))
+        .. W.Colorize(string_format(L["OPT_MSG_APPLIED"], successCount), C.SUCCESS))
     
     if failCount > 0 then
         print(W.Colorize("Warning:", C.ORANGE) .. " "
-            .. W.Colorize(string_format("%d settings could not be applied.", failCount), C.GRAY))
+            .. W.Colorize(string_format(L["OPT_MSG_FAILED_APPLY"], failCount), C.GRAY))
     end
     
     C_Timer.After(0.5, function()
@@ -337,7 +367,7 @@ function ns:ApplySingleCVar(cvar, value)
         end
         
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("maxFPS set to " .. (value == "0" and "Unlimited" or (value .. " FPS")), C.SUCCESS))
+            .. W.Colorize(string_format(L["OPT_MSG_MAXFPS_SET"], value == "0" and L["OPT_QL_UNLIMITED"] or (value .. " FPS")), C.SUCCESS))
         return true
     end
     
@@ -345,11 +375,11 @@ function ns:ApplySingleCVar(cvar, value)
     local applySuccess = pcall(SetCVar, cvar, tostring(value))
     if applySuccess then
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize(cvar .. " set to " .. tostring(value), C.SUCCESS))
+            .. W.Colorize(string_format(L["OPT_MSG_CVAR_SET"], cvar, tostring(value)), C.SUCCESS))
         return true
     else
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("Failed to set " .. cvar, C.ERROR))
+            .. W.Colorize(string_format(L["OPT_MSG_CVAR_FAILED"], cvar), C.ERROR))
         return false
     end
 end
@@ -357,7 +387,7 @@ end
 function ns:RevertSingleCVar(cvar)
     if not NaowhQOL or not NaowhQOL.individualBackups or not NaowhQOL.individualBackups[cvar] then
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("No backup found for " .. cvar, C.ERROR))
+            .. W.Colorize(string_format(L["OPT_MSG_CVAR_NO_BACKUP"], cvar), C.ERROR))
         return false
     end
     
@@ -372,7 +402,7 @@ function ns:RevertSingleCVar(cvar)
         pcall(SetCVar, "maxFPS", tostring(savedValue))
         
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("maxFPS reverted to " .. tostring(savedValue), C.SUCCESS))
+            .. W.Colorize(string_format(L["OPT_MSG_MAXFPS_REVERTED"], tostring(savedValue)), C.SUCCESS))
         
         -- Clear both backups
         NaowhQOL.individualBackups[cvar] = nil
@@ -384,13 +414,13 @@ function ns:RevertSingleCVar(cvar)
     
     if success then
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize(cvar .. " reverted to " .. tostring(savedValue), C.SUCCESS))
+            .. W.Colorize(string_format(L["OPT_MSG_CVAR_REVERTED"], cvar, tostring(savedValue)), C.SUCCESS))
         -- Clear the backup after reverting
         NaowhQOL.individualBackups[cvar] = nil
         return true
     else
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("Failed to revert " .. cvar, C.ERROR))
+            .. W.Colorize(string_format(L["OPT_MSG_CVAR_REVERT_FAILED"], cvar), C.ERROR))
         return false
     end
 end
@@ -424,14 +454,14 @@ function ns:GetCVarStatus(cvar, optimal)
         if toggleSuccess and toggleValue == "0" then
             -- Toggle is OFF = effectively unlimited (treat as "0")
             realCurrentValue = "0"
-            displayValue = "Unlimited"
+            displayValue = L["OPT_QL_UNLIMITED"]
         else
             -- Toggle is ON = use the actual maxFPS value
             realCurrentValue = current
-            displayValue = (current == "0") and "Unlimited" or (current .. " FPS")
+            displayValue = (current == "0") and L["OPT_QL_UNLIMITED"] or (current .. " FPS")
         end
         
-        displayOptimal = (optimal == "0") and "Unlimited" or (optimal .. " FPS")
+        displayOptimal = (optimal == "0") and L["OPT_QL_UNLIMITED"] or (optimal .. " FPS")
         
         local realCurrentNum = tonumber(realCurrentValue)
         local isOptimal
@@ -448,19 +478,19 @@ function ns:GetCVarStatus(cvar, optimal)
     if cvar == "graphicsViewDistance" or cvar == "graphicsEnvironmentDetail" or cvar == "graphicsGroundClutter" then
         local levelCurrent = (tonumber(current) or 0) + 1
         local levelOptimal = (tonumber(optimal) or 0) + 1
-        displayValue = "Level " .. levelCurrent
-        displayOptimal = "Level " .. levelOptimal
+        displayValue = string_format(L["OPT_QL_LEVEL"], levelCurrent)
+        displayOptimal = string_format(L["OPT_QL_LEVEL"], levelOptimal)
     elseif cvar == "maxFPSBk" or cvar == "targetFPS" then
         displayValue = current .. " FPS"
         displayOptimal = optimal .. " FPS"
     elseif cvar == "useTargetFPS" or cvar == "VSync" or
            cvar == "ffxVRS" or cvar == "graphicsProjectedTextures" or
            cvar == "useMaxFPSBk" then
-        displayValue = (current == "1" or current == "true") and "Enabled" or "Disabled"
-        displayOptimal = (optimal == "1" or optimal == "true") and "Enabled" or "Disabled"
+        displayValue = (current == "1" or current == "true") and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
+        displayOptimal = (optimal == "1" or optimal == "true") and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
     elseif cvar == "GxMaxFrameLatency" then
-        displayValue  = (currentNum == 3) and "Enabled" or "Disabled"
-        displayOptimal = (optimalNum == 3) and "Enabled" or "Disabled"
+        displayValue  = (currentNum == 3) and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
+        displayOptimal = (optimalNum == 3) and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
     elseif cvar == "GxApi" then
         local function apiLabel(v)
             local u = string.upper(v or "")
@@ -528,8 +558,8 @@ function ns:GetCVarStatus(cvar, optimal)
         displayValue  = L[tonumber(current)] or "None"
         displayOptimal = L[tonumber(optimal)] or "None"
     elseif cvar == "cameraShake" then
-        displayValue = (current == "0") and "Off" or "On"
-        displayOptimal = (optimal == "0") and "Off" or "On"
+        displayValue = (current == "0") and L["COMMON_OFF"] or L["COMMON_ON"]
+        displayOptimal = (optimal == "0") and L["COMMON_OFF"] or L["COMMON_ON"]
     elseif cvar == "renderScale" then
         local scalePercent = math.floor((tonumber(current) or 1) * 100)
         displayValue = scalePercent .. "%"
@@ -556,7 +586,7 @@ end
 function ns:RestorePreviousSettings()
     if not NaowhQOL or not NaowhQOL.savedSettings then
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-            .. W.Colorize("No saved settings found!", C.ERROR))
+            .. W.Colorize(L["OPT_MSG_NO_SAVED"], C.ERROR))
         return
     end
     
@@ -574,7 +604,7 @@ function ns:RestorePreviousSettings()
     NaowhQOL.savedSettings = nil
     
     print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-        .. W.Colorize(string_format("Restored %d settings! Reloading UI...", successCount), C.SUCCESS))
+        .. W.Colorize(string_format(L["OPT_MSG_RESTORED"], successCount), C.SUCCESS))
     
     C_Timer.After(0.5, function()
         StaticPopup_Show("NAOWH_QOL_FPS_RELOAD")
@@ -587,8 +617,8 @@ SlashCmdList["NAOWHSHARP"] = function()
     local current = tonumber(GetCVar("ResampleSharpness")) or 0
     local next = current > 0 and 0 or 0.5
     SetCVar("ResampleSharpness", next)
-    print(W.Colorize("Naowh QOL:", C.BLUE) .. " Sharpening is now "
-        .. W.Colorize(next > 0 and "ON (0.5)" or "OFF", next > 0 and C.SUCCESS or C.ERROR))
+    print(W.Colorize("Naowh QOL:", C.BLUE) .. " " .. L["OPT_MSG_SHARPENING_PREFIX"]
+        .. W.Colorize(next > 0 and L["OPT_SHARP_ON"] or L["OPT_SHARP_OFF"], next > 0 and C.SUCCESS or C.ERROR))
 end
 
 local function AddTooltip(button, title, description, features)
@@ -636,7 +666,7 @@ local function CreateCVarRow(parent, setting, yOffset)
     nameText:SetPoint("LEFT", row, "LEFT", 5, 0)
     nameText:SetWidth(140)
     nameText:SetJustifyH("LEFT")
-    nameText:SetText(W.Colorize(setting.name, C.BLUE))
+    nameText:SetText(W.Colorize(setting.nameKey and L[setting.nameKey] or setting.name, C.BLUE))
     
     -- Current value
     local currentText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -656,7 +686,7 @@ local function CreateCVarRow(parent, setting, yOffset)
     optimalText:SetJustifyH("LEFT")
     
     -- Revert button (declare first so Apply can reference it)
-    local revertBtn = W:CreateButton(row, { text = "Revert", width = 60, height = 22 })
+    local revertBtn = W:CreateButton(row, { text = L["OPT_BTN_REVERT"], width = 60, height = 22 })
     
     local function UpdateRevertButton()
         if ns:HasBackupForCVar(setting.cvar) then
@@ -679,7 +709,7 @@ local function CreateCVarRow(parent, setting, yOffset)
     
     -- Apply button
     local applyBtn = W:CreateButton(row, {
-        text = "Apply",
+        text = L["OPT_BTN_APPLY"],
         width = 60,
         height = 22,
         onClick = function()
@@ -719,11 +749,11 @@ local function CreateCVarRow(parent, setting, yOffset)
     -- Tooltip
     row:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(W.Colorize(setting.name, C.ORANGE), 1, 1, 1, 1, true)
+        GameTooltip:SetText(W.Colorize(setting.nameKey and L[setting.nameKey] or setting.name, C.ORANGE), 1, 1, 1, 1, true)
         GameTooltip:AddLine(" ")
         local displayCurrent, _, displayOptimal = ns:GetCVarStatus(setting.cvar, setting.optimal)
-        GameTooltip:AddLine(W.Colorize("Current: ", C.GRAY) .. W.Colorize(displayCurrent, C.WHITE), 1, 1, 1)
-        GameTooltip:AddLine(W.Colorize("Recommended: ", C.GRAY) .. W.Colorize(displayOptimal, C.SUCCESS), 1, 1, 1)
+        GameTooltip:AddLine(W.Colorize(L["OPT_TOOLTIP_CURRENT"] .. " ", C.GRAY) .. W.Colorize(displayCurrent, C.WHITE), 1, 1, 1)
+        GameTooltip:AddLine(W.Colorize(L["OPT_TOOLTIP_RECOMMENDED"] .. " ", C.GRAY) .. W.Colorize(displayOptimal, C.SUCCESS), 1, 1, 1)
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("CVar: " .. setting.cvar, 0.5, 0.5, 0.5)
         GameTooltip:Show()
@@ -748,20 +778,20 @@ function ns:InitOptOptions()
 
         StaticPopupDialogs["NAOWH_QOL_FPS_RELOAD"] = {
             text = W.Colorize("Naowh QOL", C.BLUE) .. "\n\n"
-                .. W.Colorize("Aggressive FPS optimizations applied successfully.", C.WHITE) .. "\n\n"
-                .. W.Colorize("A UI Reload is required to apply all changes.", C.ORANGE),
-            button1 = W.Colorize("Reload UI", C.SUCCESS),
-            button2 = W.Colorize("Cancel", C.ERROR),
+                .. W.Colorize(L["OPT_SUCCESS"], C.WHITE) .. "\n\n"
+                .. W.Colorize(L["OPT_RELOAD_REQUIRED"], C.ORANGE),
+            button1 = W.Colorize(L["COMMON_RELOAD_UI"], C.SUCCESS),
+            button2 = W.Colorize(L["COMMON_CANCEL"], C.ERROR),
             OnAccept = function() ReloadUI() end,
             timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
         }
 
         StaticPopupDialogs["NAOWH_QOL_RELOAD"] = {
             text = W.Colorize("Naowh QOL", C.BLUE) .. "\n\n"
-                .. W.Colorize("Graphics engine restarted successfully.", C.WHITE) .. "\n\n"
-                .. W.Colorize("A UI Reload is required to prevent conflicts.", C.ORANGE),
-            button1 = W.Colorize("Reload UI", C.SUCCESS),
-            button2 = W.Colorize("Cancel", C.ERROR),
+                .. W.Colorize(L["OPT_GFX_RESTART"], C.WHITE) .. "\n\n"
+                .. W.Colorize(L["OPT_CONFLICT_WARNING"], C.ORANGE),
+            button1 = W.Colorize(L["COMMON_RELOAD_UI"], C.SUCCESS),
+            button2 = W.Colorize(L["COMMON_CANCEL"], C.ERROR),
             OnAccept = function() ReloadUI() end,
             timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
         }
@@ -779,14 +809,14 @@ function ns:InitOptOptions()
         -- PRESETS (3 buttons: Optimal FPS, Ultra Settings, Revert Settings)
         -----------------------------------------------------------------------
         local presetsWrap, presetsContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "PRESETS",
+            text = L["OPT_SECTION_PRESETS"],
             startOpen = true,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         -- Create Revert button first (will be referenced by other buttons)
         local revertBtn = CreateSectionButton(presetsContent, 0, 2,
-            W.Colorize("Revert ", C.GRAY) .. "Settings")
+            W.Colorize(L["OPT_REVERT"], C.GRAY))
         
         -- Check if settings were previously saved to enable/disable button
         local hasSavedSettings = NaowhQOL and NaowhQOL.savedSettings ~= nil
@@ -801,7 +831,7 @@ function ns:InitOptOptions()
             -- Disable button after reverting
             revertBtn:Disable()
             revertBtn:SetAlpha(0.5)
-            revertBtn:SetText(W.Colorize("Revert ", C.GRAY) .. "Settings")
+            revertBtn:SetText(W.Colorize(L["OPT_REVERT"], C.GRAY))
             -- Clear saved settings
             if NaowhQOL then
                 NaowhQOL.savedSettings = nil
@@ -816,13 +846,13 @@ function ns:InitOptOptions()
         })
 
         local fpsBtn = CreateSectionButton(presetsContent, 0, 1,
-            W.Colorize("Optimal FPS ", C.ORANGE) .. "Settings")
+            W.Colorize(L["OPT_OPTIMAL"], C.ORANGE))
         fpsBtn:SetScript("OnClick", function() 
             ns:ApplyFPSOptimization()
             -- Enable revert button after applying optimization
             revertBtn:Enable()
             revertBtn:SetAlpha(1)
-            revertBtn:SetText(W.Colorize("Revert ", C.ORANGE) .. "Settings")
+            revertBtn:SetText(W.Colorize(L["OPT_REVERT"], C.ORANGE))
         end)
         AddTooltip(fpsBtn, "Optimal FPS Settings",
             "Maximum performance for competitive gameplay:", {
@@ -862,7 +892,7 @@ function ns:InitOptOptions()
             
             if settings and #settings > 0 then
                 local catWrap, catContent = W:CreateCollapsibleSection(sectionContainer, {
-                    text = CATEGORY_INFO[category].name,
+                    text = L[CATEGORY_INFO[category].nameKey] or CATEGORY_INFO[category].name,
                     startOpen = false,
                     onCollapse = function() if RelayoutSections then RelayoutSections() end end,
                 })
@@ -883,7 +913,7 @@ function ns:InitOptOptions()
         -- SPELL QUEUE WINDOW
         -----------------------------------------------------------------------
         local advWrap, advContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "SPELL QUEUE WINDOW",
+            text = L["OPT_SECTION_SQW"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
@@ -895,7 +925,7 @@ function ns:InitOptOptions()
         end
 
         local queueSlider = W:CreateAdvancedSlider(advContent,
-            W.Colorize("Spell Queue Window (ms)", C.BLUE), 50, 500, -5, 1, false,
+            W.Colorize(L["OPT_SQW_LABEL"], C.BLUE), 50, 500, -5, 1, false,
             function(val)
                 SetCVar("SpellQueueWindow", val)
                 if not NaowhQOL then NaowhQOL = {} end
@@ -907,7 +937,7 @@ function ns:InitOptOptions()
         recommendText:SetPoint("TOPLEFT", advContent, "TOPLEFT", 10, -55)
         recommendText:SetPoint("TOPRIGHT", advContent, "TOPRIGHT", -10, -55)
         recommendText:SetJustifyH("LEFT")
-        recommendText:SetText(W.Colorize("Recommended: 100-400ms. Lower = more responsive, higher = more forgiving of latency.", C.GRAY))
+        recommendText:SetText(W.Colorize(L["OPT_SQW_DETAIL"], C.GRAY))
 
         advContent:SetHeight(75)
         advWrap:RecalcHeight()
@@ -917,13 +947,13 @@ function ns:InitOptOptions()
         -- DIAGNOSTICS
         -----------------------------------------------------------------------
         local diagWrap, diagContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "DIAGNOSTICS",
+            text = L["OPT_SECTION_DIAG"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         local profBtn = CreateSectionButton(diagContent, 1, 1,
-            W.Colorize("Addon ", C.BLUE) .. "Profiler")
+            W.Colorize(L["OPT_PROFILER"], C.BLUE))
         profBtn:SetPoint("TOP", diagContent, "TOP", 0, -5)
         profBtn:SetScript("OnClick", function()
             if GetCVar("scriptProfile") ~= "1" then
@@ -953,7 +983,7 @@ function ns:InitOptOptions()
         -- REAL-TIME MONITOR
         -----------------------------------------------------------------------
         local monWrap, monContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "REAL-TIME MONITOR",
+            text = L["OPT_SECTION_MONITOR"],
             startOpen = true,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
@@ -986,7 +1016,7 @@ function ns:InitOptOptions()
             self.timer = self.timer + elapsed
             if self.timer > 0.5 then
                 if (GetTime() - startupTime) < WARMUP_DELAY then
-                    recentAvgText:SetText(W.Colorize("Warming up...", C.GRAY))
+                    recentAvgText:SetText(W.Colorize(L["OPT_WARMING"], C.GRAY))
                     lastTickText:SetText("")
                     peakText:SetText("")
                     encounterText:SetText("")
@@ -995,7 +1025,7 @@ function ns:InitOptOptions()
                 end
 
                 if not profilerAvailable then
-                    recentAvgText:SetText(W.Colorize("Profiler unavailable", C.GRAY))
+                    recentAvgText:SetText(W.Colorize(L["OPT_UNAVAILABLE"], C.GRAY))
                     lastTickText:SetText("")
                     peakText:SetText("")
                     encounterText:SetText("")
@@ -1015,21 +1045,21 @@ function ns:InitOptOptions()
                 local avgColor = C.SUCCESS
                 if recentAvg >= 2 then avgColor = C.ERROR
                 elseif recentAvg >= 0.5 then avgColor = C.ORANGE end
-                recentAvgText:SetText(W.Colorize("Avg (60 tick): ", C.BLUE)
+                recentAvgText:SetText(W.Colorize(L["OPT_AVG_TICK"] .. " ", C.BLUE)
                     .. W.Colorize(string_format("%.2f ms", recentAvg), avgColor))
 
                 -- Last tick: green <1ms, orange 1-5ms, red >=5ms
                 local lastColor = C.SUCCESS
                 if lastTime >= 5 then lastColor = C.ERROR
                 elseif lastTime >= 1 then lastColor = C.ORANGE end
-                lastTickText:SetText(W.Colorize("Last Tick: ", C.BLUE)
+                lastTickText:SetText(W.Colorize(L["OPT_LAST_TICK"] .. " ", C.BLUE)
                     .. W.Colorize(string_format("%.2f ms", lastTime), lastColor))
 
                 -- Peak: green <1ms, orange 1-5ms, red >=5ms
                 local peakColor = C.SUCCESS
                 if trackedPeak >= 5 then peakColor = C.ERROR
                 elseif trackedPeak >= 1 then peakColor = C.ORANGE end
-                peakText:SetText(W.Colorize("Peak: ", C.BLUE)
+                peakText:SetText(W.Colorize(L["OPT_PEAK"] .. " ", C.BLUE)
                     .. W.Colorize(string_format("%.2f ms", trackedPeak), peakColor))
 
                 -- Encounter average (only meaningful during/after a boss fight)
@@ -1037,10 +1067,10 @@ function ns:InitOptOptions()
                     local encColor = C.SUCCESS
                     if encAvg >= 2 then encColor = C.ERROR
                     elseif encAvg >= 0.5 then encColor = C.ORANGE end
-                    encounterText:SetText(W.Colorize("Encounter Avg: ", C.BLUE)
+                    encounterText:SetText(W.Colorize(L["OPT_ENCOUNTER_AVG"] .. " ", C.BLUE)
                         .. W.Colorize(string_format("%.2f ms", encAvg), encColor))
                 else
-                    encounterText:SetText(W.Colorize("Encounter Avg: ", C.BLUE)
+                    encounterText:SetText(W.Colorize(L["OPT_ENCOUNTER_AVG"] .. " ", C.BLUE)
                         .. W.Colorize("--", C.GRAY))
                 end
 

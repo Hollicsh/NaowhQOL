@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 -- Locale storage
 local locales = {}
-local currentLocale = "enUS"
+local currentLocale = (GetLocale and GetLocale()) or "enUS"
 local fallbackLocale = "enUS"
 local missingKeys = {}
 
