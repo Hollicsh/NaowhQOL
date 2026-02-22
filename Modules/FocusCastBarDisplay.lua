@@ -309,16 +309,27 @@ local function UpdateLayout()
         iconFrame:ClearAllPoints()
 
         -- Icon is always positioned OUTSIDE the cast bar frame
+        -- Use two-point anchoring flush with the border frame (which extends 1px beyond castBarFrame)
         if iconPos == "LEFT" then
-            iconFrame:SetPoint("RIGHT", castBarFrame, "LEFT", -1, 0)
+            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 1)
+            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, -1)
+            iconFrame:SetWidth(iconW)
         elseif iconPos == "RIGHT" then
-            iconFrame:SetPoint("LEFT", castBarFrame, "RIGHT", 1, 0)
+            iconFrame:SetPoint("TOPLEFT", castBarFrame, "TOPRIGHT", 1, 1)
+            iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "BOTTOMRIGHT", 1, -1)
+            iconFrame:SetWidth(iconW)
         elseif iconPos == "TOP" then
-            iconFrame:SetPoint("BOTTOM", castBarFrame, "TOP", 0, 1)
+            iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "TOPLEFT", -1, 1)
+            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "TOPRIGHT", 1, 1)
+            iconFrame:SetHeight(iconH)
         elseif iconPos == "BOTTOM" then
-            iconFrame:SetPoint("TOP", castBarFrame, "BOTTOM", 0, -1)
+            iconFrame:SetPoint("TOPLEFT", castBarFrame, "BOTTOMLEFT", -1, -1)
+            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "BOTTOMRIGHT", 1, -1)
+            iconFrame:SetHeight(iconH)
         else
-            iconFrame:SetPoint("RIGHT", castBarFrame, "LEFT", -1, 0)
+            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 1)
+            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, -1)
+            iconFrame:SetWidth(iconW)
         end
     else
         iconFrame:Hide()

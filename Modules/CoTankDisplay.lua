@@ -31,8 +31,8 @@ healthBg:SetColorTexture(0.1, 0.1, 0.1, 0.8)
 
 -- Health bar
 local healthBar = CreateFrame("StatusBar", nil, frame)
-healthBar:SetPoint("TOPLEFT", 2, -2)
-healthBar:SetPoint("BOTTOMRIGHT", -2, 2)
+healthBar:SetPoint("TOPLEFT", 1, -1)
+healthBar:SetPoint("BOTTOMRIGHT", -1, 1)
 healthBar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
 healthBar:SetStatusBarColor(0, 0.8, 0.2)
 healthBar:SetMinMaxValues(0, 100)
