@@ -1,20 +1,8 @@
 local addonName, ns = ...
 if not ns then return end
 
--- To add a new module to export/import:
---
---   Simple (NaowhQOL subtable):
---     ns.SettingsIO:RegisterSimple("key", "Display Name")
---
---   Custom getter/setter:
---     ns.SettingsIO:Register("key", "Display Name", getterFn, setterFn)
---
--- The UI, serializer, and base64 layer handle everything else automatically.
-
 ns.SettingsIO = { modules = {} }
 
--- Type schemas for import validation
--- Only defines expected types; missing fields are OK (will get defaults)
 local TYPE_SCHEMAS = {
     combatTimer = {
         enabled = "boolean", unlock = "boolean", font = "string",
@@ -53,7 +41,7 @@ local TYPE_SCHEMAS = {
     combatLogger = {
         enabled = "boolean", instances = "table",
     },
-    mouseRing = "table", -- Mouse ring settings
+    mouseRing = "table",
     dragonriding = {
         enabled = "boolean", barWidth = "number", speedHeight = "number",
         chargeHeight = "number", gap = "number", showSpeedText = "boolean",
@@ -230,7 +218,6 @@ local TYPE_SCHEMAS = {
     },
 }
 
--- Validate imported data against schema
 local function ValidateImportData(key, data)
     if type(data) ~= "table" then
         return false, "expected table"
@@ -238,15 +225,13 @@ local function ValidateImportData(key, data)
 
     local schema = TYPE_SCHEMAS[key]
     if not schema then
-        return true -- No schema defined, allow import
+        return true 
     end
 
-    -- Simple table schema (just validate it's a table)
     if schema == "table" then
         return true
     end
 
-    -- Detailed field validation
     for field, expectedType in pairs(schema) do
         local value = data[field]
         if value ~= nil then
@@ -286,7 +271,7 @@ local function SerializeValue(v)
         end
         for k, val in pairs(v) do
             if type(k) == "number" and k >= 1 and k <= n and k == math.floor(k) then
-                -- already handled in array part
+                
             else
                 local kStr
                 if type(k) == "string" and k:match("^[%a_][%w_]*$") then
@@ -307,14 +292,13 @@ local function Serialize(tbl)
     return SerializeValue(tbl)
 end
 
--- recursive parser (avoids loadstring for security)
 local function Deserialize(str)
     if type(str) ~= "string" or str == "" then return nil end
     local pos = 1
     local len = #str
     local MAX_DEPTH = 20
 
-    local parseValue  -- forward declaration
+    local parseValue  
 
     local function skipWS()
         while pos <= len do
@@ -330,14 +314,14 @@ local function Deserialize(str)
     end
 
     local function parseString()
-        pos = pos + 1  -- skip opening "
+        pos = pos + 1  
         local parts = {}
         while pos <= len do
             local b = str:byte(pos)
-            if b == 34 then  -- closing "
+            if b == 34 then  
                 pos = pos + 1
                 return table.concat(parts), true
-            elseif b == 92 then  -- backslash
+            elseif b == 92 then 
                 pos = pos + 1
                 if pos > len then return nil, false end
                 local esc = str:byte(pos)
@@ -368,7 +352,7 @@ local function Deserialize(str)
                 pos = pos + 1
             end
         end
-        return nil, false  -- unterminated string
+        return nil, false
     end
 
     local function parseNumber()
@@ -574,7 +558,6 @@ function ns.SettingsIO:Import(encoded, selectedKeys)
     return true
 end
 
--- Refresh callback system for reload-free profile switching
 ns.SettingsIO.refreshCallbacks = {}
 
 function ns.SettingsIO:RegisterRefresh(key, callback)
@@ -594,20 +577,27 @@ function ns.SettingsIO:TriggerRefreshAll()
     end
 end
 
--- Profile Management using AceDB
--- ns.db is the AceDB instance initialized in Core.lua
--- Profiles are now managed by AceDB instead of custom export strings
+-- Auto-save: debounced 2-second save triggered by any widget db-write.
+-- This means users never lose settings on reload even without
+-- manually pressing the Save button.
+local _dirtyPending = false
+function ns.SettingsIO:MarkDirty()
+    if _dirtyPending then return end
+    _dirtyPending = true
+    C_Timer.After(2, function()
+        _dirtyPending = false
+        if not ns.db then return end
+        local active = self:GetActiveProfile()
+        if active then self:SaveProfile(active) end
+    end)
+end
 
 function ns.SettingsIO:InitProfiles()
-    -- AceDB handles initialization, but we still need spec swap registration
     self:InitSpecProfiles()
     self:RegisterSpecSwap()
 end
 
--- Spec-based profile switching (stored per-character in ns.db.char)
 function ns.SettingsIO:InitSpecProfiles()
-    -- Spec profiles are stored in ns.db.char.specProfiles
-    -- No explicit init needed as AceDB handles defaults
 end
 
 function ns.SettingsIO:RegisterSpecSwap()
@@ -625,7 +615,6 @@ function ns.SettingsIO:RegisterSpecSwap()
         local specIndex = GetSpecialization()
         if not specIndex then return end
 
-        -- Debounce
         local now = GetTime()
         if specIndex == lastSpecIndex and (now - lastSwapTime) < 1 then
             return
@@ -640,7 +629,6 @@ function ns.SettingsIO:RegisterSpecSwap()
 
         local profileName = specData.profile
         if profileName and profileName ~= "" then
-            -- Check if profile exists
             local profiles = ns.db:GetProfiles()
             local exists = false
             for _, name in ipairs(profiles) do
@@ -692,9 +680,6 @@ function ns.SettingsIO:GetCharacterKey()
     return cachedCharKey
 end
 
--- Deep copy helper for profile snapshots.
--- NaowhQOL_Profiles is a plain account-wide SavedVariable (no AceDB aliasing),
--- so snapshots stored there reliably survive every reload.
 local function deepCopy(orig)
     if type(orig) ~= "table" then return orig end
     local copy = {}
@@ -710,11 +695,9 @@ function ns.SettingsIO:GetProfileList()
     local seen = {}
     local profiles = {}
 
-    -- 1. AceDB profiles (may be empty if NaowhQOLDB didn't persist)
     ns.db:GetProfiles(profiles)
     for _, name in ipairs(profiles) do seen[name] = true end
 
-    -- 2. NaowhQOL_Profiles (reliable account-wide SV, no aliasing problems)
     if NaowhQOL_Profiles and NaowhQOL_Profiles.profileKeys then
         for name in pairs(NaowhQOL_Profiles.profileKeys) do
             if not seen[name] then
@@ -724,7 +707,6 @@ function ns.SettingsIO:GetProfileList()
         end
     end
 
-    -- 3. AceDB global registry as additional fallback
     if ns.db.global and ns.db.global.savedProfiles then
         for name in pairs(ns.db.global.savedProfiles) do
             if not seen[name] then
@@ -746,22 +728,19 @@ end
 function ns.SettingsIO:SaveProfile(name)
     if not ns.db then return false end
 
-    -- Primary storage: NaowhQOL_Profiles (plain account-wide SV, always reliable).
     NaowhQOL_Profiles = NaowhQOL_Profiles or {}
     NaowhQOL_Profiles.profileKeys = NaowhQOL_Profiles.profileKeys or {}
     NaowhQOL_Profiles.profileData = NaowhQOL_Profiles.profileData or {}
     NaowhQOL_Profiles.profileData[name] = deepCopy(ns.db.profile)
     NaowhQOL_Profiles.profileKeys[name] = true
-    NaowhQOL_Profiles.activeProfile = name  -- remember this as the active profile
+    NaowhQOL_Profiles.activeProfile = name 
 
-    -- Secondary: also use AceDB profile switch so GetCurrentProfile() reflects the name.
     local current = ns.db:GetCurrentProfile()
     if current ~= name then
         ns.db:SetProfile(name)
         ns.db:CopyProfile(current)
     end
 
-    -- Tertiary: global registry fallback.
     if ns.db.global then
         ns.db.global.savedProfiles[name] = true
     end
@@ -772,11 +751,9 @@ end
 function ns.SettingsIO:CreateDefaultProfile(name)
     if not ns.db then return false end
 
-    -- Create a new profile with defaults by switching and resetting
     ns.db:SetProfile(name)
     ns.db:ResetProfile()
 
-    -- Register in NaowhQOL_Profiles
     NaowhQOL_Profiles = NaowhQOL_Profiles or {}
     NaowhQOL_Profiles.profileKeys = NaowhQOL_Profiles.profileKeys or {}
     NaowhQOL_Profiles.profileData = NaowhQOL_Profiles.profileData or {}
@@ -785,7 +762,6 @@ function ns.SettingsIO:CreateDefaultProfile(name)
 
     if ns.db.global then ns.db.global.savedProfiles[name] = true end
 
-    -- Trigger refresh to apply defaults to UI
     self:TriggerRefreshAll()
 
     return true
@@ -801,11 +777,8 @@ function ns.SettingsIO:LoadProfile(name)
     end
     if not exists then return false, "Profile not found" end
 
-    -- Switch AceDB to this profile name so GetCurrentProfile() returns it.
-    ns.db:SetProfile(name)  -- fires OnProfileChanged → NaowhQOL re-aliased
+    ns.db:SetProfile(name) 
 
-    -- Apply the NaowhQOL_Profiles snapshot on top (AceDB data may have been
-    -- stripped by removeDefaults, leaving the profile empty on disk).
     local savedData = NaowhQOL_Profiles and
                       NaowhQOL_Profiles.profileData and
                       NaowhQOL_Profiles.profileData[name]
@@ -816,7 +789,6 @@ function ns.SettingsIO:LoadProfile(name)
         self:TriggerRefreshAll()
     end
 
-    -- Persist which profile is active so it survives reload.
     NaowhQOL_Profiles = NaowhQOL_Profiles or {}
     NaowhQOL_Profiles.activeProfile = name
 
@@ -826,16 +798,13 @@ end
 function ns.SettingsIO:DeleteProfile(name)
     if not ns.db then return false end
 
-    -- Remove from NaowhQOL_Profiles.
     if NaowhQOL_Profiles then
         if NaowhQOL_Profiles.profileKeys then NaowhQOL_Profiles.profileKeys[name] = nil end
         if NaowhQOL_Profiles.profileData then NaowhQOL_Profiles.profileData[name] = nil end
     end
 
-    -- Remove from global registry.
     if ns.db.global then ns.db.global.savedProfiles[name] = nil end
 
-    -- AceDB: switch away from this profile before deleting.
     local current = ns.db:GetCurrentProfile()
     if current == name then
         local profiles = self:GetProfileList()
@@ -861,7 +830,6 @@ function ns.SettingsIO:RenameProfile(oldName, newName)
     if not oldExists then return false, "not_found" end
     if newExists then return false, "exists" end
 
-    -- Rename in NaowhQOL_Profiles.
     if NaowhQOL_Profiles then
         NaowhQOL_Profiles.profileKeys = NaowhQOL_Profiles.profileKeys or {}
         NaowhQOL_Profiles.profileData = NaowhQOL_Profiles.profileData or {}
@@ -871,13 +839,11 @@ function ns.SettingsIO:RenameProfile(oldName, newName)
         NaowhQOL_Profiles.profileKeys[oldName] = nil
     end
 
-    -- Update global registry.
     if ns.db.global then
         ns.db.global.savedProfiles[oldName] = nil
         ns.db.global.savedProfiles[newName] = true
     end
 
-    -- AceDB rename simulation.
     local current = ns.db:GetCurrentProfile()
     ns.db:SetProfile(oldName)
     ns.db:SetProfile(newName)
@@ -891,7 +857,6 @@ end
 function ns.SettingsIO:CopyProfile(sourceName)
     if not ns.db then return false, "Database not initialized" end
 
-    -- Prefer NaowhQOL_Profiles snapshot (always reliable).
     local savedData = NaowhQOL_Profiles and
                       NaowhQOL_Profiles.profileData and
                       NaowhQOL_Profiles.profileData[sourceName]
@@ -904,7 +869,6 @@ function ns.SettingsIO:CopyProfile(sourceName)
         return true
     end
 
-    -- Fallback: AceDB native copy.
     local profiles = self:GetProfileList()
     local exists = false
     for _, pname in ipairs(profiles) do
@@ -920,20 +884,15 @@ function ns.SettingsIO:CopyProfile(sourceName)
     return true
 end
 
--- Cross-character profile copying uses AceDB's account-wide profile storage
 function ns.SettingsIO:GetOtherCharacters()
-    -- AceDB profiles are account-wide by default, so all characters
-    -- share the same profile list. Return empty for backwards compatibility.
     return {}
 end
 
 function ns.SettingsIO:GetCharacterProfiles(charKey)
-    -- With AceDB, profiles are shared account-wide
     return self:GetProfileList()
 end
 
 function ns.SettingsIO:CopyFromCharacter(charKey, profileName, saveAsName)
-    -- With AceDB profiles being account-wide, this is just a regular copy
     local newName = saveAsName or profileName
     return self:CopyProfile(profileName)
 end

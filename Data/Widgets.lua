@@ -19,7 +19,6 @@ ns.COLORS = {
 
 function ns.Widgets.GetPlayerClassColor()
     local _, classFile = UnitClass("player")
-    -- Use WoW's built-in RAID_CLASS_COLORS which handles all classes correctly
     local color = RAID_CLASS_COLORS[classFile]
     if color then
         return CreateColor(color.r, color.g, color.b, 1)
@@ -27,7 +26,6 @@ function ns.Widgets.GetPlayerClassColor()
     return CreateColor(1, 1, 1, 1)
 end
 
--- Returns the effective color for display - class color if toggle is on, picker color otherwise
 function ns.Widgets.GetEffectiveColor(db, rKey, gKey, bKey, classColorKey)
     if classColorKey and db[classColorKey] then
         local classColor = ns.Widgets.GetPlayerClassColor()
@@ -37,11 +35,6 @@ function ns.Widgets.GetEffectiveColor(db, rKey, gKey, bKey, classColorKey)
 end
 
 -- Layout factory for consistent grid positioning
--- Usage:
---   local L = ns.Layout:New(2)  -- 2-column layout
---   local L = ns.Layout:New(1)  -- single column layout
---   L:Row(1), L:Col(1), L:Col(2)
---   L:Pos(row, col) returns x, y
 ns.Layout = {
     ROW_HEIGHT = 50,    -- Default vertical spacing between rows
     ROW_START = -10,    -- Default first row Y offset
@@ -117,7 +110,6 @@ function ns.Widgets.Colorize(text, hexColor)
     return "|cff" .. hexColor .. text .. "|r"
 end
 
--- Legacy function for any remaining template-based checkboxes
 function ns.Widgets.StyleCheckbox(cb)
     if not cb then return end
     local normal = cb:GetNormalTexture()
@@ -135,14 +127,10 @@ local BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B = 0.01, 0.56, 0.91
 local BTN_ORANGE_R, BTN_ORANGE_G, BTN_ORANGE_B = 1.00, 0.66, 0.00
 local DARK_BG_R, DARK_BG_G, DARK_BG_B = 0.08, 0.08, 0.12
 
--- Central button creation function
--- opts: { text, width, height, parent, noStyle, onClick, font }
--- If width/height not provided, auto-fits to text with padding
 function ns.Widgets:CreateButton(parent, opts)
     opts = opts or {}
     local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
 
-    -- Create label first to measure text
     local label = btn:CreateFontString(nil, "OVERLAY", opts.font or "GameFontNormalSmall")
     label:SetPoint("CENTER", 0, 0)
     label:SetText(opts.text or "")
@@ -151,7 +139,6 @@ function ns.Widgets:CreateButton(parent, opts)
     label:SetShadowColor(0, 0, 0, 0.8)
     btn.Text = label
 
-    -- Auto-fit size to text if not specified
     local textWidth = label:GetStringWidth() or 50
     local textHeight = label:GetStringHeight() or 14
     local padding = 16
@@ -162,9 +149,7 @@ function ns.Widgets:CreateButton(parent, opts)
     local height = opts.height or math.max(textHeight + 10, minHeight)
     btn:SetSize(width, height)
 
-    -- Apply styling unless explicitly disabled
     if not opts.noStyle then
-        -- Main backdrop with inset for depth
         btn:SetBackdrop({
             bgFile = [[Interface\Buttons\WHITE8x8]],
             edgeFile = [[Interface\Buttons\WHITE8x8]],
@@ -172,7 +157,6 @@ function ns.Widgets:CreateButton(parent, opts)
             insets = { left = 1, right = 1, top = 1, bottom = 1 },
         })
 
-        -- Top highlight line for raised effect
         local topHighlight = btn:CreateTexture(nil, "BORDER")
         topHighlight:SetColorTexture(1, 1, 1, 0.15)
         topHighlight:SetPoint("TOPLEFT", 2, -2)
@@ -180,7 +164,6 @@ function ns.Widgets:CreateButton(parent, opts)
         topHighlight:SetHeight(1)
         btn.topHighlight = topHighlight
 
-        -- Bottom shadow for depth
         local bottomShadow = btn:CreateTexture(nil, "BORDER")
         bottomShadow:SetColorTexture(0, 0, 0, 0.3)
         bottomShadow:SetPoint("BOTTOMLEFT", 2, 2)
@@ -188,7 +171,6 @@ function ns.Widgets:CreateButton(parent, opts)
         bottomShadow:SetHeight(1)
         btn.bottomShadow = bottomShadow
 
-        -- Inner glow overlay
         local innerGlow = btn:CreateTexture(nil, "ARTWORK")
         innerGlow:SetColorTexture(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.1)
         innerGlow:SetPoint("TOPLEFT", 2, -2)
@@ -246,7 +228,6 @@ function ns.Widgets:CreateButton(parent, opts)
             end
         end)
 
-        -- Disabled state support
         btn:HookScript("OnDisable", function(self)
             self:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
             self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.5)
@@ -260,12 +241,10 @@ function ns.Widgets:CreateButton(parent, opts)
         end)
     end
 
-    -- OnClick handler
     if opts.onClick then
         btn:SetScript("OnClick", opts.onClick)
     end
 
-    -- SetText method that auto-resizes
     function btn:SetText(text)
         self.Text:SetText(text)
         if not opts.width then
@@ -281,7 +260,6 @@ function ns.Widgets:CreateButton(parent, opts)
     return btn
 end
 
--- Style existing UIPanelButtonTemplate buttons (for legacy code)
 function ns.Widgets.StyleButton(btn)
     if not btn then return end
 
@@ -298,7 +276,6 @@ function ns.Widgets.StyleButton(btn)
             insets = { left = 1, right = 1, top = 1, bottom = 1 },
         })
 
-        -- Top highlight
         local topHighlight = btn:CreateTexture(nil, "BORDER")
         topHighlight:SetColorTexture(1, 1, 1, 0.12)
         topHighlight:SetPoint("TOPLEFT", 2, -2)
@@ -306,7 +283,6 @@ function ns.Widgets.StyleButton(btn)
         topHighlight:SetHeight(1)
         btn.topHighlight = topHighlight
 
-        -- Bottom shadow
         local bottomShadow = btn:CreateTexture(nil, "BORDER")
         bottomShadow:SetColorTexture(0, 0, 0, 0.3)
         bottomShadow:SetPoint("BOTTOMLEFT", 2, 2)
@@ -314,7 +290,6 @@ function ns.Widgets.StyleButton(btn)
         bottomShadow:SetHeight(1)
         btn.bottomShadow = bottomShadow
 
-        -- Inner glow
         local innerGlow = btn:CreateTexture(nil, "ARTWORK")
         innerGlow:SetColorTexture(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.08)
         innerGlow:SetPoint("TOPLEFT", 2, -2)
@@ -391,10 +366,6 @@ function ns.Widgets.ClearFrame(frame)
     end
 end
 
---- Standard page header: title + subtitle + optional blue separator.
--- @param titleParts  string (pre-formatted) OR {{text, color}, ...}
--- @param subtitle    string (displayed as-is)
--- @param opts        { subtitleFont = "GameFontNormal", separator = true }
 function ns.Widgets:CreatePageHeader(parent, titleParts, subtitle, opts)
     opts = opts or {}
 
@@ -440,17 +411,6 @@ function ns.Widgets:CreateSectionHeader(parent, text, yOffset, opts)
     return header, sep
 end
 
---- Collapsible section with header bar, optional enable toggle, and hideable content.
--- @param parent  the parent frame to attach to
--- @param opts    table with:
---   text       = "SECTION NAME"
---   db         = settings table (optional, required if enableKey set)
---   enableKey  = key in db for the enable toggle (nil = no toggle)
---   startOpen  = bool, default true
---   onToggle   = function(enabled) called when enable checkbox changes
---   onCollapse = function() called after collapse state changes
---   width      = wrapper width (default 460)
--- @return wrapper (Frame), contentFrame (Frame), enableCB (CheckButton|nil)
 function ns.Widgets:CreateCollapsibleSection(parent, opts)
     opts = opts or {}
     local W = ns.Widgets
@@ -462,7 +422,6 @@ function ns.Widgets:CreateCollapsibleSection(parent, opts)
     local wrapper = CreateFrame("Frame", nil, parent)
     wrapper:SetWidth(opts.width or 460)
 
-    -- Header bar background
     local headerBar = CreateFrame("Button", nil, wrapper, "BackdropTemplate")
     headerBar:SetHeight(HEADER_H)
     headerBar:SetPoint("TOPLEFT", 0, 0)
@@ -470,23 +429,19 @@ function ns.Widgets:CreateCollapsibleSection(parent, opts)
     headerBar:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
     headerBar:SetBackdropColor(0.10, 0.10, 0.10, 0.7)
 
-    -- Collapse arrow
     local arrow = headerBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     arrow:SetPoint("LEFT", 10, 0)
 
-    -- Section title
     local headerText = headerBar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerText:SetPoint("LEFT", arrow, "RIGHT", 6, 0)
     headerText:SetText(W.Colorize(opts.text or "SECTION", C.ORANGE))
 
-    -- Orange separator
     local sep = wrapper:CreateTexture(nil, "ARTWORK")
     sep:SetColorTexture(1.00, 0.66, 0.00, 0.3)
     sep:SetHeight(SEP_H)
     sep:SetPoint("TOPLEFT", headerBar, "BOTTOMLEFT", 0, 0)
     sep:SetPoint("TOPRIGHT", headerBar, "BOTTOMRIGHT", 0, 0)
 
-    -- Enable toggle in header (optional)
     local enableCB
     if opts.enableKey and opts.db then
         enableCB = CreateFrame("CheckButton", nil, headerBar, "UICheckButtonTemplate")
@@ -501,7 +456,6 @@ function ns.Widgets:CreateCollapsibleSection(parent, opts)
         end)
     end
 
-    -- Content container
     local content = CreateFrame("Frame", nil, wrapper)
     content:SetPoint("TOPLEFT", sep, "BOTTOMLEFT", 0, -PAD)
     content:SetPoint("RIGHT", wrapper, "RIGHT", 0, 0)
@@ -577,7 +531,6 @@ function ns.Widgets:CreateScrollFrame(parent, contentHeight)
     return sf, sc
 end
 
--- buildFn is called once on first show
 function ns.Widgets:CachedPanel(cache, key, parent, buildFn)
     if cache[key] then
         cache[key]:Hide()
@@ -591,26 +544,20 @@ function ns.Widgets:CachedPanel(cache, key, parent, buildFn)
     return cache[key]
 end
 
--- Custom styled checkbox matching addon theme
--- opts: label, db, key, x, y, size, description, descWidth, onChange, isMaster, font, checked, point, tooltip
 function ns.Widgets:CreateCheckbox(parent, opts)
     opts = opts or {}
 
-    -- Sizes
     local boxSize = opts.size or (opts.isMaster and 22 or 18)
     local font = opts.font or (opts.isMaster and "GameFontNormal" or "GameFontNormalSmall")
 
-    -- Create the checkbox frame (no template - fully custom)
     local cb = CreateFrame("CheckButton", nil, parent, "BackdropTemplate")
     cb:SetSize(boxSize, boxSize)
 
-    -- Positioning
     local point = opts.point or "TOPLEFT"
     if opts.x or opts.y then
         cb:SetPoint(point, opts.x or 0, opts.y or 0)
     end
 
-    -- Box backdrop
     cb:SetBackdrop({
         bgFile = [[Interface\Buttons\WHITE8x8]],
         edgeFile = [[Interface\Buttons\WHITE8x8]],
@@ -618,14 +565,12 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         insets = { left = 1, right = 1, top = 1, bottom = 1 },
     })
 
-    -- Inner glow texture
     local innerGlow = cb:CreateTexture(nil, "ARTWORK")
     innerGlow:SetColorTexture(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.08)
     innerGlow:SetPoint("TOPLEFT", 2, -2)
     innerGlow:SetPoint("BOTTOMRIGHT", -2, 2)
     cb.innerGlow = innerGlow
 
-    -- Checkmark texture using WoW's built-in checkmark
     local check = cb:CreateTexture(nil, "OVERLAY")
     check:SetSize(boxSize * 1.4, boxSize * 1.4)
     check:SetPoint("CENTER", 1, 0)
@@ -634,7 +579,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
     check:Hide()
     cb.check = check
 
-    -- Label text
     local label = cb:CreateFontString(nil, "OVERLAY", font)
     label:SetPoint("LEFT", cb, "RIGHT", 6, 0)
     label:SetText(opts.label or "")
@@ -643,7 +587,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
     label:SetShadowColor(0, 0, 0, 0.8)
     cb.Text = label
 
-    -- State functions
     local function SetUncheckedState(self)
         self:SetBackdropColor(DARK_BG_R, DARK_BG_G, DARK_BG_B, 0.95)
         self:SetBackdropBorderColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.7)
@@ -677,11 +620,9 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         end
     end
 
-    -- Initialize state
     cb.isHovered = false
     UpdateVisualState(cb)
 
-    -- Mouse events
     cb:SetScript("OnEnter", function(self)
         self.isHovered = true
         SetHoverState(self)
@@ -702,7 +643,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         end
     end)
 
-    -- Click handling
     cb:SetScript("OnClick", function(self)
         local checked = self:GetChecked() and true or false
         UpdateVisualState(self)
@@ -711,6 +651,7 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         end
         if opts.db and opts.key then
             opts.db[opts.key] = checked
+            if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
         end
         if opts.onChange then
             opts.onChange(checked)
@@ -718,7 +659,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
     end)
 
-    -- Database binding - initial state
     if opts.db and opts.key then
         cb:SetChecked(opts.db[opts.key])
         UpdateVisualState(cb)
@@ -727,7 +667,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         UpdateVisualState(cb)
     end
 
-    -- Description text (inline hint)
     if opts.description then
         local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         desc:SetPoint("LEFT", label, "RIGHT", 8, 0)
@@ -737,7 +676,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         cb.desc = desc
     end
 
-    -- Disabled state support
     cb:HookScript("OnDisable", function(self)
         self:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
         self:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.5)
@@ -752,7 +690,6 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         self.check:SetVertexColor(1, 0.75, 0.1, 1)
     end)
 
-    -- Auto-update visuals when SetChecked is called programmatically
     hooksecurefunc(cb, "SetChecked", function(self)
         UpdateVisualState(self)
         if self.isHovered then
@@ -771,10 +708,8 @@ function ns.Widgets:CreateColorPicker(parent, opts)
     })
     btn:SetPoint("TOPLEFT", opts.x or 40, opts.y)
 
-    -- Auto-generate classColorKey if not provided (unless explicitly disabled)
     local classColorKey = opts.classColorKey
     if not classColorKey and not opts.noClassColor and opts.rKey then
-        -- Derive from rKey: strip trailing "R" and append "UseClassColor"
         local base = opts.rKey:match("^(.-)R$") or opts.rKey
         classColorKey = base .. "UseClassColor"
     end
@@ -789,7 +724,6 @@ function ns.Widgets:CreateColorPicker(parent, opts)
     })
     preview:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Helper to update preview based on class toggle state
     local function UpdatePreview()
         local r, g, b = ns.Widgets.GetEffectiveColor(opts.db, opts.rKey, opts.gKey, opts.bKey, classColorKey)
         preview:SetBackdropColor(r, g, b, 1)
@@ -800,7 +734,6 @@ function ns.Widgets:CreateColorPicker(parent, opts)
     local thirdElement
 
     if classColorKey then
-        -- Class color toggle using consistent styled checkbox
         local cb = self:CreateCheckbox(parent, {
             label = "Class",
             db = opts.db,
@@ -830,7 +763,7 @@ function ns.Widgets:CreateColorPicker(parent, opts)
             swatchFunc = function()
                 local cr, cg, cb = ColorPickerFrame:GetColorRGB()
                 opts.db[opts.rKey], opts.db[opts.gKey], opts.db[opts.bKey] = cr, cg, cb
-                -- Only update preview directly if class toggle is off
+                if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
                 if not classColorKey or not opts.db[classColorKey] then
                     preview:SetBackdropColor(cr, cg, cb, 1)
                 end
@@ -849,23 +782,18 @@ function ns.Widgets:CreateColorPicker(parent, opts)
     return btn, preview, thirdElement
 end
 
--- Custom styled dropdown matching addon theme
--- opts: label, db, key, options, x, y, width, globalName, onChange
 function ns.Widgets:CreateDropdown(parent, opts)
     opts = opts or {}
     local width = opts.width or 160
     local height = 22
 
-    -- Container frame
     local f = CreateFrame("Frame", opts.globalName, parent)
     f:SetSize(width, opts.label and 40 or height)
 
-    -- Positioning
     if opts.x or opts.y then
         f:SetPoint("TOPLEFT", opts.x or 0, opts.y or 0)
     end
 
-    -- Label
     if opts.label then
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         title:SetPoint("TOPLEFT", 0, 0)
@@ -874,7 +802,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
         f.title = title
     end
 
-    -- Normalize options to {text, value} format
     local normalized = {}
     for _, opt in ipairs(opts.options or {}) do
         if type(opt) == "table" then
@@ -884,7 +811,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
         end
     end
 
-    -- Dropdown button
     local btn = CreateFrame("Button", nil, f, "BackdropTemplate")
     btn:SetSize(width, height)
     btn:SetPoint("TOPLEFT", 0, opts.label and -18 or 0)
@@ -897,7 +823,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
     btn:SetBackdropBorderColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.7)
     f.button = btn
 
-    -- Selected text
     local text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     text:SetPoint("LEFT", 8, 0)
     text:SetPoint("RIGHT", -20, 0)
@@ -905,7 +830,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
     text:SetTextColor(1, 1, 1, 1)
     btn.text = text
 
-    -- Dropdown menu frame
     local menu = CreateFrame("Frame", nil, btn, "BackdropTemplate")
     menu:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", 0, -2)
     menu:SetWidth(width)
@@ -921,10 +845,8 @@ function ns.Widgets:CreateDropdown(parent, opts)
     menu:Hide()
     f.menu = menu
 
-    -- Track menu state
     f.menuOpen = false
 
-    -- Create menu items
     local menuItems = {}
     local itemHeight = 20
     for i, opt in ipairs(normalized) do
@@ -954,6 +876,7 @@ function ns.Widgets:CreateDropdown(parent, opts)
 
         item:SetScript("OnClick", function()
             opts.db[opts.key] = opt.value
+            if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
             text:SetText(opt.text)
             menu:Hide()
             f.menuOpen = false
@@ -966,7 +889,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
 
     menu:SetHeight(#normalized * itemHeight + 2)
 
-    -- Set initial value
     local currentVal = opts.db and opts.db[opts.key]
     for i, opt in ipairs(normalized) do
         if opt.value == currentVal then
@@ -975,7 +897,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
         end
     end
 
-    -- Toggle menu on click
     btn:SetScript("OnClick", function()
         if f.menuOpen then
             menu:Hide()
@@ -988,7 +909,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
         end
     end)
 
-    -- Hover states
     btn:SetScript("OnEnter", function(self)
         if not f.menuOpen then
             self:SetBackdropBorderColor(BTN_ORANGE_R, BTN_ORANGE_G, BTN_ORANGE_B, 0.9)
@@ -1001,19 +921,16 @@ function ns.Widgets:CreateDropdown(parent, opts)
         end
     end)
 
-    -- Close menu when clicking elsewhere
     menu:SetScript("OnShow", function()
         menu:SetPropagateKeyboardInput(true)
     end)
 
-    -- Global click handler to close menu
     btn:RegisterForClicks("AnyUp")
     menu:SetScript("OnHide", function()
         f.menuOpen = false
         btn:SetBackdropBorderColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.7)
     end)
 
-    -- Close on world click
     f:SetScript("OnUpdate", function()
         if f.menuOpen and not menu:IsMouseOver() and not btn:IsMouseOver() then
             if IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton") then
@@ -1026,8 +943,6 @@ function ns.Widgets:CreateDropdown(parent, opts)
 end
 
 
--- Custom styled slider matching addon theme
--- opts: label, min, max, step, x, y, width, isPercent, db, key, showEditBox, showValueText, onChange, uppercase
 function ns.Widgets:CreateSlider(parent, opts)
     opts = opts or {}
     local step = opts.step or 1
@@ -1039,12 +954,10 @@ function ns.Widgets:CreateSlider(parent, opts)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(width + 60, 50)
 
-    -- Positioning
     if opts.x or opts.y then
         f:SetPoint("TOPLEFT", opts.x or 0, opts.y or 0)
     end
 
-    -- Title label
     local title
     if opts.label then
         title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1055,7 +968,6 @@ function ns.Widgets:CreateSlider(parent, opts)
         f.title = title
     end
 
-    -- Create custom slider (no template)
     local s = CreateFrame("Slider", nil, f, "BackdropTemplate")
     s:SetPoint("TOPLEFT", 0, opts.label and -18 or 0)
     s:SetSize(width, height)
@@ -1065,7 +977,6 @@ function ns.Widgets:CreateSlider(parent, opts)
     s:SetObeyStepOnDrag(true)
     s:EnableMouseWheel(true)
 
-    -- Track background
     s:SetBackdrop({
         bgFile = [[Interface\Buttons\WHITE8x8]],
         edgeFile = [[Interface\Buttons\WHITE8x8]],
@@ -1075,27 +986,23 @@ function ns.Widgets:CreateSlider(parent, opts)
     s:SetBackdropColor(DARK_BG_R, DARK_BG_G, DARK_BG_B, 0.95)
     s:SetBackdropBorderColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.7)
 
-    -- Fill bar (shows progress)
     local fill = s:CreateTexture(nil, "ARTWORK")
     fill:SetPoint("TOPLEFT", 2, -2)
     fill:SetHeight(height - 4)
     fill:SetColorTexture(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.4)
     s.fill = fill
 
-    -- Thumb texture (use the slider's actual thumb for proper mouse interaction)
     s:SetThumbTexture([[Interface\Buttons\WHITE8x8]])
     local thumbTex = s:GetThumbTexture()
     thumbTex:SetSize(14, height + 6)
     thumbTex:SetVertexColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.9)
     s.thumbTex = thumbTex
 
-    -- Thumb border overlay (visual only, doesn't block mouse)
     local thumbBorder = s:CreateTexture(nil, "OVERLAY")
     thumbBorder:SetSize(14, height + 6)
     thumbBorder:SetColorTexture(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.9)
     s.thumbBorder = thumbBorder
 
-    -- Update fill width and thumb border position
     local function UpdateThumbPosition()
         local val = s:GetValue()
         local pct = (max > min) and ((val - min) / (max - min)) or 0
@@ -1107,7 +1014,6 @@ function ns.Widgets:CreateSlider(parent, opts)
         thumbBorder:SetPoint("CENTER", thumbTex, "CENTER", 0, 0)
     end
 
-    -- Hover and drag states
     s.isHovered = false
     s.isDragging = false
 
@@ -1149,14 +1055,12 @@ function ns.Widgets:CreateSlider(parent, opts)
         end
     end)
 
-    -- Mouse wheel support
     s:SetScript("OnMouseWheel", function(self, delta)
         local val = self:GetValue() + (delta * step)
         val = math.max(min, math.min(max, val))
         self:SetValue(val)
     end)
 
-    -- Value display (editbox or text)
     local valueDisplay
     if opts.showEditBox ~= false then
         local eb = CreateFrame("EditBox", nil, f, "BackdropTemplate")
@@ -1205,7 +1109,6 @@ function ns.Widgets:CreateSlider(parent, opts)
         f.valueText = vt
     end
 
-    -- Format value for display
     local function FormatValue(val)
         if opts.isPercent then
             return string.format("%.0f%%", val)
@@ -1216,7 +1119,6 @@ function ns.Widgets:CreateSlider(parent, opts)
         end
     end
 
-    -- Value changed handler
     s:SetScript("OnValueChanged", function(self, val)
         val = math.floor(val / step + 0.5) * step
         UpdateThumbPosition()
@@ -1225,29 +1127,25 @@ function ns.Widgets:CreateSlider(parent, opts)
         end
         if opts.db and opts.key then
             opts.db[opts.key] = val
+            if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
         end
         if opts.onChange then opts.onChange(val) end
     end)
 
-    -- Initialize from db → module defaults → warn if missing
     local initVal
     if opts.db and opts.key then
         if opts.db[opts.key] ~= nil then
-            -- Value exists in db
             initVal = opts.db[opts.key]
         elseif opts.moduleName and ns.ModuleDefaults[opts.moduleName] then
-            -- Fall back to module defaults
             local defaults = ns.ModuleDefaults[opts.moduleName]
             if defaults[opts.key] ~= nil then
                 initVal = defaults[opts.key]
-                opts.db[opts.key] = initVal  -- Populate db with default
+                opts.db[opts.key] = initVal
             else
-                -- Missing default - warn and use slider min
                 print("|cffff6600NaowhQOL:|r Missing default for " .. (opts.moduleName or "?") .. "." .. opts.key)
                 initVal = min
             end
         else
-            -- No module defaults available, use slider min
             initVal = min
         end
     elseif opts.value ~= nil then
@@ -1258,7 +1156,6 @@ function ns.Widgets:CreateSlider(parent, opts)
     s:SetValue(initVal)
     UpdateThumbPosition()
 
-    -- Ensure initial display is set (OnValueChanged may not fire if value equals default)
     if valueDisplay and valueDisplay.SetText then
         valueDisplay:SetText(FormatValue(initVal))
     end
@@ -1324,8 +1221,6 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
     arrow:SetPoint("RIGHT", -6, 0); arrow:SetText("|cffffa900v|r")
 
     local panel = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    panel:SetSize(WIDTH, FILTER_H + ROW_H + VISIBLE_ROWS * ROW_H + 10)
-    panel:SetPoint("TOPLEFT", selBtn, "BOTTOMLEFT", 0, -2)
     panel:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]],
         edgeFile = [[Interface\Buttons\WHITE8x8]], edgeSize = 1 })
     panel:SetBackdropColor(0.06, 0.06, 0.06, 0.98)
@@ -1967,6 +1862,7 @@ function ns.Widgets:CreateTextInput(parent, opts)
         box:SetText(opts.db[opts.key] or opts.default or "")
         box:SetScript("OnEnterPressed", function(self)
             opts.db[opts.key] = self:GetText()
+            if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
             self:ClearFocus()
             if opts.onChange then opts.onChange(opts.db[opts.key]) end
         end)
