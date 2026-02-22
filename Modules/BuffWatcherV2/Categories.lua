@@ -51,6 +51,7 @@ Categories.CONSUMABLE_GROUPS = {
         name = "Flask",
         exclusive = true,
         spellIDs = {},
+        fallbackIcon = 5931173,  -- inv-potion-orange
     },
     {
         key = "food",
@@ -59,12 +60,14 @@ Categories.CONSUMABLE_GROUPS = {
         checkType = "icon",
         buffIconID = 136000,
         spellIDs = {},
+        fallbackIcon = 136000,   -- food buff icon
     },
     {
         key = "rune",
         name = "Augment Rune",
         exclusive = true,
         spellIDs = {},
+        fallbackIcon = 4549102,  -- inv-10-enchanting-crystal-color5
     },
     {
         key = "weaponBuff",
@@ -72,6 +75,7 @@ Categories.CONSUMABLE_GROUPS = {
         exclusive = true,
         checkType = "weaponEnchant",
         spellIDs = {},
+        fallbackIcon = 463543,   -- inv-misc-potionseta (weapon oil)
     },
 }
 

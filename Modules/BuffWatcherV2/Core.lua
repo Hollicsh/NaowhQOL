@@ -193,7 +193,15 @@ end
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "READY_CHECK" then
         TriggerScan()
-
+    elseif event == "READY_CHECK_CONFIRM" then
+        local unit = ...
+        if unit and UnitIsUnit(unit, "player") then
+            -- Player clicked ready - dismiss the report card
+            StopTicker()
+            if ReportCard and ReportCard:IsShown() then
+                ReportCard:Hide()
+            end
+        end
     elseif event == "PLAYER_REGEN_DISABLED" then
         -- Combat started - hide report card and stop ticker
         StopTicker()
@@ -242,6 +250,7 @@ end)
 
 -- Register events
 eventFrame:RegisterEvent("READY_CHECK")
+eventFrame:RegisterEvent("READY_CHECK_CONFIRM")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("CHALLENGE_MODE_START")

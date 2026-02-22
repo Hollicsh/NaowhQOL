@@ -349,8 +349,8 @@ function Scanner:ScanClassBuffs()
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
                     hasBuff = self:CheckWeaponEnchantIDs(enchantIDs, group.minRequired or 1)
-                    -- Use a generic weapon enchant icon
-                    foundIcon = 136241
+                    -- Use weapon oil icon
+                    foundIcon = 463543
                 end
             end
 
@@ -426,10 +426,11 @@ function Scanner:ScanConsumables()
         -- Skip if no check methods configured (no defaults set, user can add via config)
         local hasCheckMethod = primaryID or buff.buffIconID or buff.checkType == "weaponEnchant" or buff.itemIDs
         if not hasCheckMethod then
-            -- No IDs configured - show as unconfigured (yellow)
+            -- No IDs configured - show as unconfigured (yellow) with fallback icon
             BWV2.scanResults.consumables[#BWV2.scanResults.consumables + 1] = {
                 key = buff.key,
                 name = buff.name,
+                icon = buff.fallbackIcon,
                 pass = false,
                 unconfigured = true,
             }
@@ -491,8 +492,8 @@ function Scanner:ScanConsumables()
                         }
                     end
                     hasBuff = success
-                    -- Use a generic weapon icon
-                    foundIcon = 136241  -- Weapon enchant icon
+                    -- Use weapon oil icon (fallback from category definition)
+                    foundIcon = buff.fallbackIcon or 463543
                 -- Inventory check (if consumable has itemIDs)
                 elseif buff.itemIDs and #buff.itemIDs > 0 then
                     hasBuff = Categories:HasInventoryItem(buff.itemIDs)
@@ -528,7 +529,7 @@ function Scanner:ScanConsumables()
                     name = buff.name,
                     spellID = foundSpellID or primaryID,
                     itemID = autoUseItemID,
-                    icon = foundIcon or GetCachedSpellTexture(primaryID),
+                    icon = foundIcon or GetCachedSpellTexture(primaryID) or buff.fallbackIcon,
                     pass = hasBuff,
                     remaining = (not hasBuff and remaining > 0) and remaining or nil,
                 }

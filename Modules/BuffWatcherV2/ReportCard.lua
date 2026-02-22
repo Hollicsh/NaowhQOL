@@ -20,7 +20,7 @@ end
 
 -- Layout constants (defaults, actual values from DB)
 local DEFAULT_ICON_SIZE = 32
-local ICON_SPACING = 8
+local ICON_SPACING = 14
 local SECTION_SPACING = 12
 local HEADER_HEIGHT = 24
 
@@ -105,29 +105,36 @@ ReportCard.activeCells = {}
 ReportCard.activeRows = {}
 ReportCard.activeHeaders = {}
 
+-- Helper to get cell width (icon + spacing so text doesn't overflow)
+local function GetCellWidth()
+    return GetIconSize() + ICON_SPACING
+end
+
 -- Acquire a cell from pool or create new
 local function AcquireCell(parent)
     local cell = table.remove(cellPool, #cellPool)
     local iconSize = GetIconSize()
     local rowHeight = GetRowHeight()
+    local cellWidth = GetCellWidth()
 
     if cell then
         cell:SetParent(parent)
         -- Update sizes in case settings changed
-        cell:SetSize(iconSize + 4, rowHeight)
+        cell:SetSize(cellWidth, rowHeight)
         cell.iconFrame:SetSize(iconSize, iconSize)
         cell.icon:SetSize(iconSize - 2, iconSize - 2)
+        cell.text:SetWidth(cellWidth)
         cell:Show()
     else
         -- Create new cell structure using SecureActionButton for click-to-cast/use
         cellCounter = cellCounter + 1
         cell = CreateFrame("Button", "NaowhQOL_BWV2Cell" .. cellCounter, parent, "SecureActionButtonTemplate")
-        cell:SetSize(iconSize + 4, rowHeight)
+        cell:SetSize(cellWidth, rowHeight)
         cell:RegisterForClicks("AnyUp", "AnyDown")
 
         local iconFrame = CreateFrame("Frame", nil, cell, "BackdropTemplate")
         iconFrame:SetSize(iconSize, iconSize)
-        iconFrame:SetPoint("TOP", 0, 0)
+        iconFrame:SetPoint("TOP", (cellWidth - iconSize) / 2, 0)
         iconFrame:SetBackdrop({
             edgeFile = [[Interface\Buttons\WHITE8x8]],
             edgeSize = 1,
@@ -142,7 +149,9 @@ local function AcquireCell(parent)
 
         local text = cell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         text:SetPoint("TOP", iconFrame, "BOTTOM", 0, -2)
+        text:SetWidth(cellWidth)
         text:SetJustifyH("CENTER")
+        text:SetWordWrap(false)
         cell.text = text
 
         cell:EnableMouse(true)
@@ -318,9 +327,14 @@ function ReportCard:CreateFrame()
             local currentDB = BWV2:GetDB()
             currentDB.reportCardPosition = { point = point, x = x, y = y }
         end
+        -- Restart auto-close after dragging
+        ReportCard:CheckAutoClose()
     end)
     frame:SetScript("OnEnter", function(self)
         CancelAutoClose(self)
+    end)
+    frame:SetScript("OnLeave", function()
+        ReportCard:CheckAutoClose()
     end)
     frame:SetClampedToScreen(true)
     frame:Hide()
@@ -342,13 +356,52 @@ function ReportCard:CreateFrame()
     title:SetText(L["BWV2_REPORT_TITLE"])
     frame.title = title
 
-    -- Close button
-    local closeBtn = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", -2, -2)
+    -- Close button (compact custom button)
+    local closeBtn = CreateFrame("Button", nil, frame)
+    closeBtn:SetSize(16, 16)
+    closeBtn:SetPoint("TOPRIGHT", -1, -1)
+    local closeTex = closeBtn:CreateTexture(nil, "ARTWORK")
+    closeTex:SetAllPoints()
+    closeTex:SetTexture("Interface\\Buttons\\UI-StopButton")
+    closeTex:SetVertexColor(1, 0.3, 0.3)
+    closeBtn:SetScript("OnEnter", function(self)
+        closeTex:SetVertexColor(1, 0.6, 0.6)
+    end)
+    closeBtn:SetScript("OnLeave", function(self)
+        closeTex:SetVertexColor(1, 0.3, 0.3)
+    end)
     closeBtn:SetScript("OnClick", function()
         ReportCard:Hide()
     end)
     frame.closeBtn = closeBtn
+
+    -- Drag overlay (covers entire frame when unlocked, making it fully draggable)
+    local dragOverlay = CreateFrame("Frame", nil, frame)
+    dragOverlay:SetAllPoints()
+    dragOverlay:SetFrameLevel(frame:GetFrameLevel() + 100)
+    dragOverlay:EnableMouse(true)
+    dragOverlay:RegisterForDrag("LeftButton")
+    dragOverlay:SetScript("OnDragStart", function()
+        CancelAutoClose(frame)
+        frame:StartMoving()
+    end)
+    dragOverlay:SetScript("OnDragStop", function()
+        frame:StopMovingOrSizing()
+        local point, _, _, x, y = frame:GetPoint()
+        if point then
+            local currentDB = BWV2:GetDB()
+            currentDB.reportCardPosition = { point = point, x = x, y = y }
+        end
+        ReportCard:CheckAutoClose()
+    end)
+    dragOverlay:SetScript("OnEnter", function()
+        CancelAutoClose(frame)
+    end)
+    dragOverlay:SetScript("OnLeave", function()
+        ReportCard:CheckAutoClose()
+    end)
+    dragOverlay:Hide()
+    frame.dragOverlay = dragOverlay
 
     -- Content container
     local content = CreateFrame("Frame", nil, frame)
@@ -382,10 +435,20 @@ function ReportCard:ApplySettings()
         if self.frame.unlockText then
             self.frame.unlockText:Show()
         end
+        -- Show drag overlay so entire frame is draggable (covers icons)
+        if self.frame.dragOverlay then
+            self.frame.dragOverlay:Show()
+            -- Keep close button above the overlay
+            self.frame.closeBtn:SetFrameLevel(self.frame.dragOverlay:GetFrameLevel() + 1)
+        end
     else
         self.frame:SetBackdropBorderColor(unpack(BACKDROP_BORDER_COLOR))
         if self.frame.unlockText then
             self.frame.unlockText:Hide()
+        end
+        -- Hide drag overlay so icons are clickable
+        if self.frame.dragOverlay then
+            self.frame.dragOverlay:Hide()
         end
     end
 end
@@ -493,7 +556,7 @@ local function CreateIconRow(parent, items, cellType, yOffset, activeCells, acti
     activeRows[#activeRows + 1] = row
 
     local xOffset = 0
-    local iconSize = GetIconSize()
+    local cellWidth = GetCellWidth()
     for _, data in ipairs(items) do
         local cell = AcquireCell(row)
         ConfigureCell(cell, data, cellType)
@@ -502,7 +565,7 @@ local function CreateIconRow(parent, items, cellType, yOffset, activeCells, acti
         cell.cellData = data
         cell.cellType = cellType
         cell:SetPoint("TOPLEFT", xOffset, 0)
-        xOffset = xOffset + iconSize + ICON_SPACING
+        xOffset = xOffset + cellWidth
         activeCells[#activeCells + 1] = cell
     end
 
@@ -553,15 +616,23 @@ function ReportCard:Update()
     local classicMode = db.classicDisplay
 
     if classicMode then
-        -- Classic mode: no backdrop, no title, single row of failing items only
-        self.frame:SetBackdrop(nil)
+        -- Classic mode: transparent backdrop (keeps mouse interactivity), no title, single row of failing items only
+        self.frame:SetBackdrop({
+            bgFile = [[Interface\Buttons\WHITE8x8]],
+        })
+        self.frame:SetBackdropColor(0, 0, 0, 0)
         self.frame.title:SetText("")
-        if self.frame.closeBtn then self.frame.closeBtn:Show() end
+        if self.frame.closeBtn then
+            self.frame.closeBtn:SetSize(16, 16)
+            self.frame.closeBtn:ClearAllPoints()
+            self.frame.closeBtn:SetPoint("TOPRIGHT", -1, -1)
+            self.frame.closeBtn:Show()
+        end
 
-        -- Adjust content position for classic mode (no title, but keep close button space)
+        -- Adjust content position for classic mode (no title, compact close button)
         content:ClearAllPoints()
         content:SetPoint("TOPLEFT", 5, -5)
-        content:SetPoint("BOTTOMRIGHT", -22, 5)
+        content:SetPoint("BOTTOMRIGHT", -5, 5)
 
         -- Collect all failing items into one flat list
         local failingItems = {}
@@ -590,7 +661,7 @@ function ReportCard:Update()
             self.activeRows[#self.activeRows + 1] = row
 
             local xOffset = 0
-            local iconSize = GetIconSize()
+            local cellWidth = GetCellWidth()
             for i, data in ipairs(failingItems) do
                 local cell = AcquireCell(row)
                 ConfigureCell(cell, data, cellTypes[i])
@@ -598,14 +669,14 @@ function ReportCard:Update()
                 cell.cellData = data
                 cell.cellType = cellTypes[i]
                 cell:SetPoint("TOPLEFT", xOffset, 0)
-                xOffset = xOffset + iconSize + ICON_SPACING
+                xOffset = xOffset + cellWidth
                 self.activeCells[#self.activeCells + 1] = cell
             end
             maxWidth = xOffset
         end
 
-        -- Minimal sizing for classic mode
-        local frameWidth = math.max(50, maxWidth + 10)
+        -- Minimal sizing for classic mode (add space for close button)
+        local frameWidth = math.max(50, maxWidth + 10 + 18)
         local frameHeight = GetRowHeight() + 10
         self.frame:SetSize(frameWidth, frameHeight)
     else
@@ -618,7 +689,12 @@ function ReportCard:Update()
         self.frame:SetBackdropColor(unpack(BACKDROP_COLOR))
         self.frame:SetBackdropBorderColor(unpack(BACKDROP_BORDER_COLOR))
         self.frame.title:SetText(L["BWV2_REPORT_TITLE"])
-        if self.frame.closeBtn then self.frame.closeBtn:Show() end
+        if self.frame.closeBtn then
+            self.frame.closeBtn:SetSize(16, 16)
+            self.frame.closeBtn:ClearAllPoints()
+            self.frame.closeBtn:SetPoint("TOPRIGHT", -4, -4)
+            self.frame.closeBtn:Show()
+        end
 
         -- Restore content position for standard mode
         content:ClearAllPoints()
@@ -683,10 +759,9 @@ end
 function ReportCard:CheckAutoClose()
     if not self.frame or not self.frame:IsShown() then return end
 
-    local allPassed = AllChecksPassed()
     local autoCloseDelay = GetAutoCloseDelay()
 
-    if allPassed and autoCloseDelay > 0 then
+    if autoCloseDelay > 0 then
         -- Only start timer if not already running
         if not autoCloseTimer then
             autoCloseTimer = C_Timer.NewTimer(autoCloseDelay, function()
@@ -703,7 +778,7 @@ function ReportCard:CheckAutoClose()
             end)
         end
     else
-        -- Checks no longer passing, cancel any pending auto-close
+        -- Auto-close disabled (slider at 0), cancel any pending timer
         CancelAutoClose(self.frame)
     end
 end
