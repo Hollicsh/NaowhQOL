@@ -386,6 +386,33 @@ ns:RegisterLocale("enUS", {
     OPT_SQW_RANGED = "Ranged: Ping + 150",
     OPT_SECTION_DIAG = "DIAGNOSTICS",
     OPT_PROFILER = "Addon Profiler",
+
+    -- Tooltip: Revert Settings
+    OPT_TT_REVERT_TITLE       = "Revert Settings",
+    OPT_TT_REVERT_DESC        = "Restore your previous settings:",
+    OPT_TT_REVERT_LINE1       = "Reverts to saved configuration",
+    OPT_TT_REVERT_LINE2       = "Before any optimization was applied",
+    OPT_TT_REVERT_CLICK       = "Click to restore",
+    OPT_TT_REVERT_NOSAVEDYET  = "Apply optimization first",
+
+    -- Tooltip: Optimal FPS Settings
+    OPT_TT_FPS_TITLE          = "Optimal FPS Settings",
+    OPT_TT_FPS_DESC           = "Maximum performance for competitive gameplay:",
+    OPT_TT_FPS_DX12           = "DirectX 12 enabled",
+    OPT_TT_FPS_EFFECTS        = "All effects optimized",
+    OPT_TT_FPS_SHADOWS        = "Shadows balanced",
+    OPT_TT_FPS_PARTICLES      = "Particles optimized",
+    OPT_TT_FPS_PERFECT        = "Perfect for raids & M+",
+    OPT_TT_FPS_RELOAD         = "Requires UI Reload",
+
+    -- Tooltip: Addon Profiler
+    OPT_TT_PROF_TITLE         = "Addon Profiler",
+    OPT_TT_PROF_DESC          = "Profile all addon performance:",
+    OPT_TT_PROF_LINE1         = "Track all addon CPU & memory",
+    OPT_TT_PROF_LINE2         = "Find performance issues",
+    OPT_TT_PROF_LINE3         = "Optimize addon load",
+    OPT_TT_PROF_LINE4         = "Requires UI reload first time",
+
     OPT_SECTION_MONITOR = "REAL-TIME MONITOR",
     OPT_WARMING = "Warming up...",
     OPT_UNAVAILABLE = "Profiler unavailable",
@@ -904,4 +931,159 @@ ns:RegisterLocale("enUS", {
     EQUIPMENTREMINDER_CAPTURE              = "Capture Current",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "Expected Enchant",
     EQUIPMENTREMINDER_CAPTURED             = "Captured %d enchant(s) from equipped gear",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Anchor Points
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "Top Left",
+    COMMON_ANCHOR_TOP         = "Top",
+    COMMON_ANCHOR_TOPRIGHT    = "Top Right",
+    COMMON_ANCHOR_LEFT        = "Left",
+    COMMON_ANCHOR_CENTER      = "Center",
+    COMMON_ANCHOR_RIGHT       = "Right",
+    COMMON_ANCHOR_BOTTOMLEFT  = "Bottom Left",
+    COMMON_ANCHOR_BOTTOM      = "Bottom",
+    COMMON_ANCHOR_BOTTOMRIGHT = "Bottom Right",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Misc UI
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "Class",
+    COMMON_OK          = "OK",
+    COMMON_RENAME      = "Rename",
+    COMMON_DELETE      = "Delete",
+    COMMON_NEW         = "New",
+    COMMON_NONE        = "(None)",
+    COMMON_RESTORE     = "Restore",
+
+    ---------------------------------------------------------------------------
+    -- IMPORT / EXPORT (PROFILES)
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "PROFILES",
+    IMPORTEXPORT_SUBTITLE       = "Share settings between characters or with other players",
+    IMPORTEXPORT_SECTION_MANAGE = "Profile Management",
+    IMPORTEXPORT_ACTIVE_STATUS  = "Active: %s  (%d saved)",
+    IMPORTEXPORT_PLACEHOLDER    = "Select Profile",
+    IMPORTEXPORT_STATUS_LOADED  = "Loaded: %s — reload to apply",
+    IMPORTEXPORT_STATUS_SAVED   = "Saved: %s",
+    IMPORTEXPORT_STATUS_CREATED = "Created: %s",
+    IMPORTEXPORT_STATUS_RENAMED = "Renamed to: %s",
+    IMPORTEXPORT_STATUS_DELETED = "Deleted",
+    IMPORTEXPORT_ERR_LAST       = "Cannot delete last profile",
+    IMPORTEXPORT_ERR_EXISTS     = "Name already exists",
+    IMPORTEXPORT_ERR_RENAME     = "Rename failed",
+    IMPORTEXPORT_ERR_LOAD       = "Failed to load",
+    IMPORTEXPORT_SECTION_COPY   = "Copy Existing Profile",
+    IMPORTEXPORT_SELECT_COPY    = "Select Profile to Copy",
+    IMPORTEXPORT_COPY_NOTE      = "Profiles are shared across all characters",
+    IMPORTEXPORT_COPY_BTN       = "Copy to Current",
+    IMPORTEXPORT_COPY_OK        = "Copied settings from: %s",
+    IMPORTEXPORT_COPY_ERR       = "Select a profile to copy",
+    IMPORTEXPORT_SECTION_SPEC   = "Spec Profile Swap",
+    IMPORTEXPORT_SECTION_EXPORT = "Export",
+    IMPORTEXPORT_EXPORT_BTN     = "Export Settings",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A, Ctrl+C to copy",
+    IMPORTEXPORT_SECTION_IMPORT = "Import",
+    IMPORTEXPORT_LOAD_BTN       = "Load",
+    IMPORTEXPORT_IMPORT_BTN     = "Import Selected",
+    IMPORTEXPORT_FOUND          = "%d modules found.",
+    IMPORTEXPORT_NO_MODULES     = "No recognized modules in string.",
+    IMPORTEXPORT_INVALID        = "Invalid string.",
+    IMPORTEXPORT_PASTE_FIRST    = "Paste a string first.",
+    IMPORTEXPORT_IMPORT_OK      = "Imported successfully!",
+    IMPORTEXPORT_IMPORT_ERR     = "Import failed.",
+    IMPORTEXPORT_POPUP_RENAME   = "Rename profile '%s' to:",
+    IMPORTEXPORT_POPUP_NEW      = "Create new profile with default settings:",
+    IMPORTEXPORT_POPUP_DELETE   = "Delete profile '%s'?",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER (CONFIG)
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "COMBAT LOGGER",
+    COMBATLOGGER_DESC               = "Automatic combat log management for raids & M+",
+    COMBATLOGGER_ENABLE             = "Enable Combat Logger",
+    COMBATLOGGER_SECTION_STATUS     = "STATUS",
+    COMBATLOGGER_SECTION_INSTANCES  = "SAVED INSTANCES",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "Instance %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "Difficulty %s",
+    COMBATLOGGER_TOGGLE_BTN         = "Toggle",
+    COMBATLOGGER_NO_INSTANCES       = "No saved instances yet. Enter a raid or M+ dungeon.",
+    COMBATLOGGER_RESET_ALL_BTN      = "Reset All Instances",
+    COMBATLOGGER_STATUS_ACTIVE      = "LOGGING ACTIVE",
+    COMBATLOGGER_STATUS_INACTIVE    = "NOT LOGGING",
+    COMBATLOGGER_STATUS_PREFIX      = "Status: ",
+    COMBATLOGGER_CURRENT_PREFIX     = "Current: ",
+    COMBATLOGGER_NOT_TRACKABLE      = "Not in trackable content",
+    COMBATLOGGER_RESET_CONFIRM      = "Clear all saved instance logging preferences?\nYou will be prompted again next time you enter each instance.",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "Clear All",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "TALENT REMINDER",
+    TALENT_DESC                     = "Save and restore talent loadouts per dungeon and raid boss",
+    TALENT_ENABLE                   = "Enable Talent Reminder",
+    TALENT_SECTION_LOADOUTS         = "SAVED LOADOUTS",
+    TALENT_NO_LOADOUTS              = "No saved loadouts yet.\nEnter a Mythic dungeon or target a raid boss.",
+    TALENT_UNKNOWN_SPEC             = "Unknown Spec",
+    TALENT_UNKNOWN                  = "Unknown",
+    TALENT_CLEAR_ALL_BTN            = "Clear All Loadouts",
+    TALENT_RESET_CONFIRM            = "Clear all saved talent loadouts?\nYou will be prompted again for each dungeon/boss.",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "ADDON PROFILER",
+    PROFILER_COL_ADDON_NAME         = "ADDON NAME",
+    PROFILER_COL_CPU_AVG            = "CPU AVG",
+    PROFILER_COL_CPU_MAX            = "CPU MAX",
+    PROFILER_COL_RAM                = "RAM",
+    PROFILER_UNIT_MS                = "(ms)",
+    PROFILER_UNIT_MB                = "(MB)",
+    PROFILER_RESET                  = "Reset",
+    PROFILER_STATS_RESET            = "Statistics reset",
+    PROFILER_PURGE_RAM              = "Purge RAM",
+    PROFILER_PURGE_COMPLETE         = "Global RAM purge complete. Freed: ",
+    PROFILER_PAUSE                  = "Pause",
+    PROFILER_RESUME                 = "Resume",
+    PROFILER_PAUSED                 = "Paused",
+    PROFILER_RESUMED                = "Resumed",
+    PROFILER_STOP                   = "Stop Profiling",
+    PROFILER_SELF_LABEL             = " [Self: %.2fms / %.1fMB]",
+    PROFILER_NOT_AVAILABLE          = "Profiler module not available.",
+
+    ---------------------------------------------------------------------------
+    -- MODULES (additional)
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "Hide Minimap Icon",
+    MODULES_HIDE_MINIMAP_DESC       = "Hides the NaowhQOL minimap button",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (additional)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "Display equipped trinkets and weapons when entering instances or during ready checks",
+    EQUIPMENTREMINDER_MAIN_HAND     = "Main Hand",
+    EQUIPMENTREMINDER_OFF_HAND      = "Off Hand",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION (additional)
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "(unknown spell)",
+    EMOTE_ERR_SPELLID               = "Spell ID required.",
+    EMOTE_ERR_EMOTETEXT             = "Emote text required.",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER (additional)
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "Unknown",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR (additional)
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "HPal uses 4yd item detection (~0.5yd variance)",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2 (additional)
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "Seconds before fade when passing (0 = disabled)",
 })

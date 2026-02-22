@@ -488,7 +488,7 @@ function ns:InitCrosshair()
         -- Holy Paladin note (alpha=0 for non-Paladins so it's invisible)
         local hpalNote = mlContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         hpalNote:SetPoint("TOPLEFT", 250, -278)
-        hpalNote:SetText("HPal uses 4yd item detection (~0.5yd variance)")
+        hpalNote:SetText(L["CROSSHAIR_HPAL_NOTE"])
         hpalNote:SetTextColor(1, 0.82, 0)
         local isHpal = ns.SpecUtil.GetClassName() == "PALADIN" and ns.SpecUtil.GetSpecIndex() == 1
         hpalNote:SetAlpha(isHpal and 1 or 0)

@@ -47,7 +47,6 @@ end
 function ns:SetLocale(locale)
     if locales[locale] then
         currentLocale = locale
-        NaowhQOL.locale = locale
         return true
     end
     return false

@@ -386,6 +386,30 @@ ns:RegisterLocale("zhTW", {
     OPT_SQW_RANGED = "遠距：Ping + 150",
     OPT_SECTION_DIAG = "診斷",
     OPT_PROFILER = "插件分析器",
+
+    OPT_TT_REVERT_TITLE       = "還原設定",
+    OPT_TT_REVERT_DESC        = "恢復先前的設定：",
+    OPT_TT_REVERT_LINE1       = "還原至已儲存的設定",
+    OPT_TT_REVERT_LINE2       = "在任何最佳化之前",
+    OPT_TT_REVERT_CLICK       = "點擊還原",
+    OPT_TT_REVERT_NOSAVEDYET  = "請先套用最佳化",
+
+    OPT_TT_FPS_TITLE          = "最佳 FPS 設定",
+    OPT_TT_FPS_DESC           = "競技遊戲最大效能：",
+    OPT_TT_FPS_DX12           = "DirectX 12 已啟用",
+    OPT_TT_FPS_EFFECTS        = "所有特效已最佳化",
+    OPT_TT_FPS_SHADOWS        = "陰影已平衡",
+    OPT_TT_FPS_PARTICLES      = "粒子效果已最佳化",
+    OPT_TT_FPS_PERFECT        = "適合團本和傳奇鑰石",
+    OPT_TT_FPS_RELOAD         = "需要重新載入介面",
+
+    OPT_TT_PROF_TITLE         = "插件分析器",
+    OPT_TT_PROF_DESC          = "分析所有插件效能：",
+    OPT_TT_PROF_LINE1         = "追蹤所有插件的 CPU 和記憶體",
+    OPT_TT_PROF_LINE2         = "尋找效能問題",
+    OPT_TT_PROF_LINE3         = "最佳化插件載入",
+    OPT_TT_PROF_LINE4         = "首次使用需要重新載入介面",
+
     OPT_SECTION_MONITOR = "即時監控",
     OPT_WARMING = "暖機中...",
     OPT_UNAVAILABLE = "分析器不可用",
@@ -895,4 +919,159 @@ ns:RegisterLocale("zhTW", {
     EQUIPMENTREMINDER_CAPTURE              = "擷取目前",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "預期附魔",
     EQUIPMENTREMINDER_CAPTURED             = "從已裝備的裝備擷取了 %d 個附魔",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: 錨點方向
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "左上",
+    COMMON_ANCHOR_TOP         = "上",
+    COMMON_ANCHOR_TOPRIGHT    = "右上",
+    COMMON_ANCHOR_LEFT        = "左",
+    COMMON_ANCHOR_CENTER      = "中央",
+    COMMON_ANCHOR_RIGHT       = "右",
+    COMMON_ANCHOR_BOTTOMLEFT  = "左下",
+    COMMON_ANCHOR_BOTTOM      = "下",
+    COMMON_ANCHOR_BOTTOMRIGHT = "右下",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: 雜項 UI
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "職業",
+    COMMON_OK          = "確定",
+    COMMON_RENAME      = "重新命名",
+    COMMON_DELETE      = "刪除",
+    COMMON_NEW         = "新增",
+    COMMON_NONE        = "（無）",
+    COMMON_RESTORE     = "還原",
+
+    ---------------------------------------------------------------------------
+    -- IMPORT / EXPORT（設定檔）
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "設定檔",
+    IMPORTEXPORT_SUBTITLE       = "在角色之間或與其他玩家分享設定",
+    IMPORTEXPORT_SECTION_MANAGE = "設定檔管理",
+    IMPORTEXPORT_ACTIVE_STATUS  = "目前：%s（%d 個已儲存）",
+    IMPORTEXPORT_PLACEHOLDER    = "選擇設定檔",
+    IMPORTEXPORT_STATUS_LOADED  = "已載入：%s — 重新載入以套用",
+    IMPORTEXPORT_STATUS_SAVED   = "已儲存：%s",
+    IMPORTEXPORT_STATUS_CREATED = "已建立：%s",
+    IMPORTEXPORT_STATUS_RENAMED = "已重新命名為：%s",
+    IMPORTEXPORT_STATUS_DELETED = "已刪除",
+    IMPORTEXPORT_ERR_LAST       = "無法刪除最後一個設定檔",
+    IMPORTEXPORT_ERR_EXISTS     = "名稱已存在",
+    IMPORTEXPORT_ERR_RENAME     = "重新命名失敗",
+    IMPORTEXPORT_ERR_LOAD       = "載入失敗",
+    IMPORTEXPORT_SECTION_COPY   = "複製現有設定檔",
+    IMPORTEXPORT_SELECT_COPY    = "選擇要複製的設定檔",
+    IMPORTEXPORT_COPY_NOTE      = "設定檔在所有角色間共享",
+    IMPORTEXPORT_COPY_BTN       = "複製到目前",
+    IMPORTEXPORT_COPY_OK        = "已從 %s 複製設定",
+    IMPORTEXPORT_COPY_ERR       = "請選擇要複製的設定檔",
+    IMPORTEXPORT_SECTION_SPEC   = "專精設定檔切換",
+    IMPORTEXPORT_SECTION_EXPORT = "匯出",
+    IMPORTEXPORT_EXPORT_BTN     = "匯出設定",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A、Ctrl+C 複製",
+    IMPORTEXPORT_SECTION_IMPORT = "匯入",
+    IMPORTEXPORT_LOAD_BTN       = "載入",
+    IMPORTEXPORT_IMPORT_BTN     = "匯入所選",
+    IMPORTEXPORT_FOUND          = "找到 %d 個模組。",
+    IMPORTEXPORT_NO_MODULES     = "字串中未找到可識別的模組。",
+    IMPORTEXPORT_INVALID        = "無效字串。",
+    IMPORTEXPORT_PASTE_FIRST    = "請先貼上字串。",
+    IMPORTEXPORT_IMPORT_OK      = "匯入成功！",
+    IMPORTEXPORT_IMPORT_ERR     = "匯入失敗。",
+    IMPORTEXPORT_POPUP_RENAME   = "將設定檔 '%s' 重新命名為：",
+    IMPORTEXPORT_POPUP_NEW      = "使用預設設定建立新設定檔：",
+    IMPORTEXPORT_POPUP_DELETE   = "刪除設定檔 '%s'？",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER（設定）
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "戰鬥記錄",
+    COMBATLOGGER_DESC               = "團隊副本和傳奇鑰石的自動戰鬥記錄管理",
+    COMBATLOGGER_ENABLE             = "啟用戰鬥記錄",
+    COMBATLOGGER_SECTION_STATUS     = "狀態",
+    COMBATLOGGER_SECTION_INSTANCES  = "已儲存的副本",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "副本 %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "難度 %s",
+    COMBATLOGGER_TOGGLE_BTN         = "切換",
+    COMBATLOGGER_NO_INSTANCES       = "尚無已儲存的副本。進入團隊副本或傳奇鑰石地城。",
+    COMBATLOGGER_RESET_ALL_BTN      = "重設所有副本",
+    COMBATLOGGER_STATUS_ACTIVE      = "正在記錄",
+    COMBATLOGGER_STATUS_INACTIVE    = "未在記錄",
+    COMBATLOGGER_STATUS_PREFIX      = "狀態：",
+    COMBATLOGGER_CURRENT_PREFIX     = "目前：",
+    COMBATLOGGER_NOT_TRACKABLE      = "不在可追蹤的內容中",
+    COMBATLOGGER_RESET_CONFIRM      = "清除所有已儲存的副本記錄偏好設定？\n下次進入每個副本時將再次提示。",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "全部清除",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER（設定）
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "天賦提醒",
+    TALENT_DESC                     = "按地城和團隊副本首領儲存和還原天賦設定",
+    TALENT_ENABLE                   = "啟用天賦提醒",
+    TALENT_SECTION_LOADOUTS         = "已儲存的設定",
+    TALENT_NO_LOADOUTS              = "尚無已儲存的設定。\n進入傳奇地城或選取團隊副本首領。",
+    TALENT_UNKNOWN_SPEC             = "未知專精",
+    TALENT_UNKNOWN                  = "未知",
+    TALENT_CLEAR_ALL_BTN            = "清除所有設定",
+    TALENT_RESET_CONFIRM            = "清除所有已儲存的天賦設定？\n每個地城/首領將再次提示。",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "插件效能分析",
+    PROFILER_COL_ADDON_NAME         = "插件名稱",
+    PROFILER_COL_CPU_AVG            = "CPU 平均",
+    PROFILER_COL_CPU_MAX            = "CPU 最大",
+    PROFILER_COL_RAM                = "記憶體",
+    PROFILER_UNIT_MS                = "(毫秒)",
+    PROFILER_UNIT_MB                = "(MB)",
+    PROFILER_RESET                  = "重設",
+    PROFILER_STATS_RESET            = "統計已重設",
+    PROFILER_PURGE_RAM              = "清理記憶體",
+    PROFILER_PURGE_COMPLETE         = "全域記憶體清理完成。已釋放：",
+    PROFILER_PAUSE                  = "暫停",
+    PROFILER_RESUME                 = "繼續",
+    PROFILER_PAUSED                 = "已暫停",
+    PROFILER_RESUMED                = "已繼續",
+    PROFILER_STOP                   = "停止分析",
+    PROFILER_SELF_LABEL             = " [自身：%.2f毫秒 / %.1fMB]",
+    PROFILER_NOT_AVAILABLE          = "效能分析模組不可用。",
+
+    ---------------------------------------------------------------------------
+    -- MODULES（額外）
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "隱藏小地圖圖示",
+    MODULES_HIDE_MINIMAP_DESC       = "隱藏 NaowhQOL 小地圖按鈕",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER（額外）
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "進入副本或準備確認時顯示已裝備的飾品和武器",
+    EQUIPMENTREMINDER_MAIN_HAND     = "主手",
+    EQUIPMENTREMINDER_OFF_HAND      = "副手",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION（額外）
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "（未知法術）",
+    EMOTE_ERR_SPELLID               = "需要法術 ID。",
+    EMOTE_ERR_EMOTETEXT             = "需要表情文字。",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER（額外）
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "未知",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR（額外）
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "神聖騎士使用 4 碼物品偵測（約 0.5 碼誤差）",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2（額外）
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "通過前消失前的秒數（0 = 停用）",
 })

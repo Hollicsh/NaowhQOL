@@ -105,9 +105,9 @@ function ns:InitModuleOptions()
             descWidth = 350,
         })
         W:CreateCheckbox(clutterContent, {
-            label = "Hide Minimap Icon", db = db, key = "hideMinimapIcon",
+            label = L["MODULES_HIDE_MINIMAP"], db = db, key = "hideMinimapIcon",
             x = 10, y = -155, template = "ChatConfigCheckButtonTemplate",
-            description = "Hides the NaowhQOL minimap button",
+            description = L["MODULES_HIDE_MINIMAP_DESC"],
             descWidth = 350,
             onChange = function(enabled)
                 local iconDb = NaowhQOL.minimapIcon

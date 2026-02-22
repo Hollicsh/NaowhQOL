@@ -240,7 +240,7 @@ function ns:InitDragonriding()
             end)
 
         local fontSizeSlider = W:CreateAdvancedSlider(appContent,
-            W.Colorize("Font Size", C.ORANGE), 6, 32, -325, 1, false,
+            W.Colorize(L["COMMON_FONT_SIZE"], C.ORANGE), 6, 32, -325, 1, false,
             function(val) db.speedFontSize = val; drRefresh() end,
             { db = db, key = "speedFontSize", moduleName = "dragonriding" })
         PlaceSlider(fontSizeSlider, appContent, GAP:Col(2), GAP:Row(7))

@@ -386,6 +386,30 @@ ns:RegisterLocale("ruRU", {
     OPT_SQW_RANGED = "Дальний бой: пинг + 150",
     OPT_SECTION_DIAG = "ДИАГНОСТИКА",
     OPT_PROFILER = "Профилирование аддонов",
+
+    OPT_TT_REVERT_TITLE       = "Вернуть настройки",
+    OPT_TT_REVERT_DESC        = "Восстановить предыдущие настройки:",
+    OPT_TT_REVERT_LINE1       = "Вернуть сохранённую конфигурацию",
+    OPT_TT_REVERT_LINE2       = "До любой оптимизации",
+    OPT_TT_REVERT_CLICK       = "Нажмите для восстановления",
+    OPT_TT_REVERT_NOSAVEDYET  = "Сначала примените оптимизацию",
+
+    OPT_TT_FPS_TITLE          = "Оптимальные настройки FPS",
+    OPT_TT_FPS_DESC           = "Максимальная производительность для соревновательной игры:",
+    OPT_TT_FPS_DX12           = "DirectX 12 включён",
+    OPT_TT_FPS_EFFECTS        = "Все эффекты оптимизированы",
+    OPT_TT_FPS_SHADOWS        = "Тени сбалансированы",
+    OPT_TT_FPS_PARTICLES      = "Частицы оптимизированы",
+    OPT_TT_FPS_PERFECT        = "Идеально для рейдов и М+",
+    OPT_TT_FPS_RELOAD         = "Требуется перезагрузка UI",
+
+    OPT_TT_PROF_TITLE         = "Профилирование аддонов",
+    OPT_TT_PROF_DESC          = "Анализ производительности всех аддонов:",
+    OPT_TT_PROF_LINE1         = "Отслеживание CPU и памяти всех аддонов",
+    OPT_TT_PROF_LINE2         = "Поиск проблем с производительностью",
+    OPT_TT_PROF_LINE3         = "Оптимизация загрузки аддонов",
+    OPT_TT_PROF_LINE4         = "Требуется перезагрузка UI при первом запуске",
+
     OPT_SECTION_MONITOR = "МОНИТОРИНГ В РЕАЛЬНОМ ВРЕМЕНИ",
     OPT_WARMING = "Инициализация...",
     OPT_UNAVAILABLE = "Профилирование недоступно",
@@ -904,4 +928,159 @@ ns:RegisterLocale("ruRU", {
     EQUIPMENTREMINDER_CAPTURE              = "Сохранить текущее",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "Ожидаемые чары",
     EQUIPMENTREMINDER_CAPTURED             = "Сохранено чар: %d",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Точки привязки
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "Сверху слева",
+    COMMON_ANCHOR_TOP         = "Сверху",
+    COMMON_ANCHOR_TOPRIGHT    = "Сверху справа",
+    COMMON_ANCHOR_LEFT        = "Слева",
+    COMMON_ANCHOR_CENTER      = "Центр",
+    COMMON_ANCHOR_RIGHT       = "Справа",
+    COMMON_ANCHOR_BOTTOMLEFT  = "Снизу слева",
+    COMMON_ANCHOR_BOTTOM      = "Снизу",
+    COMMON_ANCHOR_BOTTOMRIGHT = "Снизу справа",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Разное UI
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "Класс",
+    COMMON_OK          = "ОК",
+    COMMON_RENAME      = "Переименовать",
+    COMMON_DELETE      = "Удалить",
+    COMMON_NEW         = "Создать",
+    COMMON_NONE        = "(Нет)",
+    COMMON_RESTORE     = "Восстановить",
+
+    ---------------------------------------------------------------------------
+    -- ИМПОРТ / ЭКСПОРТ (ПРОФИЛИ)
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "ПРОФИЛИ",
+    IMPORTEXPORT_SUBTITLE       = "Обмен настройками между персонажами или с другими игроками",
+    IMPORTEXPORT_SECTION_MANAGE = "Управление профилями",
+    IMPORTEXPORT_ACTIVE_STATUS  = "Активный: %s  (%d сохранено)",
+    IMPORTEXPORT_PLACEHOLDER    = "Выберите профиль",
+    IMPORTEXPORT_STATUS_LOADED  = "Загружен: %s — перезагрузите для применения",
+    IMPORTEXPORT_STATUS_SAVED   = "Сохранён: %s",
+    IMPORTEXPORT_STATUS_CREATED = "Создан: %s",
+    IMPORTEXPORT_STATUS_RENAMED = "Переименован в: %s",
+    IMPORTEXPORT_STATUS_DELETED = "Удалён",
+    IMPORTEXPORT_ERR_LAST       = "Нельзя удалить последний профиль",
+    IMPORTEXPORT_ERR_EXISTS     = "Имя уже существует",
+    IMPORTEXPORT_ERR_RENAME     = "Ошибка переименования",
+    IMPORTEXPORT_ERR_LOAD       = "Ошибка загрузки",
+    IMPORTEXPORT_SECTION_COPY   = "Копировать существующий профиль",
+    IMPORTEXPORT_SELECT_COPY    = "Выберите профиль для копирования",
+    IMPORTEXPORT_COPY_NOTE      = "Профили общие для всех персонажей",
+    IMPORTEXPORT_COPY_BTN       = "Копировать в текущий",
+    IMPORTEXPORT_COPY_OK        = "Настройки скопированы из: %s",
+    IMPORTEXPORT_COPY_ERR       = "Выберите профиль для копирования",
+    IMPORTEXPORT_SECTION_SPEC   = "Смена профиля по специализации",
+    IMPORTEXPORT_SECTION_EXPORT = "Экспорт",
+    IMPORTEXPORT_EXPORT_BTN     = "Экспорт настроек",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A, Ctrl+C для копирования",
+    IMPORTEXPORT_SECTION_IMPORT = "Импорт",
+    IMPORTEXPORT_LOAD_BTN       = "Загрузить",
+    IMPORTEXPORT_IMPORT_BTN     = "Импортировать выбранное",
+    IMPORTEXPORT_FOUND          = "Найдено модулей: %d.",
+    IMPORTEXPORT_NO_MODULES     = "В строке не найдено распознанных модулей.",
+    IMPORTEXPORT_INVALID        = "Недопустимая строка.",
+    IMPORTEXPORT_PASTE_FIRST    = "Сначала вставьте строку.",
+    IMPORTEXPORT_IMPORT_OK      = "Импорт выполнен успешно!",
+    IMPORTEXPORT_IMPORT_ERR     = "Ошибка импорта.",
+    IMPORTEXPORT_POPUP_RENAME   = "Переименовать профиль '%s' в:",
+    IMPORTEXPORT_POPUP_NEW      = "Создать новый профиль с настройками по умолчанию:",
+    IMPORTEXPORT_POPUP_DELETE   = "Удалить профиль '%s'?",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER (CONFIG)
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "ЖУРНАЛ БОЯ",
+    COMBATLOGGER_DESC               = "Автоматическое управление журналом боя для рейдов и М+",
+    COMBATLOGGER_ENABLE             = "Включить журнал боя",
+    COMBATLOGGER_SECTION_STATUS     = "СТАТУС",
+    COMBATLOGGER_SECTION_INSTANCES  = "СОХРАНЁННЫЕ ПОДЗЕМЕЛЬЯ",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "Подземелье %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "Сложность %s",
+    COMBATLOGGER_TOGGLE_BTN         = "Переключить",
+    COMBATLOGGER_NO_INSTANCES       = "Нет сохранённых подземелий. Войдите в рейд или М+ подземелье.",
+    COMBATLOGGER_RESET_ALL_BTN      = "Сбросить все подземелья",
+    COMBATLOGGER_STATUS_ACTIVE      = "ЗАПИСЬ АКТИВНА",
+    COMBATLOGGER_STATUS_INACTIVE    = "НЕТ ЗАПИСИ",
+    COMBATLOGGER_STATUS_PREFIX      = "Статус: ",
+    COMBATLOGGER_CURRENT_PREFIX     = "Текущее: ",
+    COMBATLOGGER_NOT_TRACKABLE      = "Не в отслеживаемом контенте",
+    COMBATLOGGER_RESET_CONFIRM      = "Очистить все сохранённые настройки записи подземелий?\nПри следующем входе в каждое подземелье вас спросят снова.",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "Очистить всё",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "НАПОМИНАНИЕ О ТАЛАНТАХ",
+    TALENT_DESC                     = "Сохранение и восстановление конфигураций талантов для подземелий и боссов рейдов",
+    TALENT_ENABLE                   = "Включить напоминание о талантах",
+    TALENT_SECTION_LOADOUTS         = "СОХРАНЁННЫЕ КОНФИГУРАЦИИ",
+    TALENT_NO_LOADOUTS              = "Нет сохранённых конфигураций.\nВойдите в эпохальное подземелье или выберите босса рейда.",
+    TALENT_UNKNOWN_SPEC             = "Неизвестная специализация",
+    TALENT_UNKNOWN                  = "Неизвестно",
+    TALENT_CLEAR_ALL_BTN            = "Очистить все конфигурации",
+    TALENT_RESET_CONFIRM            = "Очистить все сохранённые конфигурации талантов?\nДля каждого подземелья/босса вас спросят снова.",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "ПРОФИЛИРОВЩИК АДДОНОВ",
+    PROFILER_COL_ADDON_NAME         = "НАЗВАНИЕ АДДОНА",
+    PROFILER_COL_CPU_AVG            = "CPU СРЕД.",
+    PROFILER_COL_CPU_MAX            = "CPU МАКС.",
+    PROFILER_COL_RAM                = "ОЗУ",
+    PROFILER_UNIT_MS                = "(мс)",
+    PROFILER_UNIT_MB                = "(МБ)",
+    PROFILER_RESET                  = "Сбросить",
+    PROFILER_STATS_RESET            = "Статистика сброшена",
+    PROFILER_PURGE_RAM              = "Очистить ОЗУ",
+    PROFILER_PURGE_COMPLETE         = "Глобальная очистка ОЗУ завершена. Освобождено: ",
+    PROFILER_PAUSE                  = "Пауза",
+    PROFILER_RESUME                 = "Продолжить",
+    PROFILER_PAUSED                 = "Приостановлено",
+    PROFILER_RESUMED                = "Возобновлено",
+    PROFILER_STOP                   = "Остановить профилирование",
+    PROFILER_SELF_LABEL             = " [Своё: %.2fмс / %.1fМБ]",
+    PROFILER_NOT_AVAILABLE          = "Модуль профилировщика недоступен.",
+
+    ---------------------------------------------------------------------------
+    -- MODULES (дополнительно)
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "Скрыть значок миникарты",
+    MODULES_HIDE_MINIMAP_DESC       = "Скрывает кнопку NaowhQOL на миникарте",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (дополнительно)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "Показывать экипированные аксессуары и оружие при входе в подземелье или при проверке готовности",
+    EQUIPMENTREMINDER_MAIN_HAND     = "Правая рука",
+    EQUIPMENTREMINDER_OFF_HAND      = "Левая рука",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION (дополнительно)
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "(неизвестное заклинание)",
+    EMOTE_ERR_SPELLID               = "Требуется ID заклинания.",
+    EMOTE_ERR_EMOTETEXT             = "Требуется текст эмоции.",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER (дополнительно)
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "Неизвестно",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR (дополнительно)
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "Свет. пал. использует обнаружение предметом на 4 ярда (~0.5 ярда погрешность)",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2 (дополнительно)
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "Секунд до исчезновения при прохождении (0 = отключено)",
 })

@@ -14,7 +14,7 @@ function ns:InitEquipmentReminder()
 
         W:CreatePageHeader(sc,
             {{"EQUIPMENT ", C.BLUE}, {"REMINDER", C.ORANGE}},
-            W.Colorize("Display equipped trinkets and weapons when entering instances or during ready checks", C.GRAY))
+            W.Colorize(L["EQUIPMENTREMINDER_DESC"], C.GRAY))
 
         -- Master toggle
         local toggleArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
@@ -205,8 +205,8 @@ function ns:InitEquipmentReminder()
 
         local gridElements = {}
         local SLOTS = ns.EquipmentReminder and ns.EquipmentReminder.ENCHANTABLE_SLOTS or {
-            { id = 16, name = "Main Hand" },
-            { id = 17, name = "Off Hand" },
+            { id = 16, name = L["EQUIPMENTREMINDER_MAIN_HAND"] },
+            { id = 17, name = L["EQUIPMENTREMINDER_OFF_HAND"] },
         }
 
         -- Create an enchant entry (display only)

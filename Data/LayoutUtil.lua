@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 ns.LayoutUtil = {}
 
@@ -166,13 +167,13 @@ end
 
 -- Standard anchor point options for dropdowns
 ns.LayoutUtil.ANCHOR_POINTS = {
-    { text = "Top Left",     value = "TOPLEFT" },
-    { text = "Top",          value = "TOP" },
-    { text = "Top Right",    value = "TOPRIGHT" },
-    { text = "Left",         value = "LEFT" },
-    { text = "Center",       value = "CENTER" },
-    { text = "Right",        value = "RIGHT" },
-    { text = "Bottom Left",  value = "BOTTOMLEFT" },
-    { text = "Bottom",       value = "BOTTOM" },
-    { text = "Bottom Right", value = "BOTTOMRIGHT" },
+    { text = L["COMMON_ANCHOR_TOPLEFT"],     value = "TOPLEFT" },
+    { text = L["COMMON_ANCHOR_TOP"],         value = "TOP" },
+    { text = L["COMMON_ANCHOR_TOPRIGHT"],    value = "TOPRIGHT" },
+    { text = L["COMMON_ANCHOR_LEFT"],        value = "LEFT" },
+    { text = L["COMMON_ANCHOR_CENTER"],      value = "CENTER" },
+    { text = L["COMMON_ANCHOR_RIGHT"],       value = "RIGHT" },
+    { text = L["COMMON_ANCHOR_BOTTOMLEFT"],  value = "BOTTOMLEFT" },
+    { text = L["COMMON_ANCHOR_BOTTOM"],      value = "BOTTOM" },
+    { text = L["COMMON_ANCHOR_BOTTOMRIGHT"], value = "BOTTOMRIGHT" },
 }

@@ -386,6 +386,30 @@ ns:RegisterLocale("frFR", {
     OPT_SQW_RANGED = "Distance : Ping + 150",
     OPT_SECTION_DIAG = "DIAGNOSTICS",
     OPT_PROFILER = "Profileur d'addon",
+
+    OPT_TT_REVERT_TITLE       = "Restaurer les paramètres",
+    OPT_TT_REVERT_DESC        = "Restaurer vos paramètres précédents :",
+    OPT_TT_REVERT_LINE1       = "Revenir à la configuration sauvegardée",
+    OPT_TT_REVERT_LINE2       = "Avant toute optimisation",
+    OPT_TT_REVERT_CLICK       = "Cliquez pour restaurer",
+    OPT_TT_REVERT_NOSAVEDYET  = "Appliquez d'abord une optimisation",
+
+    OPT_TT_FPS_TITLE          = "Paramètres FPS optimaux",
+    OPT_TT_FPS_DESC           = "Performance maximale pour le jeu compétitif :",
+    OPT_TT_FPS_DX12           = "DirectX 12 activé",
+    OPT_TT_FPS_EFFECTS        = "Tous les effets optimisés",
+    OPT_TT_FPS_SHADOWS        = "Ombres équilibrées",
+    OPT_TT_FPS_PARTICLES      = "Particules optimisées",
+    OPT_TT_FPS_PERFECT        = "Parfait pour les raids et M+",
+    OPT_TT_FPS_RELOAD         = "Rechargement de l'IU requis",
+
+    OPT_TT_PROF_TITLE         = "Profileur d'addon",
+    OPT_TT_PROF_DESC          = "Analyser les performances de tous les addons :",
+    OPT_TT_PROF_LINE1         = "Suivre le CPU et la mémoire des addons",
+    OPT_TT_PROF_LINE2         = "Détecter les problèmes de performance",
+    OPT_TT_PROF_LINE3         = "Optimiser le chargement des addons",
+    OPT_TT_PROF_LINE4         = "Rechargement de l'IU requis la première fois",
+
     OPT_SECTION_MONITOR = "MONITEUR EN TEMPS RÉEL",
     OPT_WARMING = "Préchauffage...",
     OPT_UNAVAILABLE = "Profileur indisponible",
@@ -895,4 +919,159 @@ ns:RegisterLocale("frFR", {
     EQUIPMENTREMINDER_CAPTURE              = "Capturer l'actuel",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "Enchantement attendu",
     EQUIPMENTREMINDER_CAPTURED             = "%d enchantement(s) capturé(s) depuis l'équipement équipé",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Points d'ancrage
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "Haut Gauche",
+    COMMON_ANCHOR_TOP         = "Haut",
+    COMMON_ANCHOR_TOPRIGHT    = "Haut Droit",
+    COMMON_ANCHOR_LEFT        = "Gauche",
+    COMMON_ANCHOR_CENTER      = "Centre",
+    COMMON_ANCHOR_RIGHT       = "Droit",
+    COMMON_ANCHOR_BOTTOMLEFT  = "Bas Gauche",
+    COMMON_ANCHOR_BOTTOM      = "Bas",
+    COMMON_ANCHOR_BOTTOMRIGHT = "Bas Droit",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: UI Divers
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "Classe",
+    COMMON_OK          = "OK",
+    COMMON_RENAME      = "Renommer",
+    COMMON_DELETE      = "Supprimer",
+    COMMON_NEW         = "Nouveau",
+    COMMON_NONE        = "(Aucun)",
+    COMMON_RESTORE     = "Restaurer",
+
+    ---------------------------------------------------------------------------
+    -- IMPORT / EXPORT (PROFILS)
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "PROFILS",
+    IMPORTEXPORT_SUBTITLE       = "Partagez les paramètres entre personnages ou avec d'autres joueurs",
+    IMPORTEXPORT_SECTION_MANAGE = "Gestion des profils",
+    IMPORTEXPORT_ACTIVE_STATUS  = "Actif : %s  (%d sauvegardés)",
+    IMPORTEXPORT_PLACEHOLDER    = "Sélectionner un profil",
+    IMPORTEXPORT_STATUS_LOADED  = "Chargé : %s — rechargez pour appliquer",
+    IMPORTEXPORT_STATUS_SAVED   = "Sauvegardé : %s",
+    IMPORTEXPORT_STATUS_CREATED = "Créé : %s",
+    IMPORTEXPORT_STATUS_RENAMED = "Renommé en : %s",
+    IMPORTEXPORT_STATUS_DELETED = "Supprimé",
+    IMPORTEXPORT_ERR_LAST       = "Impossible de supprimer le dernier profil",
+    IMPORTEXPORT_ERR_EXISTS     = "Le nom existe déjà",
+    IMPORTEXPORT_ERR_RENAME     = "Échec du renommage",
+    IMPORTEXPORT_ERR_LOAD       = "Échec du chargement",
+    IMPORTEXPORT_SECTION_COPY   = "Copier un profil existant",
+    IMPORTEXPORT_SELECT_COPY    = "Sélectionner le profil à copier",
+    IMPORTEXPORT_COPY_NOTE      = "Les profils sont partagés entre tous les personnages",
+    IMPORTEXPORT_COPY_BTN       = "Copier vers l'actuel",
+    IMPORTEXPORT_COPY_OK        = "Paramètres copiés depuis : %s",
+    IMPORTEXPORT_COPY_ERR       = "Sélectionnez un profil à copier",
+    IMPORTEXPORT_SECTION_SPEC   = "Changement de profil par spécialisation",
+    IMPORTEXPORT_SECTION_EXPORT = "Exporter",
+    IMPORTEXPORT_EXPORT_BTN     = "Exporter les paramètres",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A, Ctrl+C pour copier",
+    IMPORTEXPORT_SECTION_IMPORT = "Importer",
+    IMPORTEXPORT_LOAD_BTN       = "Charger",
+    IMPORTEXPORT_IMPORT_BTN     = "Importer la sélection",
+    IMPORTEXPORT_FOUND          = "%d modules trouvés.",
+    IMPORTEXPORT_NO_MODULES     = "Aucun module reconnu dans la chaîne.",
+    IMPORTEXPORT_INVALID        = "Chaîne invalide.",
+    IMPORTEXPORT_PASTE_FIRST    = "Collez d'abord une chaîne.",
+    IMPORTEXPORT_IMPORT_OK      = "Importation réussie !",
+    IMPORTEXPORT_IMPORT_ERR     = "Échec de l'importation.",
+    IMPORTEXPORT_POPUP_RENAME   = "Renommer le profil '%s' en :",
+    IMPORTEXPORT_POPUP_NEW      = "Créer un nouveau profil avec les paramètres par défaut :",
+    IMPORTEXPORT_POPUP_DELETE   = "Supprimer le profil '%s' ?",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER (CONFIG)
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "JOURNAL DE COMBAT",
+    COMBATLOGGER_DESC               = "Gestion automatique du journal de combat pour les raids et M+",
+    COMBATLOGGER_ENABLE             = "Activer le journal de combat",
+    COMBATLOGGER_SECTION_STATUS     = "STATUT",
+    COMBATLOGGER_SECTION_INSTANCES  = "INSTANCES SAUVEGARDÉES",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "Instance %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "Difficulté %s",
+    COMBATLOGGER_TOGGLE_BTN         = "Basculer",
+    COMBATLOGGER_NO_INSTANCES       = "Aucune instance sauvegardée. Entrez dans un raid ou un donjon M+.",
+    COMBATLOGGER_RESET_ALL_BTN      = "Réinitialiser toutes les instances",
+    COMBATLOGGER_STATUS_ACTIVE      = "ENREGISTREMENT ACTIF",
+    COMBATLOGGER_STATUS_INACTIVE    = "PAS D'ENREGISTREMENT",
+    COMBATLOGGER_STATUS_PREFIX      = "Statut : ",
+    COMBATLOGGER_CURRENT_PREFIX     = "Actuel : ",
+    COMBATLOGGER_NOT_TRACKABLE      = "Pas dans un contenu suivable",
+    COMBATLOGGER_RESET_CONFIRM      = "Effacer toutes les préférences d'enregistrement des instances ?\nVous serez de nouveau invité la prochaine fois que vous entrerez dans chaque instance.",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "Tout effacer",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "RAPPEL DE TALENTS",
+    TALENT_DESC                     = "Sauvegarder et restaurer les configurations de talents par donjon et boss de raid",
+    TALENT_ENABLE                   = "Activer le rappel de talents",
+    TALENT_SECTION_LOADOUTS         = "CONFIGURATIONS SAUVEGARDÉES",
+    TALENT_NO_LOADOUTS              = "Aucune configuration sauvegardée.\nEntrez dans un donjon Mythique ou ciblez un boss de raid.",
+    TALENT_UNKNOWN_SPEC             = "Spécialisation inconnue",
+    TALENT_UNKNOWN                  = "Inconnu",
+    TALENT_CLEAR_ALL_BTN            = "Effacer toutes les configurations",
+    TALENT_RESET_CONFIRM            = "Effacer toutes les configurations de talents sauvegardées ?\nVous serez de nouveau invité pour chaque donjon/boss.",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "PROFILEUR D'ADDONS",
+    PROFILER_COL_ADDON_NAME         = "NOM DE L'ADDON",
+    PROFILER_COL_CPU_AVG            = "CPU MOY.",
+    PROFILER_COL_CPU_MAX            = "CPU MAX",
+    PROFILER_COL_RAM                = "RAM",
+    PROFILER_UNIT_MS                = "(ms)",
+    PROFILER_UNIT_MB                = "(Mo)",
+    PROFILER_RESET                  = "Réinitialiser",
+    PROFILER_STATS_RESET            = "Statistiques réinitialisées",
+    PROFILER_PURGE_RAM              = "Purger la RAM",
+    PROFILER_PURGE_COMPLETE         = "Purge globale de la RAM terminée. Libéré : ",
+    PROFILER_PAUSE                  = "Pause",
+    PROFILER_RESUME                 = "Reprendre",
+    PROFILER_PAUSED                 = "En pause",
+    PROFILER_RESUMED                = "Repris",
+    PROFILER_STOP                   = "Arrêter le profilage",
+    PROFILER_SELF_LABEL             = " [Auto : %.2fms / %.1fMo]",
+    PROFILER_NOT_AVAILABLE          = "Module de profilage non disponible.",
+
+    ---------------------------------------------------------------------------
+    -- MODULES (supplémentaire)
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "Masquer l'icône de la minicarte",
+    MODULES_HIDE_MINIMAP_DESC       = "Masque le bouton NaowhQOL de la minicarte",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (supplémentaire)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "Afficher les bijoux et armes équipés en entrant dans les instances ou lors des vérifications de préparation",
+    EQUIPMENTREMINDER_MAIN_HAND     = "Main droite",
+    EQUIPMENTREMINDER_OFF_HAND      = "Main gauche",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION (supplémentaire)
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "(sort inconnu)",
+    EMOTE_ERR_SPELLID               = "ID de sort requis.",
+    EMOTE_ERR_EMOTETEXT             = "Texte d'emote requis.",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER (supplémentaire)
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "Inconnu",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR (supplémentaire)
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "HPal utilise la détection d'objet à 4m (~0.5m de variance)",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2 (supplémentaire)
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "Secondes avant la disparition en cas de réussite (0 = désactivé)",
 })

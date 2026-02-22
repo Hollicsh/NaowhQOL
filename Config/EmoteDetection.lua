@@ -217,7 +217,7 @@ function ns:InitEmoteDetection()
                 if info and info.name then
                     spellPreview:SetText(W.Colorize(info.name, C.ORANGE))
                 else
-                    spellPreview:SetText(W.Colorize("(unknown spell)", C.RED))
+                    spellPreview:SetText(W.Colorize(L["EMOTE_UNKNOWN_SPELL"], C.RED))
                 end
             else
                 spellPreview:SetText("")
@@ -272,11 +272,11 @@ function ns:InitEmoteDetection()
             local emoteText = strtrim(emoteBox:GetText())
 
             if not spellId or spellId <= 0 then
-                UIErrorsFrame:AddMessage("Spell ID required.", 1, 0.3, 0.3, 1, 3)
+                UIErrorsFrame:AddMessage(L["EMOTE_ERR_SPELLID"], 1, 0.3, 0.3, 1, 3)
                 return
             end
             if emoteText == "" then
-                UIErrorsFrame:AddMessage("Emote text required.", 1, 0.3, 0.3, 1, 3)
+                UIErrorsFrame:AddMessage(L["EMOTE_ERR_EMOTETEXT"], 1, 0.3, 0.3, 1, 3)
                 return
             end
 
@@ -368,7 +368,7 @@ function ns:InitEmoteDetection()
                         if ns.RebuildAutoEmoteLookup then ns.RebuildAutoEmoteLookup() end
                     end)
 
-                    row.tog:SetText(entry.enabled ~= false and W.Colorize("ON", C.GREEN) or W.Colorize("OFF", C.RED))
+                    row.tog:SetText(entry.enabled ~= false and W.Colorize(L["COMMON_ON"], C.GREEN) or W.Colorize(L["COMMON_OFF"], C.RED))
                     row.tog:SetScript("OnClick", function()
                         entry.enabled = not (entry.enabled ~= false)
                         BuildAutoEmoteList()

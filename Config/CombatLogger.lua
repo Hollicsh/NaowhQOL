@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 local cache = {}
 local W = ns.Widgets
@@ -15,7 +16,7 @@ function ns:InitCombatLogger()
 
         W:CreatePageHeader(sc,
             {{"COMBAT ", C.BLUE}, {"LOGGER", C.ORANGE}},
-            W.Colorize("Automatic combat log management for raids & M+", C.GRAY))
+            W.Colorize(L["COMBATLOGGER_DESC"], C.GRAY))
 
         -- on/off toggle
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
@@ -25,7 +26,7 @@ function ns:InitCombatLogger()
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
 
         local masterCB = W:CreateCheckbox(killArea, {
-            label = "Enable Combat Logger",
+            label = L["COMBATLOGGER_ENABLE"],
             db = db, key = "enabled",
             x = 15, y = -8,
             isMaster = true,
@@ -41,7 +42,7 @@ function ns:InitCombatLogger()
 
         -- STATUS section
         local statWrap, statContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "STATUS",
+            text = L["COMBATLOGGER_SECTION_STATUS"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
@@ -57,7 +58,7 @@ function ns:InitCombatLogger()
 
         -- SAVED INSTANCES section
         local instWrap, instContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "SAVED INSTANCES",
+            text = L["COMBATLOGGER_SECTION_INSTANCES"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
@@ -109,14 +110,14 @@ function ns:InitCombatLogger()
                     local displayDiff = entry.diffName or ""
                     if displayName == "" then
                         local instID, diff = key:match("^(%d+):(%d+)$")
-                        displayName = "Instance " .. (instID or "?")
-                        displayDiff = "Difficulty " .. (diff or "?")
+                        displayName = string.format(L["COMBATLOGGER_UNKNOWN_INSTANCE"], instID or "?")
+                        displayDiff = string.format(L["COMBATLOGGER_UNKNOWN_DIFFICULTY"], diff or "?")
                     end
                     label:SetText(displayName .. " " .. W.Colorize("(" .. displayDiff .. ")", C.GRAY))
 
                     local status = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                     status:SetPoint("RIGHT", -85, 0)
-                    status:SetText(entry.enabled and W.Colorize("ON", C.SUCCESS) or W.Colorize("OFF", C.ERROR))
+                    status:SetText(entry.enabled and W.Colorize(L["COMMON_ON"], C.SUCCESS) or W.Colorize(L["COMMON_OFF"], C.ERROR))
 
                     local deleteBtn = W:CreateButton(row, {
                         text = "|cffff0000X|r",
@@ -130,7 +131,7 @@ function ns:InitCombatLogger()
                     deleteBtn:SetPoint("RIGHT", -5, 0)
 
                     local toggleBtn = W:CreateButton(row, {
-                        text = "Toggle",
+                        text = L["COMBATLOGGER_TOGGLE_BTN"],
                         width = 50,
                         height = 20,
                         onClick = function()
@@ -147,14 +148,14 @@ function ns:InitCombatLogger()
             if count == 0 then
                 local emptyText = instChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 emptyText:SetPoint("TOPLEFT", 0, 0)
-                emptyText:SetText(W.Colorize("No saved instances yet. Enter a raid or M+ dungeon.", C.GRAY))
+                emptyText:SetText(W.Colorize(L["COMBATLOGGER_NO_INSTANCES"], C.GRAY))
             end
 
             instChild:SetHeight(math.max(1, math.abs(yOff)))
         end
 
         local resetBtn = W:CreateButton(instContent, {
-            text = "Reset All Instances",
+            text = L["COMBATLOGGER_RESET_ALL_BTN"],
             width = 160,
             height = 26,
             onClick = function()
@@ -222,19 +223,19 @@ function ns:InitCombatLogger()
     -- Refresh dynamic content each time tab is shown
     if statusRef then
         if LoggingCombat() then
-            statusRef:SetText("Status: " .. W.Colorize("LOGGING ACTIVE", C.SUCCESS))
+            statusRef:SetText(L["COMBATLOGGER_STATUS_PREFIX"] .. W.Colorize(L["COMBATLOGGER_STATUS_ACTIVE"], C.SUCCESS))
         else
-            statusRef:SetText("Status: " .. W.Colorize("NOT LOGGING", C.GRAY))
+            statusRef:SetText(L["COMBATLOGGER_STATUS_PREFIX"] .. W.Colorize(L["COMBATLOGGER_STATUS_INACTIVE"], C.GRAY))
         end
     end
 
     if zoneRef and ns.ZoneUtil then
         local zone = ns.ZoneUtil.GetCurrentZone()
         if ns.ZoneUtil.IsInRaid() or ns.ZoneUtil.IsInMythicPlus() then
-            zoneRef:SetText("Current: " .. W.Colorize(zone.zoneName, C.ORANGE)
+            zoneRef:SetText(L["COMBATLOGGER_CURRENT_PREFIX"] .. W.Colorize(zone.zoneName, C.ORANGE)
                 .. " (" .. zone.difficultyName .. ")")
         else
-            zoneRef:SetText("Current: " .. W.Colorize("Not in trackable content", C.GRAY))
+            zoneRef:SetText(L["COMBATLOGGER_CURRENT_PREFIX"] .. W.Colorize(L["COMBATLOGGER_NOT_TRACKABLE"], C.GRAY))
         end
     end
 
@@ -245,10 +246,9 @@ function ns:InitCombatLogger()
     if not StaticPopupDialogs["NAOWHQOL_COMBATLOG_RESET"] then
         StaticPopupDialogs["NAOWHQOL_COMBATLOG_RESET"] = {
             text = W.Colorize("Naowh QOL", C.BLUE) .. "\n\n"
-                .. "Clear all saved instance logging preferences?\n"
-                .. "You will be prompted again next time you enter each instance.",
-            button1 = "Clear All",
-            button2 = "Cancel",
+                .. L["COMBATLOGGER_RESET_CONFIRM"],
+            button1 = L["COMBATLOGGER_CLEAR_ALL_BTN"],
+            button2 = L["COMMON_CANCEL"],
             OnAccept = function()
                 NaowhQOL.combatLogger.instances = {}
                 if cache["clFrame"] then cache["clFrame"]:Hide(); cache["clFrame"] = nil end

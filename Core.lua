@@ -335,9 +335,6 @@ ns.ModuleDefaults = {
 -- AceDB defaults structure
 local aceDBDefaults = {
     profile = {
-        -- Locale
-        locale = GetLocale(),
-
         -- Config (UI state)
         config = {
             lastTab = nil,
@@ -614,12 +611,6 @@ local function MigrateFromLegacy(legacyCharData)
             end
         end
 
-        -- Migrate locale
-        if oldData.locale then
-            DebugPrint("Migrating locale: " .. oldData.locale)
-            currentProfile.locale = oldData.locale
-        end
-
         DebugPrint("Migration completed successfully!")
     else
         DebugPrint("No legacy data found, using fresh AceDB profile.")
@@ -680,9 +671,9 @@ function ns:OnProfileChanged()
         NaowhQOL.talentReminder.loadouts = NaowhQOL.talentReminder.loadouts or {}
     end
 
-    -- Re-initialize locale
+    -- Re-initialize locale (always follow the WoW client locale, never a saved value)
     if ns.SetLocale then
-        ns:SetLocale(NaowhQOL.locale or GetLocale())
+        ns:SetLocale(GetLocale())
     end
 
     -- Trigger refresh callbacks for all modules
@@ -730,9 +721,9 @@ local function InitializeDB()
         NaowhQOL = ns.db.profile
     end
 
-    -- Initialize locale
+    -- Initialize locale (always follow the WoW client locale, never a saved value)
     if ns.SetLocale then
-        ns:SetLocale(NaowhQOL.locale or GetLocale())
+        ns:SetLocale(GetLocale())
     end
 
     -- Ensure combatLogger.instances exists

@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 ns.Profiler = {}
 
 local W = ns.Widgets
@@ -50,33 +51,33 @@ titleText:SetText(ColorizeText("ADDON ", COLORS.BLUE) .. ColorizeText("PROFILER"
 
 local nameHeader = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 nameHeader:SetPoint("TOPLEFT", 12, -44)
-nameHeader:SetText(ColorizeText("ADDON NAME", COLORS.BLUE))
+nameHeader:SetText(ColorizeText(L["PROFILER_COL_ADDON_NAME"], COLORS.BLUE))
 
 -- Primera fila de encabezados (labels principales)
 local avgHeader1 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 avgHeader1:SetPoint("TOPRIGHT", p, "TOPRIGHT", -185, -30)
-avgHeader1:SetText(ColorizeText("CPU AVG", COLORS.ORANGE))
+avgHeader1:SetText(ColorizeText(L["PROFILER_COL_CPU_AVG"], COLORS.ORANGE))
 
 local peakHeader1 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 peakHeader1:SetPoint("TOPRIGHT", p, "TOPRIGHT", -95, -30)
-peakHeader1:SetText(ColorizeText("CPU MAX", COLORS.ORANGE))
+peakHeader1:SetText(ColorizeText(L["PROFILER_COL_CPU_MAX"], COLORS.ORANGE))
 
 local ramHeader1 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 ramHeader1:SetPoint("TOPRIGHT", p, "TOPRIGHT", -15, -30) 
-ramHeader1:SetText(ColorizeText("RAM", COLORS.GRAY))
+ramHeader1:SetText(ColorizeText(L["PROFILER_COL_RAM"], COLORS.GRAY))
 
 -- Segunda fila de encabezados (unidades)
 local avgHeader2 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 avgHeader2:SetPoint("TOPRIGHT", p, "TOPRIGHT", -185, -44)
-avgHeader2:SetText(ColorizeText("(ms)", COLORS.ORANGE))
+avgHeader2:SetText(ColorizeText(L["PROFILER_UNIT_MS"], COLORS.ORANGE))
 
 local peakHeader2 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 peakHeader2:SetPoint("TOPRIGHT", p, "TOPRIGHT", -95, -44)
-peakHeader2:SetText(ColorizeText("(ms)", COLORS.ORANGE))
+peakHeader2:SetText(ColorizeText(L["PROFILER_UNIT_MS"], COLORS.ORANGE))
 
 local ramHeader2 = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 ramHeader2:SetPoint("TOPRIGHT", p, "TOPRIGHT", -15, -44) 
-ramHeader2:SetText(ColorizeText("(MB)", COLORS.GRAY))
+ramHeader2:SetText(ColorizeText(L["PROFILER_UNIT_MB"], COLORS.GRAY))
 
 local sep = p:CreateTexture(nil, "ARTWORK")
 sep:SetColorTexture(0.00, 0.56, 0.91, 0.4)
@@ -132,20 +133,20 @@ end)
 
 
 local resetBtn = W:CreateButton(p, {
-    text = ColorizeText("Reset", COLORS.ORANGE),
+    text = ColorizeText(L["PROFILER_RESET"], COLORS.ORANGE),
     width = 80,
     height = 22,
     onClick = function()
         ResetCPUUsage()
         UpdateAddOnCPUUsage()
         UpdateAddOnMemoryUsage()
-        print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText("Statistics reset", COLORS.ORANGE))
+        print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText(L["PROFILER_STATS_RESET"], COLORS.ORANGE))
     end
 })
 resetBtn:SetPoint("BOTTOMLEFT", p, "BOTTOMLEFT", 12, 12)
 
 local purgeBtn = W:CreateButton(p, {
-    text = ColorizeText("Purge ", COLORS.ORANGE) .. ColorizeText("RAM", COLORS.BLUE),
+    text = ColorizeText(L["PROFILER_PURGE_RAM"], COLORS.ORANGE),
     width = 100,
     height = 22,
     onClick = function()
@@ -161,32 +162,32 @@ local purgeBtn = W:CreateButton(p, {
 
         p.timer = 2
 
-        DEFAULT_CHAT_FRAME:AddMessage(ColorizeText("Naowh QOL:", COLORS.BLUE) .. " Global RAM purge complete. Freed: " ..
+        DEFAULT_CHAT_FRAME:AddMessage(ColorizeText("Naowh QOL:", COLORS.BLUE) .. " " .. L["PROFILER_PURGE_COMPLETE"] ..
             ColorizeText(string.format("%.2f MB", freed), COLORS.SUCCESS))
     end
 })
 purgeBtn:SetPoint("LEFT", resetBtn, "RIGHT", 5, 0)
 
 local pauseBtn = W:CreateButton(p, {
-    text = ColorizeText("Pause", COLORS.GREEN),
+    text = ColorizeText(L["PROFILER_PAUSE"], COLORS.GREEN),
     width = 80,
     height = 22,
     onClick = function(self)
         isPaused = not isPaused
         if isPaused then
-            self:SetText(ColorizeText("Resume", COLORS.ORANGE))
-            print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText("Paused", COLORS.ORANGE))
+            self:SetText(ColorizeText(L["PROFILER_RESUME"], COLORS.ORANGE))
+            print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText(L["PROFILER_PAUSED"], COLORS.ORANGE))
         else
-            self:SetText(ColorizeText("Pause", COLORS.GREEN))
+            self:SetText(ColorizeText(L["PROFILER_PAUSE"], COLORS.GREEN))
             p.timer = 2
-            print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText("Resumed", COLORS.GREEN))
+            print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText(L["PROFILER_RESUMED"], COLORS.GREEN))
         end
     end
 })
 pauseBtn:SetPoint("LEFT", purgeBtn, "RIGHT", 5, 0)
 
 local stopBtn = W:CreateButton(p, {
-    text = ColorizeText("Stop", COLORS.RED) .. " Profiling",
+    text = ColorizeText(L["PROFILER_STOP"], COLORS.RED),
     width = 100,
     height = 22,
     onClick = function()
@@ -274,7 +275,7 @@ p:SetScript("OnUpdate", function(self, elapsed)
         
         -- Update title to show profiler's own usage - this lets you see if WE are leaking
         titleText:SetText(ColorizeText("ADDON ", COLORS.BLUE) .. ColorizeText("PROFILER", COLORS.ORANGE) .. 
-            ColorizeText(string.format(" [Self: %.2fms / %.1fMB]", profilerCPU, profilerMem), COLORS.GRAY))
+            ColorizeText(string.format(L["PROFILER_SELF_LABEL"], profilerCPU, profilerMem), COLORS.GRAY))
         
         for i = 1, 40 do
             if data[i] then

@@ -343,7 +343,7 @@ function ns:InitGcdTracker()
                 icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
                 icon:SetTexture(GetSpellIcon(spellId))
 
-                local spellName = GetSpellName(spellId) or "Unknown"
+                local spellName = GetSpellName(spellId) or L["GCD_UNKNOWN_SPELL"]
                 local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                 label:SetPoint("LEFT", icon, "RIGHT", 6, 0)
                 label:SetText(W.Colorize(spellName, C.WHITE) .. "  "

@@ -1104,7 +1104,7 @@ function ns:InitBuffWatcherV2()
             db = db, key = "reportCardAutoCloseDelay",
             x = rcG:Col(1), y = rcG:SliderY(3),
             width = 180,
-            tooltip = "Seconds before fade when passing (0 = disabled)",
+            tooltip = L["BWV2_FADE_TOOLTIP"],
             onChange = function(val) db.reportCardAutoCloseDelay = val end,
         })
 
@@ -1147,7 +1147,7 @@ function ns:InitBuffWatcherV2()
         dungeonInput:SetPoint("LEFT", dungeonLabel, "RIGHT", 8, 0)
         dungeonInput:SetNumeric(true)
         dungeonInput:SetAutoFocus(false)
-        dungeonInput:SetText(tostring(math.floor(db.thresholds.dungeon / 60)))
+        dungeonInput:SetText(tostring(math.floor((db.thresholds.dungeon or 0) / 60)))
         dungeonInput:SetScript("OnTextChanged", function(self)
             local val = tonumber(self:GetText())
             if val then db.thresholds.dungeon = val * 60 end
@@ -1166,7 +1166,7 @@ function ns:InitBuffWatcherV2()
         raidInput:SetPoint("LEFT", raidLabel, "RIGHT", 8, 0)
         raidInput:SetNumeric(true)
         raidInput:SetAutoFocus(false)
-        raidInput:SetText(tostring(math.floor(db.thresholds.raid / 60)))
+        raidInput:SetText(tostring(math.floor((db.thresholds.raid or 0) / 60)))
         raidInput:SetScript("OnTextChanged", function(self)
             local val = tonumber(self:GetText())
             if val then db.thresholds.raid = val * 60 end
@@ -1185,7 +1185,7 @@ function ns:InitBuffWatcherV2()
         otherInput:SetPoint("LEFT", otherLabel, "RIGHT", 8, 0)
         otherInput:SetNumeric(true)
         otherInput:SetAutoFocus(false)
-        otherInput:SetText(tostring(math.floor(db.thresholds.other / 60)))
+        otherInput:SetText(tostring(math.floor((db.thresholds.other or 0) / 60)))
         otherInput:SetScript("OnTextChanged", function(self)
             local val = tonumber(self:GetText())
             if val then db.thresholds.other = val * 60 end

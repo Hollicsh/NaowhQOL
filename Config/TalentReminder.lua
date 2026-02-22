@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 local cache = {}
 local W = ns.Widgets
@@ -15,7 +16,7 @@ function ns:InitTalentReminder()
 
         W:CreatePageHeader(sc,
             {{"TALENT ", C.BLUE}, {"REMINDER", C.ORANGE}},
-            W.Colorize("Save and restore talent loadouts per dungeon and raid boss", C.GRAY))
+            W.Colorize(L["TALENT_DESC"], C.GRAY))
 
         -- Master toggle
         local toggleArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
@@ -25,7 +26,7 @@ function ns:InitTalentReminder()
         toggleArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
 
         local masterCB = W:CreateCheckbox(toggleArea, {
-            label = "Enable Talent Reminder",
+            label = L["TALENT_ENABLE"],
             db = db, key = "enabled",
             x = 15, y = -8,
             isMaster = true,
@@ -41,7 +42,7 @@ function ns:InitTalentReminder()
 
         -- SAVED LOADOUTS section
         local loadWrap, loadContent = W:CreateCollapsibleSection(sectionContainer, {
-            text = "SAVED LOADOUTS",
+            text = L["TALENT_SECTION_LOADOUTS"],
             startOpen = false,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
@@ -90,7 +91,7 @@ function ns:InitTalentReminder()
             if #specIDs == 0 then
                 local emptyText = loadChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 emptyText:SetPoint("TOPLEFT", 0, 0)
-                emptyText:SetText(W.Colorize("No saved loadouts yet.\nEnter a Mythic dungeon or target a raid boss.", C.GRAY))
+                emptyText:SetText(W.Colorize(L["TALENT_NO_LOADOUTS"], C.GRAY))
                 loadChild:SetHeight(40)
                 return
             end
@@ -101,7 +102,7 @@ function ns:InitTalentReminder()
                 local entries = specGroups[specID]
 
                 -- Get spec name
-                local specName = "Unknown Spec"
+                local specName = L["TALENT_UNKNOWN_SPEC"]
                 local _, name, _, icon = GetSpecializationInfoByID(specID)
                 if name then specName = name end
 
@@ -158,11 +159,11 @@ function ns:InitTalentReminder()
                     label:SetWidth(240)
                     label:SetJustifyH("LEFT")
 
-                    local displayName = entry.name or "Unknown"
+                    local displayName = entry.name or L["TALENT_UNKNOWN"]
                     local diffText = entry.diffName and (" (" .. entry.diffName .. ")") or ""
                     local configText
                     if entry.tlxMode then
-                        configText = " - " .. W.Colorize("[TLX] " .. (entry.tlxName or "Unknown"), C.SUCCESS)
+                        configText = " - " .. W.Colorize("[TLX] " .. (entry.tlxName or L["TALENT_UNKNOWN"]), C.SUCCESS)
                     else
                         configText = entry.configName and (" - " .. W.Colorize(entry.configName, C.SUCCESS)) or ""
                     end
@@ -193,7 +194,7 @@ function ns:InitTalentReminder()
             loadChild:SetHeight(math.max(1, math.abs(yOff)))
         end
 
-        local resetBtn = W:CreateButton(loadContent, { text = "Clear All Loadouts", onClick = function()
+        local resetBtn = W:CreateButton(loadContent, { text = L["TALENT_CLEAR_ALL_BTN"], onClick = function()
             StaticPopup_Show("NAOWHQOL_TALENT_RESET")
         end })
         resetBtn:SetPoint("TOPLEFT", 0, -295)
@@ -264,10 +265,9 @@ function ns:InitTalentReminder()
     if not StaticPopupDialogs["NAOWHQOL_TALENT_RESET"] then
         StaticPopupDialogs["NAOWHQOL_TALENT_RESET"] = {
             text = W.Colorize("Naowh QOL", C.BLUE) .. "\n\n"
-                .. "Clear all saved talent loadouts?\n"
-                .. "You will be prompted again for each dungeon/boss.",
-            button1 = "Clear All",
-            button2 = "Cancel",
+                .. L["TALENT_RESET_CONFIRM"],
+            button1 = L["COMBATLOGGER_CLEAR_ALL_BTN"],
+            button2 = L["COMMON_CANCEL"],
             OnAccept = function()
                 NaowhQOL.talentReminder.loadouts = {}
                 if cache["trFrame"] then cache["trFrame"]:Hide(); cache["trFrame"] = nil end

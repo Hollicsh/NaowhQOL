@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 local cache = {}
 local W = ns.Widgets
@@ -77,7 +78,7 @@ local function CreateDynamicDropdown(parent, opts)
     emptyItem:SetPoint("TOPLEFT", 1, -1)
     local emptyText = emptyItem:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     emptyText:SetPoint("LEFT", 8, 0)
-    emptyText:SetText(opts.emptyText or "(None)")
+    emptyText:SetText(opts.emptyText or L["COMMON_NONE"])
     emptyItem:Hide()
     f.emptyItem = emptyItem
 
@@ -208,8 +209,8 @@ end
 -- Static popup for profile name input
 StaticPopupDialogs["NAOWH_QOL_PROFILE_NAME"] = {
     text = "%s",
-    button1 = "OK",
-    button2 = "Cancel",
+    button1 = L["COMMON_OK"],
+    button2 = L["COMMON_CANCEL"],
     hasEditBox = true,
     OnShow = function(self)
         local editBox = self.editBox or self.EditBox
@@ -241,8 +242,8 @@ StaticPopupDialogs["NAOWH_QOL_PROFILE_NAME"] = {
 
 StaticPopupDialogs["NAOWH_QOL_PROFILE_CONFIRM"] = {
     text = "%s",
-    button1 = "Yes",
-    button2 = "No",
+    button1 = L["COMMON_YES"],
+    button2 = L["COMMON_NO"],
     OnAccept = function(self)
         if self.data and self.data.callback then
             self.data.callback()
@@ -261,12 +262,12 @@ function ns:InitImportExport()
         local _, sc = W:CreateScrollFrame(f, 1200)
 
         W:CreatePageHeader(sc,
-            W.Colorize("PROFILES", C.ORANGE),
-            W.Colorize("Share settings between characters or with other players", C.BLUE),
+            W.Colorize(L["IMPORTEXPORT_TITLE"], C.ORANGE),
+            W.Colorize(L["IMPORTEXPORT_SUBTITLE"], C.BLUE),
             { subtitleFont = "GameFontNormalSmall", separator = false })
 
         -- Profile Management Section
-        W:CreateSectionHeader(sc, "Profile Management", -80)
+        W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_MANAGE"], -80)
 
         local profileStatus = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         profileStatus:SetPoint("TOPLEFT", 35, -115)
@@ -275,22 +276,22 @@ function ns:InitImportExport()
         local function UpdateProfileStatus()
             local active = ns.SettingsIO:GetActiveProfile()
             local count = #ns.SettingsIO:GetProfileList()
-            profileStatus:SetText("|cff44ff44Active: " .. active .. "|r  (" .. count .. " saved)")
+            profileStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_ACTIVE_STATUS"], active, count) .. "|r")
         end
 
         -- Profile dropdown
         local profileDropdown = CreateDynamicDropdown(sc, {
             width = 160,
-            placeholder = "Select Profile",
-            emptyText = "(No saved profiles)",
+            placeholder = L["IMPORTEXPORT_PLACEHOLDER"],
+            emptyText = L["COMMON_NONE"],
             onSelect = function(name)
                 local ok, err = ns.SettingsIO:LoadProfile(name)
                 if ok then
                     UpdateProfileStatus()
-                    profileStatus:SetText("|cff44ff44Loaded: " .. name .. " — reload to apply all changes|r")
+                    profileStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_STATUS_LOADED"], name) .. "|r")
                     StaticPopup_Show("NAOWH_QOL_RELOAD")
                 else
-                    profileStatus:SetText("|cffff4444" .. (err or "Failed to load") .. "|r")
+                    profileStatus:SetText("|cffff4444" .. (err or L["IMPORTEXPORT_ERR_LOAD"]) .. "|r")
                 end
             end
         })
@@ -313,7 +314,7 @@ function ns:InitImportExport()
 
         -- Save button — saves current settings directly into the active profile.
         -- No popup: use "New" to create a differently-named profile.
-        local saveBtn = W:CreateButton(sc, { text = "Save", width = 60, height = 24 })
+        local saveBtn = W:CreateButton(sc, { text = L["COMMON_SAVE"], width = 60, height = 24 })
         saveBtn:SetPoint("LEFT", profileDropdown, "RIGHT", 8, 0)
         saveBtn:SetScript("OnClick", function()
             local active = ns.SettingsIO:GetActiveProfile()
@@ -321,15 +322,15 @@ function ns:InitImportExport()
             RefreshProfileDropdown()
             if RefreshSpecDropdowns then RefreshSpecDropdowns() end
             UpdateProfileStatus()
-            profileStatus:SetText("|cff44ff44Saved: " .. active .. "|r")
+            profileStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_STATUS_SAVED"], active) .. "|r")
         end)
 
         -- Rename button
-        local renameBtn = W:CreateButton(sc, { text = "Rename", width = 70, height = 24 })
+        local renameBtn = W:CreateButton(sc, { text = L["COMMON_RENAME"], width = 70, height = 24 })
         renameBtn:SetPoint("LEFT", saveBtn, "RIGHT", 4, 0)
         renameBtn:SetScript("OnClick", function()
             local current = ns.SettingsIO:GetActiveProfile()
-            local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_NAME", "Rename profile '" .. current .. "' to:")
+                local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_NAME", string.format(L["IMPORTEXPORT_POPUP_RENAME"], current))
             if dialog then
                 dialog.data = {
                     default = current,
@@ -339,12 +340,12 @@ function ns:InitImportExport()
                             RefreshProfileDropdown()
                             if RefreshSpecDropdowns then RefreshSpecDropdowns() end
                             UpdateProfileStatus()
-                            profileStatus:SetText("|cff44ff44Renamed to: " .. newName .. "|r")
+                            profileStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_STATUS_RENAMED"], newName) .. "|r")
                         else
                             if err == "exists" then
-                                profileStatus:SetText("|cffff4444Name already exists|r")
+                                profileStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_ERR_EXISTS"] .. "|r")
                             else
-                                profileStatus:SetText("|cffff4444Rename failed|r")
+                                profileStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_ERR_RENAME"] .. "|r")
                             end
                         end
                     end
@@ -353,16 +354,16 @@ function ns:InitImportExport()
         end)
 
         -- Delete button
-        local deleteBtn = W:CreateButton(sc, { text = "Delete", width = 60, height = 24 })
+        local deleteBtn = W:CreateButton(sc, { text = L["COMMON_DELETE"], width = 60, height = 24 })
         deleteBtn:SetPoint("LEFT", renameBtn, "RIGHT", 4, 0)
         deleteBtn:SetScript("OnClick", function()
             local current = ns.SettingsIO:GetActiveProfile()
             local profiles = ns.SettingsIO:GetProfileList()
             if #profiles <= 1 then
-                profileStatus:SetText("|cffff4444Cannot delete last profile|r")
+                profileStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_ERR_LAST"] .. "|r")
                 return
             end
-            local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_CONFIRM", "Delete profile '" .. current .. "'?")
+                local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_CONFIRM", string.format(L["IMPORTEXPORT_POPUP_DELETE"], current))
             if dialog then
                 dialog.data = {
                     callback = function()
@@ -370,17 +371,17 @@ function ns:InitImportExport()
                         RefreshProfileDropdown()
                         if RefreshSpecDropdowns then RefreshSpecDropdowns() end
                         UpdateProfileStatus()
-                        profileStatus:SetText("|cff44ff44Deleted|r")
+                        profileStatus:SetText("|cff44ff44" .. L["IMPORTEXPORT_STATUS_DELETED"] .. "|r")
                     end
                 }
             end
         end)
 
         -- New profile button (creates profile with default settings)
-        local newBtn = W:CreateButton(sc, { text = "New", width = 60, height = 24 })
+        local newBtn = W:CreateButton(sc, { text = L["COMMON_NEW"], width = 60, height = 24 })
         newBtn:SetPoint("LEFT", deleteBtn, "RIGHT", 4, 0)
         newBtn:SetScript("OnClick", function()
-            local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_NAME", "Create new profile with default settings:")
+                local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_NAME", L["IMPORTEXPORT_POPUP_NEW"])
             if dialog then
                 dialog.data = {
                     default = "",
@@ -389,7 +390,7 @@ function ns:InitImportExport()
                         local profiles = ns.SettingsIO:GetProfileList()
                         for _, pname in ipairs(profiles) do
                             if pname == name then
-                                profileStatus:SetText("|cffff4444Name already exists|r")
+                                profileStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_ERR_EXISTS"] .. "|r")
                                 return
                             end
                         end
@@ -397,19 +398,19 @@ function ns:InitImportExport()
                         RefreshProfileDropdown()
                         if RefreshSpecDropdowns then RefreshSpecDropdowns() end
                         UpdateProfileStatus()
-                        profileStatus:SetText("|cff44ff44Created: " .. name .. "|r")
+                        profileStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_STATUS_CREATED"], name) .. "|r")
                     end
                 }
             end
         end)
 
         -- Copy profile section (AceDB profiles are account-wide)
-        W:CreateSectionHeader(sc, "Copy Existing Profile", -180)
+        W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_COPY"], -180)
 
         local copyFromDropdown = CreateDynamicDropdown(sc, {
             width = 200,
-            placeholder = "Select Profile to Copy",
-            emptyText = "(No profiles available)",
+            placeholder = L["IMPORTEXPORT_SELECT_COPY"],
+            emptyText = L["COMMON_NONE"],
         })
         copyFromDropdown:SetPoint("TOPLEFT", 35, -218)
 
@@ -423,44 +424,44 @@ function ns:InitImportExport()
                 end
             end
             copyFromDropdown:Refresh(options)
-            copyFromDropdown:SetText("Select Profile to Copy")
+            copyFromDropdown:SetText(L["IMPORTEXPORT_SELECT_COPY"])
             copyFromDropdown:SetSelectedValue(nil)
         end
 
         local copyNote = sc:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         copyNote:SetPoint("TOPLEFT", 35, -248)
-        copyNote:SetText("Profiles are shared across all characters")
+        copyNote:SetText(L["IMPORTEXPORT_COPY_NOTE"])
 
         local copyStatus = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         copyStatus:SetPoint("TOPLEFT", 35, -264)
         copyStatus:SetText("")
 
-        local copyBtn = W:CreateButton(sc, { text = "Copy to Current", width = 110, height = 24 })
+        local copyBtn = W:CreateButton(sc, { text = L["IMPORTEXPORT_COPY_BTN"], width = 110, height = 24 })
         copyBtn:SetPoint("LEFT", copyFromDropdown, "RIGHT", 8, 0)
         copyBtn:SetScript("OnClick", function()
             local sourceProfile = copyFromDropdown:GetSelectedValue()
             if not sourceProfile then
-                copyStatus:SetText("|cffff4444Select a profile to copy|r")
+                copyStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_COPY_ERR"] .. "|r")
                 return
             end
             local ok, err = ns.SettingsIO:CopyProfile(sourceProfile)
             if ok then
-                copyStatus:SetText("|cff44ff44Copied settings from: " .. sourceProfile .. "|r")
+                copyStatus:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_COPY_OK"], sourceProfile) .. "|r")
                 RefreshProfileDropdown()
                 UpdateProfileStatus()
             else
-                copyStatus:SetText("|cffff4444" .. (err or "Copy failed") .. "|r")
+                copyStatus:SetText("|cffff4444" .. (err or L["IMPORTEXPORT_COPY_ERR"]) .. "|r")
             end
         end)
 
         -- Spec Profile Swap Section
-        W:CreateSectionHeader(sc, "Spec Profile Swap", -296)
+        W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_SPEC"], -296)
 
         local specRows = {}
 
         RefreshSpecDropdowns = function()
             local profiles = ns.SettingsIO:GetProfileList()
-            local options = {{ text = "(None)", value = "" }}
+            local options = {{ text = L["COMMON_NONE"], value = "" }}
             for _, name in ipairs(profiles) do
                 options[#options + 1] = { text = name, value = name }
             end
@@ -471,7 +472,7 @@ function ns:InitImportExport()
                     dropdown:SetText(specData.profile)
                     dropdown:SetSelectedValue(specData.profile)
                 else
-                    dropdown:SetText("(None)")
+                    dropdown:SetText(L["COMMON_NONE"])
                     dropdown:SetSelectedValue("")
                 end
             end
@@ -508,8 +509,8 @@ function ns:InitImportExport()
                     -- Profile dropdown
                     local dropdown = CreateDynamicDropdown(sc, {
                         width = 140,
-                        placeholder = "(None)",
-                        emptyText = "(No profiles)",
+                        placeholder = L["COMMON_NONE"],
+                        emptyText = L["COMMON_NONE"],
                         onSelect = function(profileName)
                             ns.SettingsIO:SetSpecProfile(specIndex, profileName)
                         end
@@ -584,14 +585,14 @@ function ns:InitImportExport()
             return box, bg
         end
 
-        W:CreateSectionHeader(sc, "Export", -480)
+        W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_EXPORT"], -480)
 
-        local exportBtn = W:CreateButton(sc, { text = "Export Settings", width = 130, height = 26 })
+        local exportBtn = W:CreateButton(sc, { text = L["IMPORTEXPORT_EXPORT_BTN"], width = 130, height = 26 })
         exportBtn:SetPoint("TOPLEFT", 35, -515)
 
         local exportHint = sc:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         exportHint:SetPoint("LEFT", exportBtn, "RIGHT", 10, 0)
-        exportHint:SetText("Ctrl+A, Ctrl+C to copy")
+        exportHint:SetText(L["IMPORTEXPORT_EXPORT_HINT"])
 
         local exportBox = MakeTextBox(sc, -548, 80, true)
 
@@ -602,11 +603,11 @@ function ns:InitImportExport()
             exportBox:SetFocus(); exportBox:HighlightText()
         end)
 
-        W:CreateSectionHeader(sc, "Import", -645)
+        W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_IMPORT"], -645)
 
         local importBox = MakeTextBox(sc, -680, 80, false)
 
-        local loadBtn = W:CreateButton(sc, { text = "Load", width = 80, height = 26 })
+        local loadBtn = W:CreateButton(sc, { text = L["IMPORTEXPORT_LOAD_BTN"], width = 80, height = 26 })
         loadBtn:SetPoint("TOPLEFT", 35, -768)
 
         local statusText = sc:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -641,7 +642,7 @@ function ns:InitImportExport()
         local function BuildChecks(foundKeys)
             ClearChecks()
             if not foundKeys then
-                statusText:SetText("|cffff4444Invalid string.|r")
+                statusText:SetText("|cffff4444" .. L["IMPORTEXPORT_INVALID"] .. "|r")
                 return
             end
 
@@ -662,15 +663,15 @@ function ns:InitImportExport()
             end
 
             if count == 0 then
-                statusText:SetText("|cffff4444No recognized modules in string.|r")
+                statusText:SetText("|cffff4444" .. L["IMPORTEXPORT_NO_MODULES"] .. "|r")
                 return
             end
 
-            statusText:SetText("|cff44ff44" .. count .. " modules found.|r")
+            statusText:SetText("|cff44ff44" .. string.format(L["IMPORTEXPORT_FOUND"], count) .. "|r")
 
             if not importBtn then
                 importBtn = W:CreateButton(checkContainer, {
-                    text = "Import Selected",
+                    text = L["IMPORTEXPORT_IMPORT_BTN"],
                     width = 130,
                     height = 26,
                     onClick = function()
@@ -681,9 +682,9 @@ function ns:InitImportExport()
                         local raw = strtrim(importBox:GetText())
                         local ok, err = ns.SettingsIO:Import(raw, selected)
                         if ok then
-                            statusText:SetText("|cff44ff44Imported successfully!|r")
+                            statusText:SetText("|cff44ff44" .. L["IMPORTEXPORT_IMPORT_OK"] .. "|r")
                         else
-                            statusText:SetText("|cffff4444" .. (err or "Import failed.") .. "|r")
+                            statusText:SetText("|cffff4444" .. (err or L["IMPORTEXPORT_IMPORT_ERR"]) .. "|r")
                         end
                     end
                 })
@@ -697,7 +698,7 @@ function ns:InitImportExport()
 
         loadBtn:SetScript("OnClick", function()
             local raw = strtrim(importBox:GetText())
-            if raw == "" then ClearChecks(); statusText:SetText("|cffff4444Paste a string first.|r"); return end
+            if raw == "" then ClearChecks(); statusText:SetText("|cffff4444" .. L["IMPORTEXPORT_PASTE_FIRST"] .. "|r"); return end
             local found = ns.SettingsIO:Preview(raw)
             BuildChecks(found)
         end)

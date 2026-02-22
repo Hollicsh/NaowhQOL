@@ -735,11 +735,12 @@ function ns.Widgets:CreateColorPicker(parent, opts)
 
     if classColorKey then
         local cb = self:CreateCheckbox(parent, {
-            label = "Class",
+            label = ns.L["COMMON_CLASS"],
             db = opts.db,
             key = classColorKey,
             size = 18,
-            tooltip = "Use your class color instead of the picker color",
+            tooltip = ns.L["COMMON_CLASS"],
+            -- Use your class color instead of the picker color
             onChange = function()
                 UpdatePreview()
                 if opts.onChange then
@@ -1221,6 +1222,8 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
     arrow:SetPoint("RIGHT", -6, 0); arrow:SetText("|cffffa900v|r")
 
     local panel = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    panel:SetSize(WIDTH, FILTER_H + ROW_H + VISIBLE_ROWS * ROW_H + 12)
+    panel:SetPoint("TOPLEFT", selBtn, "BOTTOMLEFT", 0, -2)
     panel:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]],
         edgeFile = [[Interface\Buttons\WHITE8x8]], edgeSize = 1 })
     panel:SetBackdropColor(0.06, 0.06, 0.06, 0.98)
@@ -1329,18 +1332,49 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
 
     local listArea = CreateFrame("Frame", nil, panel)
     listArea:SetPoint("TOPLEFT", 4, -(FILTER_H + ROW_H + 8))
-    listArea:SetSize(WIDTH - 8, VISIBLE_ROWS * ROW_H)
+    listArea:SetSize(WIDTH - 14, VISIBLE_ROWS * ROW_H)
     listArea:EnableMouseWheel(true)
+
+    -- Scrollbar track + thumb
+    local SCROLLBAR_W = 4
+    local scrollTrack = panel:CreateTexture(nil, "ARTWORK")
+    scrollTrack:SetColorTexture(0.15, 0.15, 0.15, 0.6)
+    scrollTrack:SetSize(SCROLLBAR_W, VISIBLE_ROWS * ROW_H)
+    scrollTrack:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -4, -(FILTER_H + ROW_H + 8))
+
+    local scrollThumb = panel:CreateTexture(nil, "OVERLAY")
+    scrollThumb:SetColorTexture(1.0, 0.66, 0.0, 0.7)
+    scrollThumb:SetSize(SCROLLBAR_W, 30)
+    scrollThumb:SetPoint("TOP", scrollTrack, "TOP", 0, 0)
 
     local rows = {}
     local filtered = {}
     local scrollOff = 0
 
+    local function UpdateScrollbar()
+        local total = #filtered
+        if total <= VISIBLE_ROWS then
+            scrollTrack:Hide()
+            scrollThumb:Hide()
+            return
+        end
+        scrollTrack:Show()
+        scrollThumb:Show()
+        local trackH = VISIBLE_ROWS * ROW_H
+        local thumbH = math.max(16, trackH * (VISIBLE_ROWS / total))
+        scrollThumb:SetHeight(thumbH)
+        local maxOff = total - VISIBLE_ROWS
+        local ratio = scrollOff / maxOff
+        local travel = trackH - thumbH
+        scrollThumb:ClearAllPoints()
+        scrollThumb:SetPoint("TOP", scrollTrack, "TOP", 0, -(ratio * travel))
+    end
+
     local function BuildRows()
         for i = 1, VISIBLE_ROWS do
             if rows[i] then break end
             local row = CreateFrame("Button", nil, listArea, "BackdropTemplate")
-            row:SetSize(WIDTH - 8, ROW_H)
+            row:SetSize(WIDTH - 14, ROW_H)
             row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_H)
             row:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
             row:SetBackdropColor(0, 0, 0, 0)
@@ -1388,6 +1422,7 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
     end
 
     Filter = function()
+        ns.SoundList.Rebuild()
         filtered = {}
         local q = strlower(strtrim(search:GetText()))
         for i, entry in ipairs(ns.SoundList) do
@@ -1399,6 +1434,7 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
         end
         scrollOff = 0
         Refresh()
+        UpdateScrollbar()
     end
 
     search:SetScript("OnTextChanged", function() Filter() end)
@@ -1407,6 +1443,7 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
     listArea:SetScript("OnMouseWheel", function(_, delta)
         scrollOff = math.max(0, math.min(scrollOff - delta, math.max(0, #filtered - VISIBLE_ROWS)))
         Refresh()
+        UpdateScrollbar()
     end)
 
     selBtn:SetScript("OnClick", function()
@@ -2192,7 +2229,7 @@ function ns.Widgets:CreateRestoreDefaultsButton(opts)
 
     local label = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     label:SetPoint("CENTER", 0, 0)
-    label:SetText("RESTORE DEFAULTS")
+    label:SetText(ns.L["COMMON_RESET_DEFAULTS"])
     label:SetTextColor(0.9, 0.3, 0.3, 1)
 
     btn:SetScript("OnEnter", function(self)
@@ -2210,8 +2247,8 @@ function ns.Widgets:CreateRestoreDefaultsButton(opts)
     btn:SetScript("OnClick", function()
         StaticPopupDialogs["NAOWHQOL_RESTORE_DEFAULTS"] = {
             text = "Restore " .. moduleName:upper() .. " to default settings?\n\nThis will close the settings panel.",
-            button1 = "Restore",
-            button2 = "Cancel",
+            button1 = ns.L["COMMON_RESTORE"],
+            button2 = ns.L["COMMON_CANCEL"],
             OnAccept = function()
                 if ns:RestoreModuleDefaults(moduleName) then
                     print("|cff018ee7NaowhQOL|r: " .. moduleName .. " restored to defaults.")

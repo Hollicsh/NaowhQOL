@@ -837,12 +837,12 @@ function ns:InitOptOptions()
                 NaowhQOL.savedSettings = nil
             end
         end)
-        AddTooltip(revertBtn, "Revert Settings",
-            "Restore your previous settings:", {
-            "Reverts to saved configuration",
-            "Before any optimization was applied",
+        AddTooltip(revertBtn, L["OPT_TT_REVERT_TITLE"],
+            L["OPT_TT_REVERT_DESC"], {
+            L["OPT_TT_REVERT_LINE1"],
+            L["OPT_TT_REVERT_LINE2"],
             " ",
-            hasSavedSettings and "Click to restore" or "Apply optimization first"
+            hasSavedSettings and L["OPT_TT_REVERT_CLICK"] or L["OPT_TT_REVERT_NOSAVEDYET"]
         })
 
         local fpsBtn = CreateSectionButton(presetsContent, 0, 1,
@@ -854,12 +854,12 @@ function ns:InitOptOptions()
             revertBtn:SetAlpha(1)
             revertBtn:SetText(W.Colorize(L["OPT_REVERT"], C.ORANGE))
         end)
-        AddTooltip(fpsBtn, "Optimal FPS Settings",
-            "Maximum performance for competitive gameplay:", {
-            "DirectX 12 enabled", "All effects optimized",
-            "Shadows balanced", "Particles optimized",
-            "Perfect for raids & M+",
-            " ", "Requires UI Reload"
+        AddTooltip(fpsBtn, L["OPT_TT_FPS_TITLE"],
+            L["OPT_TT_FPS_DESC"], {
+            L["OPT_TT_FPS_DX12"], L["OPT_TT_FPS_EFFECTS"],
+            L["OPT_TT_FPS_SHADOWS"], L["OPT_TT_FPS_PARTICLES"],
+            L["OPT_TT_FPS_PERFECT"],
+            " ", L["OPT_TT_FPS_RELOAD"]
         })
 
         presetsContent:SetHeight(87)
@@ -964,13 +964,13 @@ function ns:InitOptOptions()
                     ns.Profiler:Toggle()
                 else
                     print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
-                        .. W.Colorize("Profiler module not available.", C.ERROR))
+                        .. W.Colorize(L["PROFILER_NOT_AVAILABLE"], C.ERROR))
                 end
             end
         end)
-        AddTooltip(profBtn, "Addon Profiler", "Profile all addon performance:", {
-            "Track all addon CPU & memory", "Find performance issues",
-            "Optimize addon load", "Requires UI reload first time"
+        AddTooltip(profBtn, L["OPT_TT_PROF_TITLE"], L["OPT_TT_PROF_DESC"], {
+            L["OPT_TT_PROF_LINE1"], L["OPT_TT_PROF_LINE2"],
+            L["OPT_TT_PROF_LINE3"], L["OPT_TT_PROF_LINE4"]
         })
 
         diagContent:SetHeight(45)

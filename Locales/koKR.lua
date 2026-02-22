@@ -386,6 +386,30 @@ ns:RegisterLocale("koKR", {
     OPT_SQW_RANGED = "원거리: 핑 + 150",
     OPT_SECTION_DIAG = "진단",
     OPT_PROFILER = "애드온 프로파일러",
+
+    OPT_TT_REVERT_TITLE       = "설정 복원",
+    OPT_TT_REVERT_DESC        = "이전 설정을 복원합니다:",
+    OPT_TT_REVERT_LINE1       = "저장된 구성으로 되돌리기",
+    OPT_TT_REVERT_LINE2       = "최적화 적용 이전 상태",
+    OPT_TT_REVERT_CLICK       = "클릭하여 복원",
+    OPT_TT_REVERT_NOSAVEDYET  = "먼저 최적화를 적용하세요",
+
+    OPT_TT_FPS_TITLE          = "최적 FPS 설정",
+    OPT_TT_FPS_DESC           = "경쟁 게임플레이를 위한 최대 성능:",
+    OPT_TT_FPS_DX12           = "DirectX 12 활성화",
+    OPT_TT_FPS_EFFECTS        = "모든 효과 최적화",
+    OPT_TT_FPS_SHADOWS        = "그림자 균형 조정",
+    OPT_TT_FPS_PARTICLES      = "파티클 최적화",
+    OPT_TT_FPS_PERFECT        = "레이드 & 쐐기 최적",
+    OPT_TT_FPS_RELOAD         = "UI 리로드 필요",
+
+    OPT_TT_PROF_TITLE         = "애드온 프로파일러",
+    OPT_TT_PROF_DESC          = "모든 애드온 성능 분석:",
+    OPT_TT_PROF_LINE1         = "모든 애드온 CPU 및 메모리 추적",
+    OPT_TT_PROF_LINE2         = "성능 문제 찾기",
+    OPT_TT_PROF_LINE3         = "애드온 로드 최적화",
+    OPT_TT_PROF_LINE4         = "처음 사용 시 UI 리로드 필요",
+
     OPT_SECTION_MONITOR = "실시간 모니터",
     OPT_WARMING = "준비 중...",
     OPT_UNAVAILABLE = "프로파일러 사용 불가",
@@ -895,4 +919,159 @@ ns:RegisterLocale("koKR", {
     EQUIPMENTREMINDER_CAPTURE              = "현재 캡처",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "예상 인챈트",
     EQUIPMENTREMINDER_CAPTURED             = "장착된 장비에서 %d개의 인챈트 캡처됨",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: 앵커 포인트
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "좌상단",
+    COMMON_ANCHOR_TOP         = "상단",
+    COMMON_ANCHOR_TOPRIGHT    = "우상단",
+    COMMON_ANCHOR_LEFT        = "왼쪽",
+    COMMON_ANCHOR_CENTER      = "중앙",
+    COMMON_ANCHOR_RIGHT       = "오른쪽",
+    COMMON_ANCHOR_BOTTOMLEFT  = "좌하단",
+    COMMON_ANCHOR_BOTTOM      = "하단",
+    COMMON_ANCHOR_BOTTOMRIGHT = "우하단",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: 기타 UI
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "직업",
+    COMMON_OK          = "확인",
+    COMMON_RENAME      = "이름 변경",
+    COMMON_DELETE      = "삭제",
+    COMMON_NEW         = "새로 만들기",
+    COMMON_NONE        = "(없음)",
+    COMMON_RESTORE     = "복원",
+
+    ---------------------------------------------------------------------------
+    -- IMPORT / EXPORT (프로필)
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "프로필",
+    IMPORTEXPORT_SUBTITLE       = "캐릭터 간 또는 다른 플레이어와 설정 공유",
+    IMPORTEXPORT_SECTION_MANAGE = "프로필 관리",
+    IMPORTEXPORT_ACTIVE_STATUS  = "활성: %s  (%d개 저장됨)",
+    IMPORTEXPORT_PLACEHOLDER    = "프로필 선택",
+    IMPORTEXPORT_STATUS_LOADED  = "로드됨: %s — 적용하려면 UI 리로드",
+    IMPORTEXPORT_STATUS_SAVED   = "저장됨: %s",
+    IMPORTEXPORT_STATUS_CREATED = "생성됨: %s",
+    IMPORTEXPORT_STATUS_RENAMED = "이름 변경됨: %s",
+    IMPORTEXPORT_STATUS_DELETED = "삭제됨",
+    IMPORTEXPORT_ERR_LAST       = "마지막 프로필은 삭제할 수 없습니다",
+    IMPORTEXPORT_ERR_EXISTS     = "이미 존재하는 이름입니다",
+    IMPORTEXPORT_ERR_RENAME     = "이름 변경 실패",
+    IMPORTEXPORT_ERR_LOAD       = "로드 실패",
+    IMPORTEXPORT_SECTION_COPY   = "기존 프로필 복사",
+    IMPORTEXPORT_SELECT_COPY    = "복사할 프로필 선택",
+    IMPORTEXPORT_COPY_NOTE      = "프로필은 모든 캐릭터 간에 공유됩니다",
+    IMPORTEXPORT_COPY_BTN       = "현재에 복사",
+    IMPORTEXPORT_COPY_OK        = "%s에서 설정 복사됨",
+    IMPORTEXPORT_COPY_ERR       = "복사할 프로필을 선택하세요",
+    IMPORTEXPORT_SECTION_SPEC   = "특화 프로필 전환",
+    IMPORTEXPORT_SECTION_EXPORT = "내보내기",
+    IMPORTEXPORT_EXPORT_BTN     = "설정 내보내기",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A, Ctrl+C로 복사",
+    IMPORTEXPORT_SECTION_IMPORT = "가져오기",
+    IMPORTEXPORT_LOAD_BTN       = "로드",
+    IMPORTEXPORT_IMPORT_BTN     = "선택 항목 가져오기",
+    IMPORTEXPORT_FOUND          = "%d개 모듈 발견.",
+    IMPORTEXPORT_NO_MODULES     = "문자열에서 인식된 모듈이 없습니다.",
+    IMPORTEXPORT_INVALID        = "유효하지 않은 문자열.",
+    IMPORTEXPORT_PASTE_FIRST    = "먼저 문자열을 붙여넣으세요.",
+    IMPORTEXPORT_IMPORT_OK      = "성공적으로 가져왔습니다!",
+    IMPORTEXPORT_IMPORT_ERR     = "가져오기 실패.",
+    IMPORTEXPORT_POPUP_RENAME   = "프로필 '%s'의 이름을 변경:",
+    IMPORTEXPORT_POPUP_NEW      = "기본 설정으로 새 프로필 만들기:",
+    IMPORTEXPORT_POPUP_DELETE   = "프로필 '%s'을(를) 삭제하시겠습니까?",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER (CONFIG)
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "전투 로거",
+    COMBATLOGGER_DESC               = "공격대 및 쐐기돌 던전을 위한 자동 전투 로그 관리",
+    COMBATLOGGER_ENABLE             = "전투 로거 활성화",
+    COMBATLOGGER_SECTION_STATUS     = "상태",
+    COMBATLOGGER_SECTION_INSTANCES  = "저장된 인스턴스",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "인스턴스 %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "난이도 %s",
+    COMBATLOGGER_TOGGLE_BTN         = "전환",
+    COMBATLOGGER_NO_INSTANCES       = "저장된 인스턴스가 없습니다. 공격대 또는 쐐기돌 던전에 입장하세요.",
+    COMBATLOGGER_RESET_ALL_BTN      = "모든 인스턴스 초기화",
+    COMBATLOGGER_STATUS_ACTIVE      = "기록 중",
+    COMBATLOGGER_STATUS_INACTIVE    = "기록 안 함",
+    COMBATLOGGER_STATUS_PREFIX      = "상태: ",
+    COMBATLOGGER_CURRENT_PREFIX     = "현재: ",
+    COMBATLOGGER_NOT_TRACKABLE      = "추적 가능한 콘텐츠가 아닙니다",
+    COMBATLOGGER_RESET_CONFIRM      = "저장된 모든 인스턴스 기록 환경설정을 지우시겠습니까?\n각 인스턴스에 다음에 입장할 때 다시 묻습니다.",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "모두 지우기",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "특성 알림",
+    TALENT_DESC                     = "던전 및 공격대 보스별로 특성 불러오기 저장 및 복원",
+    TALENT_ENABLE                   = "특성 알림 활성화",
+    TALENT_SECTION_LOADOUTS         = "저장된 구성",
+    TALENT_NO_LOADOUTS              = "저장된 구성이 없습니다.\n신화 던전에 입장하거나 공격대 보스를 대상으로 지정하세요.",
+    TALENT_UNKNOWN_SPEC             = "알 수 없는 특화",
+    TALENT_UNKNOWN                  = "알 수 없음",
+    TALENT_CLEAR_ALL_BTN            = "모든 구성 지우기",
+    TALENT_RESET_CONFIRM            = "저장된 모든 특성 구성을 지우시겠습니까?\n각 던전/보스에 대해 다시 묻습니다.",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "애드온 프로파일러",
+    PROFILER_COL_ADDON_NAME         = "애드온 이름",
+    PROFILER_COL_CPU_AVG            = "CPU 평균",
+    PROFILER_COL_CPU_MAX            = "CPU 최대",
+    PROFILER_COL_RAM                = "메모리",
+    PROFILER_UNIT_MS                = "(ms)",
+    PROFILER_UNIT_MB                = "(MB)",
+    PROFILER_RESET                  = "초기화",
+    PROFILER_STATS_RESET            = "통계 초기화됨",
+    PROFILER_PURGE_RAM              = "메모리 정리",
+    PROFILER_PURGE_COMPLETE         = "전역 메모리 정리 완료. 해제됨: ",
+    PROFILER_PAUSE                  = "일시정지",
+    PROFILER_RESUME                 = "재개",
+    PROFILER_PAUSED                 = "일시정지됨",
+    PROFILER_RESUMED                = "재개됨",
+    PROFILER_STOP                   = "프로파일링 중지",
+    PROFILER_SELF_LABEL             = " [자신: %.2fms / %.1fMB]",
+    PROFILER_NOT_AVAILABLE          = "프로파일러 모듈을 사용할 수 없습니다.",
+
+    ---------------------------------------------------------------------------
+    -- MODULES (추가)
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "미니맵 아이콘 숨기기",
+    MODULES_HIDE_MINIMAP_DESC       = "NaowhQOL 미니맵 버튼 숨기기",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (추가)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "인스턴스 입장 시 또는 준비 확인 시 장착된 장신구와 무기 표시",
+    EQUIPMENTREMINDER_MAIN_HAND     = "주 무기",
+    EQUIPMENTREMINDER_OFF_HAND      = "보조 무기",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION (추가)
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "(알 수 없는 주문)",
+    EMOTE_ERR_SPELLID               = "주문 ID가 필요합니다.",
+    EMOTE_ERR_EMOTETEXT             = "감정 표현 텍스트가 필요합니다.",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER (추가)
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "알 수 없음",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR (추가)
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "신성 기사는 4yd 아이템 탐지 사용 (~0.5yd 오차)",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2 (추가)
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "통과 시 사라지기 전 초 (0 = 비활성화)",
 })

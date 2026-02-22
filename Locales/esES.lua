@@ -386,6 +386,30 @@ ns:RegisterLocale("esES", {
     OPT_SQW_RANGED = "Distancia: Ping + 150",
     OPT_SECTION_DIAG = "DIAGNÓSTICO",
     OPT_PROFILER = "Analizador de complementos",
+
+    OPT_TT_REVERT_TITLE       = "Revertir ajustes",
+    OPT_TT_REVERT_DESC        = "Restaurar ajustes anteriores:",
+    OPT_TT_REVERT_LINE1       = "Revertir a la configuración guardada",
+    OPT_TT_REVERT_LINE2       = "Antes de cualquier optimización",
+    OPT_TT_REVERT_CLICK       = "Clic para restaurar",
+    OPT_TT_REVERT_NOSAVEDYET  = "Aplica la optimización primero",
+
+    OPT_TT_FPS_TITLE          = "Ajustes óptimos de FPS",
+    OPT_TT_FPS_DESC           = "Máximo rendimiento para juego competitivo:",
+    OPT_TT_FPS_DX12           = "DirectX 12 habilitado",
+    OPT_TT_FPS_EFFECTS        = "Todos los efectos optimizados",
+    OPT_TT_FPS_SHADOWS        = "Sombras equilibradas",
+    OPT_TT_FPS_PARTICLES      = "Partículas optimizadas",
+    OPT_TT_FPS_PERFECT        = "Perfecto para raids y M+",
+    OPT_TT_FPS_RELOAD         = "Requiere recargar la IU",
+
+    OPT_TT_PROF_TITLE         = "Analizador de complementos",
+    OPT_TT_PROF_DESC          = "Analizar rendimiento de complementos:",
+    OPT_TT_PROF_LINE1         = "Rastrear CPU y memoria de complementos",
+    OPT_TT_PROF_LINE2         = "Encontrar problemas de rendimiento",
+    OPT_TT_PROF_LINE3         = "Optimizar carga de complementos",
+    OPT_TT_PROF_LINE4         = "Requiere recargar la IU la primera vez",
+
     OPT_SECTION_MONITOR = "MONITOR EN TIEMPO REAL",
     OPT_WARMING = "Calentando...",
     OPT_UNAVAILABLE = "Analizador no disponible",
@@ -895,4 +919,159 @@ ns:RegisterLocale("esES", {
     EQUIPMENTREMINDER_CAPTURE              = "Capturar actual",
     EQUIPMENTREMINDER_EXPECTED_ENCHANT     = "Encantamiento esperado",
     EQUIPMENTREMINDER_CAPTURED             = "%d encantamiento(s) capturado(s) del equipo equipado",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Puntos de anclaje
+    ---------------------------------------------------------------------------
+    COMMON_ANCHOR_TOPLEFT     = "Arriba Izquierda",
+    COMMON_ANCHOR_TOP         = "Arriba",
+    COMMON_ANCHOR_TOPRIGHT    = "Arriba Derecha",
+    COMMON_ANCHOR_LEFT        = "Izquierda",
+    COMMON_ANCHOR_CENTER      = "Centro",
+    COMMON_ANCHOR_RIGHT       = "Derecha",
+    COMMON_ANCHOR_BOTTOMLEFT  = "Abajo Izquierda",
+    COMMON_ANCHOR_BOTTOM      = "Abajo",
+    COMMON_ANCHOR_BOTTOMRIGHT = "Abajo Derecha",
+
+    ---------------------------------------------------------------------------
+    -- COMMON: Misc UI
+    ---------------------------------------------------------------------------
+    COMMON_CLASS       = "Clase",
+    COMMON_OK          = "OK",
+    COMMON_RENAME      = "Renombrar",
+    COMMON_DELETE      = "Eliminar",
+    COMMON_NEW         = "Nuevo",
+    COMMON_NONE        = "(Ninguno)",
+    COMMON_RESTORE     = "Restaurar",
+
+    ---------------------------------------------------------------------------
+    -- IMPORT / EXPORT (PERFILES)
+    ---------------------------------------------------------------------------
+    IMPORTEXPORT_TITLE          = "PERFILES",
+    IMPORTEXPORT_SUBTITLE       = "Comparte ajustes entre personajes o con otros jugadores",
+    IMPORTEXPORT_SECTION_MANAGE = "Gestión de perfiles",
+    IMPORTEXPORT_ACTIVE_STATUS  = "Activo: %s  (%d guardados)",
+    IMPORTEXPORT_PLACEHOLDER    = "Seleccionar perfil",
+    IMPORTEXPORT_STATUS_LOADED  = "Cargado: %s — recarga para aplicar",
+    IMPORTEXPORT_STATUS_SAVED   = "Guardado: %s",
+    IMPORTEXPORT_STATUS_CREATED = "Creado: %s",
+    IMPORTEXPORT_STATUS_RENAMED = "Renombrado a: %s",
+    IMPORTEXPORT_STATUS_DELETED = "Eliminado",
+    IMPORTEXPORT_ERR_LAST       = "No se puede eliminar el último perfil",
+    IMPORTEXPORT_ERR_EXISTS     = "El nombre ya existe",
+    IMPORTEXPORT_ERR_RENAME     = "Error al renombrar",
+    IMPORTEXPORT_ERR_LOAD       = "Error al cargar",
+    IMPORTEXPORT_SECTION_COPY   = "Copiar perfil existente",
+    IMPORTEXPORT_SELECT_COPY    = "Seleccionar perfil para copiar",
+    IMPORTEXPORT_COPY_NOTE      = "Los perfiles se comparten entre todos los personajes",
+    IMPORTEXPORT_COPY_BTN       = "Copiar al actual",
+    IMPORTEXPORT_COPY_OK        = "Ajustes copiados de: %s",
+    IMPORTEXPORT_COPY_ERR       = "Selecciona un perfil para copiar",
+    IMPORTEXPORT_SECTION_SPEC   = "Cambio de perfil por especialización",
+    IMPORTEXPORT_SECTION_EXPORT = "Exportar",
+    IMPORTEXPORT_EXPORT_BTN     = "Exportar ajustes",
+    IMPORTEXPORT_EXPORT_HINT    = "Ctrl+A, Ctrl+C para copiar",
+    IMPORTEXPORT_SECTION_IMPORT = "Importar",
+    IMPORTEXPORT_LOAD_BTN       = "Cargar",
+    IMPORTEXPORT_IMPORT_BTN     = "Importar seleccionados",
+    IMPORTEXPORT_FOUND          = "%d módulos encontrados.",
+    IMPORTEXPORT_NO_MODULES     = "No se reconocieron módulos en la cadena.",
+    IMPORTEXPORT_INVALID        = "Cadena no válida.",
+    IMPORTEXPORT_PASTE_FIRST    = "Pega una cadena primero.",
+    IMPORTEXPORT_IMPORT_OK      = "¡Importado con éxito!",
+    IMPORTEXPORT_IMPORT_ERR     = "Error al importar.",
+    IMPORTEXPORT_POPUP_RENAME   = "Renombrar perfil '%s' a:",
+    IMPORTEXPORT_POPUP_NEW      = "Crear nuevo perfil con ajustes predeterminados:",
+    IMPORTEXPORT_POPUP_DELETE   = "¿Eliminar perfil '%s'?",
+
+    ---------------------------------------------------------------------------
+    -- COMBAT LOGGER (CONFIG)
+    ---------------------------------------------------------------------------
+    COMBATLOGGER_TITLE              = "REGISTRO DE COMBATE",
+    COMBATLOGGER_DESC               = "Gestión automática del registro de combate para bandas y M+",
+    COMBATLOGGER_ENABLE             = "Activar registro de combate",
+    COMBATLOGGER_SECTION_STATUS     = "ESTADO",
+    COMBATLOGGER_SECTION_INSTANCES  = "INSTANCIAS GUARDADAS",
+    COMBATLOGGER_UNKNOWN_INSTANCE   = "Instancia %s",
+    COMBATLOGGER_UNKNOWN_DIFFICULTY = "Dificultad %s",
+    COMBATLOGGER_TOGGLE_BTN         = "Alternar",
+    COMBATLOGGER_NO_INSTANCES       = "Sin instancias guardadas aún. Entra en una banda o mazmorra M+.",
+    COMBATLOGGER_RESET_ALL_BTN      = "Restablecer todas las instancias",
+    COMBATLOGGER_STATUS_ACTIVE      = "REGISTRO ACTIVO",
+    COMBATLOGGER_STATUS_INACTIVE    = "SIN REGISTRO",
+    COMBATLOGGER_STATUS_PREFIX      = "Estado: ",
+    COMBATLOGGER_CURRENT_PREFIX     = "Actual: ",
+    COMBATLOGGER_NOT_TRACKABLE      = "No en contenido rastreable",
+    COMBATLOGGER_RESET_CONFIRM      = "¿Borrar todas las preferencias de registro de instancias guardadas?\nSe te preguntará de nuevo la próxima vez que entres en cada instancia.",
+    COMBATLOGGER_CLEAR_ALL_BTN      = "Borrar todo",
+
+    ---------------------------------------------------------------------------
+    -- TALENT REMINDER (CONFIG)
+    ---------------------------------------------------------------------------
+    TALENT_TITLE                    = "RECORDATORIO DE TALENTOS",
+    TALENT_DESC                     = "Guardar y restaurar configuraciones de talentos por mazmorra y jefe de banda",
+    TALENT_ENABLE                   = "Activar recordatorio de talentos",
+    TALENT_SECTION_LOADOUTS         = "CONFIGURACIONES GUARDADAS",
+    TALENT_NO_LOADOUTS              = "Sin configuraciones guardadas aún.\nEntra en una mazmorra Mítica o selecciona un jefe de banda.",
+    TALENT_UNKNOWN_SPEC             = "Especialización desconocida",
+    TALENT_UNKNOWN                  = "Desconocido",
+    TALENT_CLEAR_ALL_BTN            = "Borrar todas las configuraciones",
+    TALENT_RESET_CONFIRM            = "¿Borrar todas las configuraciones de talentos guardadas?\nSe te preguntará de nuevo para cada mazmorra/jefe.",
+
+    ---------------------------------------------------------------------------
+    -- PROFILER
+    ---------------------------------------------------------------------------
+    PROFILER_TITLE                  = "PERFILADOR DE ADDONS",
+    PROFILER_COL_ADDON_NAME         = "NOMBRE DEL ADDON",
+    PROFILER_COL_CPU_AVG            = "CPU PROM.",
+    PROFILER_COL_CPU_MAX            = "CPU MÁX.",
+    PROFILER_COL_RAM                = "RAM",
+    PROFILER_UNIT_MS                = "(ms)",
+    PROFILER_UNIT_MB                = "(MB)",
+    PROFILER_RESET                  = "Restablecer",
+    PROFILER_STATS_RESET            = "Estadísticas restablecidas",
+    PROFILER_PURGE_RAM              = "Purgar RAM",
+    PROFILER_PURGE_COMPLETE         = "Purga global de RAM completada. Liberado: ",
+    PROFILER_PAUSE                  = "Pausar",
+    PROFILER_RESUME                 = "Reanudar",
+    PROFILER_PAUSED                 = "Pausado",
+    PROFILER_RESUMED                = "Reanudado",
+    PROFILER_STOP                   = "Detener perfilado",
+    PROFILER_SELF_LABEL             = " [Propio: %.2fms / %.1fMB]",
+    PROFILER_NOT_AVAILABLE          = "Módulo de perfilado no disponible.",
+
+    ---------------------------------------------------------------------------
+    -- MODULES (adicional)
+    ---------------------------------------------------------------------------
+    MODULES_HIDE_MINIMAP            = "Ocultar icono del minimapa",
+    MODULES_HIDE_MINIMAP_DESC       = "Oculta el botón del minimapa de NaowhQOL",
+
+    ---------------------------------------------------------------------------
+    -- EQUIPMENT REMINDER (adicional)
+    ---------------------------------------------------------------------------
+    EQUIPMENTREMINDER_DESC          = "Mostrar abalorios y armas equipados al entrar en instancias o durante comprobaciones de preparación",
+    EQUIPMENTREMINDER_MAIN_HAND     = "Mano principal",
+    EQUIPMENTREMINDER_OFF_HAND      = "Mano secundaria",
+
+    ---------------------------------------------------------------------------
+    -- EMOTE DETECTION (adicional)
+    ---------------------------------------------------------------------------
+    EMOTE_UNKNOWN_SPELL             = "(hechizo desconocido)",
+    EMOTE_ERR_SPELLID               = "Se requiere ID de hechizo.",
+    EMOTE_ERR_EMOTETEXT             = "Se requiere texto de emote.",
+
+    ---------------------------------------------------------------------------
+    -- GCD TRACKER (adicional)
+    ---------------------------------------------------------------------------
+    GCD_UNKNOWN_SPELL               = "Desconocido",
+
+    ---------------------------------------------------------------------------
+    -- CROSSHAIR (adicional)
+    ---------------------------------------------------------------------------
+    CROSSHAIR_HPAL_NOTE             = "HPal usa detección de objeto a 4yd (~0.5yd de variación)",
+
+    ---------------------------------------------------------------------------
+    -- BUFF WATCHER V2 (adicional)
+    ---------------------------------------------------------------------------
+    BWV2_FADE_TOOLTIP               = "Segundos antes de desaparecer al aprobar (0 = desactivado)",
 })
