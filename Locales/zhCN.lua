@@ -319,7 +319,7 @@ ns:RegisterLocale("zhCN", {
     GCD_SHOW_RAIDS = "在团队副本中显示",
     GCD_SHOW_ARENAS = "在竞技场中显示",
     GCD_SHOW_BGS = "在战场中显示",
-    GCD_SHOW_WORLD = "在世界中显示",
+    GCD_SHOW_WORLD = "在野外显示",
     GCD_SECTION_BLOCKLIST = "技能黑名单",
     GCD_BLOCKLIST_DESC = "阻止特定技能显示 (输入技能 ID)",
     GCD_SPELLID_PLACEHOLDER = "技能 ID...",
@@ -382,7 +382,7 @@ ns:RegisterLocale("zhCN", {
     OPT_OPTIMAL = "优化 FPS 设置",
     OPT_ULTRA = "全高设置",
     OPT_REVERT = "恢复设置",
-    OPT_SECTION_SQW = "施法队列窗口 (SQW)",
+    OPT_SECTION_SQW = "施法队列延迟容限 (SQW)",
     OPT_SQW_LABEL = "施法队列延迟 (ms)",
     OPT_SQW_RECOMMENDED = "推荐设置:",
     OPT_SQW_MELEE = "近战: 延迟 + 100,",
@@ -393,12 +393,12 @@ ns:RegisterLocale("zhCN", {
     OPT_TT_REVERT_TITLE       = "还原设置",
     OPT_TT_REVERT_DESC        = "恢复之前的设置：",
     OPT_TT_REVERT_LINE1       = "恢复到已保存的配置",
-    OPT_TT_REVERT_LINE2       = "在进行任何优化之前",
+    OPT_TT_REVERT_LINE2       = "优化前的原始设置",
     OPT_TT_REVERT_CLICK       = "点击还原",
     OPT_TT_REVERT_NOSAVEDYET  = "请先应用优化",
 
     OPT_TT_FPS_TITLE          = "最佳 FPS 设置",
-    OPT_TT_FPS_DESC           = "竞技游戏最大性能：",
+    OPT_TT_FPS_DESC           = "性能优先：",
     OPT_TT_FPS_DX12           = "DirectX 12 已启用",
     OPT_TT_FPS_EFFECTS        = "所有特效已优化",
     OPT_TT_FPS_SHADOWS        = "阴影已平衡",
@@ -471,7 +471,7 @@ ns:RegisterLocale("zhCN", {
     OPT_TOOLTIP_RECOMMENDED = "推荐:",
 
     -- Spell Queue Window detail text
-    OPT_SQW_DETAIL = "推荐：100-400ms。更低更灵敏，更高更能容忍延迟。",
+    OPT_SQW_DETAIL = "推荐：100-400ms。数值越低响应越灵敏，数值越高对网络延迟的容错性越好。",
 
     -- Print / notification messages
     OPT_MSG_SAVED = "当前设置已保存！你可以随时恢复。",
@@ -479,8 +479,8 @@ ns:RegisterLocale("zhCN", {
     OPT_MSG_FAILED_APPLY = "%d 项设置无法应用。",
     OPT_MSG_RESTORED = "已恢复 %d 项设置！正在重载界面...",
     OPT_MSG_NO_SAVED = "未找到已保存的设置！",
-    OPT_MSG_MAXFPS_SET = "maxFPS 已设置为 %s",
-    OPT_MSG_MAXFPS_REVERTED = "maxFPS 已还原为 %s",
+    OPT_MSG_MAXFPS_SET = "最大FPS 已设置为 %s",
+    OPT_MSG_MAXFPS_REVERTED = "最大FPS 已还原为 %s",
     OPT_MSG_CVAR_SET = "%s 已设置为 %s",
     OPT_MSG_CVAR_FAILED = "设置 %s 失败",
     OPT_MSG_CVAR_NO_BACKUP = "未找到 %s 的备份",
@@ -808,7 +808,7 @@ ns:RegisterLocale("zhCN", {
     ---------------------------------------------------------------------------
     BWV2_MODULE_NAME = "增益监控 V2",
     BWV2_TITLE = "增益监控",
-    BWV2_SUBTITLE = "就绪确认时触发团队增益检查",
+    BWV2_SUBTITLE = "就位确认时触发团队增益检查",
     BWV2_ENABLE = "启用增益监控",
     BWV2_SCAN_NOW = "立即扫描",
     BWV2_SCAN_HINT = "或使用 /nscan 命令。使用 /nsup 关闭扫描直到重载。",
@@ -843,7 +843,7 @@ ns:RegisterLocale("zhCN", {
     BWV2_SECTION_CONSUMABLES = "消耗品",
     BWV2_SECTION_INVENTORY = "库存检查",
     BWV2_SECTION_CLASS = "职业增益",
-    BWV2_SECTION_REPORT_CARD = "数据结算面板",
+    BWV2_SECTION_REPORT_CARD = "汇报面板",
 
     -- Class Buff Modal
     BWV2_MODAL_EDIT_TITLE = "编辑增益组",
@@ -911,9 +911,9 @@ ns:RegisterLocale("zhCN", {
     EQUIPMENTREMINDER_SECTION_TRIGGERS = "触发",
     EQUIPMENTREMINDER_TRIGGER_DESC = "选择何时显示装备提醒",
     EQUIPMENTREMINDER_SHOW_INSTANCE = "进入副本时显示",
-    EQUIPMENTREMINDER_SHOW_INSTANCE_DESC = "进入地下城、团队或场景战役时显示装备",
-    EQUIPMENTREMINDER_SHOW_READYCHECK = "就绪检查时显示",
-    EQUIPMENTREMINDER_SHOW_READYCHECK_DESC = "发起就绪检查时显示装备",
+    EQUIPMENTREMINDER_SHOW_INSTANCE_DESC = "进入地下城、团队或场景战役时显示",
+    EQUIPMENTREMINDER_SHOW_READYCHECK = "就位检查时显示",
+    EQUIPMENTREMINDER_SHOW_READYCHECK_DESC = "发起就位确认时显示",
     EQUIPMENTREMINDER_AUTOHIDE = "自动隐藏延迟",
     EQUIPMENTREMINDER_AUTOHIDE_DESC = "自动隐藏前的秒数（0 = 仅手动关闭）",
     EQUIPMENTREMINDER_ICON_SIZE_DESC = "装备图标大小",
@@ -922,11 +922,11 @@ ns:RegisterLocale("zhCN", {
     EQUIPMENTREMINDER_SECTION_ENCHANT = "附魔检查",
     EQUIPMENTREMINDER_ENCHANT_DESC = "在装备提醒框体中显示附魔状态",
     EQUIPMENTREMINDER_ENCHANT_ENABLE = "启用附魔检查",
-    EQUIPMENTREMINDER_ENCHANT_ENABLE_DESC = "在装备提醒中显示附魔状态行",
+    EQUIPMENTREMINDER_ENCHANT_ENABLE_DESC = "在装备提醒中显示附魔状态",
     EQUIPMENTREMINDER_ALL_SPECS = "所有专精使用相同规则",
     EQUIPMENTREMINDER_ALL_SPECS_DESC = "启用后，附魔规则对所有专精生效",
     EQUIPMENTREMINDER_CAPTURE = "捕获当前",
-    EQUIPMENTREMINDER_EXPECTED_ENCHANT = "期望附魔",
+    EQUIPMENTREMINDER_EXPECTED_ENCHANT = "建议附魔",
     EQUIPMENTREMINDER_CAPTURED = "已从已装备物品捕获 %d 个附魔",
 
     ---------------------------------------------------------------------------
@@ -997,35 +997,35 @@ ns:RegisterLocale("zhCN", {
     -- COMBAT LOGGER (CONFIG)
     ---------------------------------------------------------------------------
     COMBATLOGGER_TITLE              = "战斗日志",
-    COMBATLOGGER_DESC               = "团队副本和大秘境的自动战斗日志管理",
+    COMBATLOGGER_DESC               = "自动管理团队副本和大秘境的战斗日志",
     COMBATLOGGER_ENABLE             = "启用战斗日志",
     COMBATLOGGER_SECTION_STATUS     = "状态",
     COMBATLOGGER_SECTION_INSTANCES  = "已保存的副本",
     COMBATLOGGER_UNKNOWN_INSTANCE   = "副本 %s",
     COMBATLOGGER_UNKNOWN_DIFFICULTY = "难度 %s",
     COMBATLOGGER_TOGGLE_BTN         = "切换",
-    COMBATLOGGER_NO_INSTANCES       = "暂无已保存的副本。进入团队副本或大秘境地下城。",
+    COMBATLOGGER_NO_INSTANCES       = "尚无记录。请进入团队副本或大秘境。",
     COMBATLOGGER_RESET_ALL_BTN      = "重置所有副本",
     COMBATLOGGER_STATUS_ACTIVE      = "正在记录",
     COMBATLOGGER_STATUS_INACTIVE    = "未在记录",
     COMBATLOGGER_STATUS_PREFIX      = "状态：",
     COMBATLOGGER_CURRENT_PREFIX     = "当前：",
-    COMBATLOGGER_NOT_TRACKABLE      = "不在可追踪的内容中",
-    COMBATLOGGER_RESET_CONFIRM      = "清除所有已保存的副本日志记录偏好？\n下次进入每个副本时将再次提示。",
+    COMBATLOGGER_NOT_TRACKABLE      = "不在可记录的副本内",
+    COMBATLOGGER_RESET_CONFIRM      = "确认清除所有已保存的副本日志记录偏好？\n下次进入副本时将再次提示。",
     COMBATLOGGER_CLEAR_ALL_BTN      = "全部清除",
 
     ---------------------------------------------------------------------------
     -- TALENT REMINDER (CONFIG)
     ---------------------------------------------------------------------------
     TALENT_TITLE                    = "天赋提醒",
-    TALENT_DESC                     = "按地下城和团队副本Boss保存和恢复天赋配置",
+    TALENT_DESC                     = "针对每个地下城或团本首领保存并恢复天赋配置方案",
     TALENT_ENABLE                   = "启用天赋提醒",
     TALENT_SECTION_LOADOUTS         = "已保存的配置",
     TALENT_NO_LOADOUTS              = "暂无已保存的配置。\n进入史诗地下城或选中团队副本Boss。",
     TALENT_UNKNOWN_SPEC             = "未知专精",
     TALENT_UNKNOWN                  = "未知",
     TALENT_CLEAR_ALL_BTN            = "清除所有配置",
-    TALENT_RESET_CONFIRM            = "清除所有已保存的天赋配置？\n每个地下城/Boss将再次提示。",
+    TALENT_RESET_CONFIRM            = "清除所有已保存的天赋配置？\n每个地下城或面对首领将再次提示。",
 
     ---------------------------------------------------------------------------
     -- PROFILER
@@ -1058,7 +1058,7 @@ ns:RegisterLocale("zhCN", {
     ---------------------------------------------------------------------------
     -- EQUIPMENT REMINDER (additional)
     ---------------------------------------------------------------------------
-    EQUIPMENTREMINDER_DESC          = "进入副本或准备确认时显示已装备的饰品和武器",
+    EQUIPMENTREMINDER_DESC          = "进入副本或就位确认时显示已装备的饰品和武器",
     EQUIPMENTREMINDER_MAIN_HAND     = "主手",
     EQUIPMENTREMINDER_OFF_HAND      = "副手",
 
@@ -1077,7 +1077,7 @@ ns:RegisterLocale("zhCN", {
     ---------------------------------------------------------------------------
     -- CROSSHAIR (additional)
     ---------------------------------------------------------------------------
-    CROSSHAIR_HPAL_NOTE             = "神圣骑士使用4码物品检测（约0.5码误差）",
+    CROSSHAIR_HPAL_NOTE             = "奶骑使用4码物品检测（约0.5码误差）",
 
     ---------------------------------------------------------------------------
     -- BUFF WATCHER V2 (additional)
