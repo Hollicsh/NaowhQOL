@@ -114,8 +114,8 @@ function ns:InitCombatAlerts()
             onChange = refresh
         })
 
-        W:CreateSoundPicker(enterContent, GE:Col(1), GE:Row(3), db.enterSound, function(entry)
-            db.enterSound = entry.id and { id = entry.id } or { path = entry.path }
+        W:CreateSoundPicker(enterContent, GE:Col(1), GE:Row(3), db.enterSound, function(sound)
+            db.enterSound = sound
         end)
 
         local enterTtsLbl = enterContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -199,8 +199,8 @@ function ns:InitCombatAlerts()
             onChange = refresh
         })
 
-        W:CreateSoundPicker(leaveContent, GL:Col(1), GL:Row(3), db.leaveSound, function(entry)
-            db.leaveSound = entry.id and { id = entry.id } or { path = entry.path }
+        W:CreateSoundPicker(leaveContent, GL:Col(1), GL:Row(3), db.leaveSound, function(sound)
+            db.leaveSound = sound
         end)
 
         local leaveTtsLbl = leaveContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

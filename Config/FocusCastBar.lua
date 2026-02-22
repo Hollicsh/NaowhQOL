@@ -292,8 +292,8 @@ function ns:InitFocusCastBar()
             end
         })
 
-        W:CreateSoundPicker(audioContent, GA:Col(1), GA:Row(2) + 15, db.sound, function(entry)
-            db.sound = entry.id and { id = entry.id } or { path = entry.path }
+        W:CreateSoundPicker(audioContent, GA:Col(1), GA:Row(2) + 15, db.sound, function(sound)
+            db.sound = sound
         end)
 
         local ttsCB = W:CreateCheckbox(audioContent, {

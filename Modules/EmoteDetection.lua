@@ -276,8 +276,12 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Emote Detection", function(self
             ShowAlert(text)
 
             if db.soundOn then
-                local soundID = db.soundID or 8959
-                PlaySound(soundID, "Master")
+                local sound = db.soundID or 8959
+                if type(sound) == "table" then
+                    ns.SoundList.Play(sound)
+                elseif type(sound) == "number" then
+                    PlaySound(sound, "Master")
+                end
             end
         end)
     end

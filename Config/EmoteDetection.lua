@@ -141,7 +141,7 @@ function ns:InitEmoteDetection()
         })
 
         W:CreateSoundPicker(soundContent, 10, -35, db.soundID or 8959,
-            function(id) db.soundID = id end)
+            function(sound) db.soundID = sound end)
 
         soundContent:SetHeight(80)
         soundWrap:RecalcHeight()

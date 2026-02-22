@@ -36,7 +36,7 @@ local TYPE_SCHEMAS = {
         meleeRecolor = "boolean", meleeRecolorBorder = "boolean",
         meleeRecolorArms = "boolean", meleeRecolorDot = "boolean", meleeRecolorCircle = "boolean",
         meleeOutColorR = "number", meleeOutColorG = "number", meleeOutColorB = "number",
-        meleeSoundEnabled = "boolean", meleeSoundID = "number", meleeSoundInterval = "number",
+        meleeSoundEnabled = "boolean", meleeSoundInterval = "number",
     },
     combatLogger = {
         enabled = "boolean", instances = "table",
@@ -89,7 +89,7 @@ local TYPE_SCHEMAS = {
         stancePoint = "string", stanceX = "number", stanceY = "number",
         stanceWidth = "number", stanceHeight = "number",
         stanceCombatOnly = "boolean", stanceSoundEnabled = "boolean",
-        stanceSoundID = "number", stanceSoundInterval = "number",
+        stanceSoundInterval = "number",
         stanceWarnText = "string",
     },
     emoteDetection = {
@@ -98,7 +98,7 @@ local TYPE_SCHEMAS = {
         autoEmoteEnabled = "boolean", autoEmotes = "table", autoEmoteCooldown = "number",
         font = "string", fontSize = "number",
         textR = "number", textG = "number", textB = "number",
-        emotePattern = "string", soundOn = "boolean", soundID = "number",
+        emotePattern = "string", soundOn = "boolean",
     },
     rangeCheck = {
         enabled = "boolean",
@@ -125,7 +125,7 @@ local TYPE_SCHEMAS = {
         hideFriendlyCasts = "boolean", showEmpowerStages = "boolean",
         showShieldIcon = "boolean", colorNonInterrupt = "boolean",
         nonIntColorR = "number", nonIntColorG = "number", nonIntColorB = "number",
-        soundEnabled = "boolean", soundID = "number",
+        soundEnabled = "boolean",
         ttsEnabled = "boolean", ttsMessage = "string", ttsVolume = "number",
     },
     slashCommands = {
@@ -180,12 +180,12 @@ local TYPE_SCHEMAS = {
         tsEnabled = "boolean", tsUnlock = "boolean",
         tsText = "string", tsColorR = "number", tsColorG = "number", tsColorB = "number",
         tsPoint = "string", tsX = "number", tsY = "number", tsWidth = "number", tsHeight = "number",
-        tsSoundEnabled = "boolean", tsSoundID = "number",
+        tsSoundEnabled = "boolean",
         tsTtsEnabled = "boolean", tsTtsMessage = "string", tsTtsVolume = "number", tsTtsRate = "number",
         gwEnabled = "boolean", gwUnlock = "boolean", gwCombatOnly = "boolean",
         gwText = "string", gwColorR = "number", gwColorG = "number", gwColorB = "number", gwColorUseClassColor = "boolean",
         gwPoint = "string", gwX = "number", gwY = "number", gwWidth = "number", gwHeight = "number",
-        gwSoundEnabled = "boolean", gwSoundID = "number",
+        gwSoundEnabled = "boolean",
         gwTtsEnabled = "boolean", gwTtsMessage = "string", gwTtsVolume = "number",
     },
     talentReminder = {

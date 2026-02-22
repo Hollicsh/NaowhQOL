@@ -244,8 +244,10 @@ local function PlayTimeSpiralAlert(db)
         local sound = db.tsSoundID
         if type(sound) == "table" then
             ns.SoundList.Play(sound)
-        else
+        elseif type(sound) == "number" then
             PlaySound(sound)
+        elseif type(sound) == "string" then
+            PlaySoundFile(sound, "Master")
         end
     elseif db.tsTtsEnabled and db.tsTtsMessage then
         C_VoiceChat.SpeakText(0, db.tsTtsMessage, 1, db.tsTtsVolume or 50, true)
@@ -257,8 +259,10 @@ local function PlayGatewayAlert(db)
         local sound = db.gwSoundID
         if type(sound) == "table" then
             ns.SoundList.Play(sound)
-        else
+        elseif type(sound) == "number" then
             PlaySound(sound)
+        elseif type(sound) == "string" then
+            PlaySoundFile(sound, "Master")
         end
     elseif db.gwTtsEnabled and db.gwTtsMessage then
         C_VoiceChat.SpeakText(0, db.gwTtsMessage, 1, db.gwTtsVolume or 50, true)

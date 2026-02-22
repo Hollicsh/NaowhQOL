@@ -1199,6 +1199,20 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
     -- Normalize legacy format
     if type(currentSound) == "number" then
         currentSound = { id = currentSound }
+    elseif type(currentSound) == "string" then
+        currentSound = { path = currentSound }
+    elseif type(currentSound) == "table" then
+        -- Clean up corrupted saves that stored the full entry object
+        if currentSound.id and type(currentSound.id) == "number" then
+            currentSound = { id = currentSound.id }
+        elseif currentSound.path then
+            currentSound = { path = currentSound.path }
+        elseif currentSound.id and type(currentSound.id) == "string" then
+            -- Old bug: path string was stored in the id field
+            currentSound = { path = currentSound.id }
+        else
+            currentSound = { id = 8959 }
+        end
     end
     currentSound = currentSound or { id = 8959 }
 
@@ -1409,7 +1423,8 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
                     currentSound = entry.id and { id = entry.id } or { path = entry.path }
                     selText:SetText(entry.name)
                     panel:Hide()
-                    if onSelect then onSelect(entry) end
+                    if onSelect then onSelect(currentSound) end
+                    if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
                 end)
                 row.play:SetScript("OnClick", function()
                     ns.SoundList.Play(entry)

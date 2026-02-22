@@ -194,14 +194,14 @@ function ns:InitMovementAlert()
 
         W:CreateTextInput(tsColContent, {
             label = L["TIME_SPIRAL_TEXT"], db = db, key = "tsText",
-            default = "FREE MOVEMENT", x = LT:Col(1), y = LT:Row(1) + 12, width = 180,
+            default = "FREE MOVEMENT", x = LT:Col(1), y = LT:Row(1), width = 150,
             onChange = refreshTimeSpiral
         })
 
         W:CreateColorPicker(tsColContent, {
             label = L["TIME_SPIRAL_COLOR"], db = db,
             rKey = "tsColorR", gKey = "tsColorG", bKey = "tsColorB",
-            x = LT:Col(2), y = LT:Row(1) + 6,
+            x = LT:Col(2), y = LT:Row(1) - 4,
             onChange = refreshTimeSpiral
         })
 
@@ -216,10 +216,8 @@ function ns:InitMovementAlert()
             end
         })
 
-        W:CreateSoundPicker(tsColContent, LT:Col(2), LT:Row(2) + 11, db.tsSoundID and { id = db.tsSoundID } or { id = 8959 },
-            function(entry)
-                db.tsSoundID = entry.id or entry.path
-            end)
+        W:CreateSoundPicker(tsColContent, LT:Col(2), LT:Row(2) + 11, db.tsSoundID or 8959,
+            function(sound) db.tsSoundID = sound end)
 
         W:CreateCheckbox(tsColContent, {
             label = L["TIME_SPIRAL_TTS_ON"],
@@ -234,7 +232,7 @@ function ns:InitMovementAlert()
 
         W:CreateTextInput(tsColContent, {
             label = L["TIME_SPIRAL_TTS_MESSAGE"], db = db, key = "tsTtsMessage",
-            default = "Free movement", x = LT:Col(1), y = LT:Row(4) + 12, width = 180,
+            default = "Free movement", x = LT:Col(1), y = LT:Row(4), width = 150,
         })
 
         W:CreateSlider(tsColContent, {
@@ -301,14 +299,14 @@ function ns:InitMovementAlert()
 
         W:CreateTextInput(gwColContent, {
             label = L["GATEWAY_SHARD_TEXT"], db = db, key = "gwText",
-            default = "GATEWAY READY", x = LG:Col(1), y = LG:Row(1) + 12, width = 180,
+            default = "GATEWAY READY", x = LG:Col(1), y = LG:Row(1), width = 150,
             onChange = refreshGateway
         })
 
         W:CreateColorPicker(gwColContent, {
             label = L["GATEWAY_SHARD_COLOR"], db = db,
             rKey = "gwColorR", gKey = "gwColorG", bKey = "gwColorB",
-            x = LG:Col(2), y = LG:Row(1) + 6,
+            x = LG:Col(2), y = LG:Row(1) - 4,
             onChange = refreshGateway
         })
 
@@ -320,10 +318,8 @@ function ns:InitMovementAlert()
             onChange = refreshGateway
         })
 
-        W:CreateSoundPicker(gwColContent, LG:Col(2), LG:Row(2) + 11, db.gwSoundID and { id = db.gwSoundID } or { id = 8959 },
-            function(entry)
-                db.gwSoundID = entry.id or entry.path
-            end)
+        W:CreateSoundPicker(gwColContent, LG:Col(2), LG:Row(2) + 11, db.gwSoundID or 8959,
+            function(sound) db.gwSoundID = sound end)
 
         W:CreateCheckbox(gwColContent, {
             label = L["GATEWAY_SHARD_TTS_ON"],
@@ -335,7 +331,7 @@ function ns:InitMovementAlert()
 
         W:CreateTextInput(gwColContent, {
             label = L["GATEWAY_SHARD_TTS_MESSAGE"], db = db, key = "gwTtsMessage",
-            default = "Gateway ready", x = LG:Col(1), y = LG:Row(4) + 12, width = 180,
+            default = "Gateway ready", x = LG:Col(1), y = LG:Row(4), width = 150,
         })
 
         W:CreateSlider(gwColContent, {

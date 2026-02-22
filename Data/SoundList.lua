@@ -221,7 +221,7 @@ end
 
 -- Get name by ID (legacy) or by path
 function ns.SoundList.GetName(idOrPath)
-    if not ns.SoundList._nameByID then ns.SoundList.Rebuild() end
+    ns.SoundList.Rebuild()
     if type(idOrPath) == "number" then
         return ns.SoundList._nameByID[idOrPath] or ("Unknown (" .. tostring(idOrPath) .. ")")
     else
@@ -232,7 +232,7 @@ end
 -- Get entry by sound data table {id=...} or {path=...}
 function ns.SoundList.GetEntry(soundData)
     if not soundData then return nil end
-    if not ns.SoundList._entryByID then ns.SoundList.Rebuild() end
+    ns.SoundList.Rebuild()
     if soundData.id then
         return ns.SoundList._entryByID[soundData.id]
     elseif soundData.path then

@@ -386,7 +386,7 @@ function ns:InitCrosshair()
         meleeSubElements[#meleeSubElements + 1] = soundCB
 
         local soundPicker = W:CreateSoundPicker(mlContent, 10, -135, db.meleeSoundID or 8959,
-            function(id) db.meleeSoundID = id end)
+            function(sound) db.meleeSoundID = sound end)
         meleeSubElements[#meleeSubElements + 1] = soundPicker
 
         local intervalSlider = W:CreateAdvancedSlider(mlContent,
