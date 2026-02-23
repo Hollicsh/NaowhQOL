@@ -105,6 +105,7 @@ function Core:PrintSummary()
 
     -- Group by category type for cleaner output
     local raidMissing = {}
+    local presenceMissing = {}
     local classBuffMissing = {}
     local consumableMissing = {}
     local inventoryMissing = {}
@@ -118,6 +119,17 @@ function Core:PrintSummary()
                 raidMissing[key] = data
                 found = true
                 break
+            end
+        end
+
+        -- Check presence buffs
+        if not found and Categories.PRESENCE then
+            for _, buff in ipairs(Categories.PRESENCE) do
+                if buff.key == key then
+                    presenceMissing[key] = data
+                    found = true
+                    break
+                end
             end
         end
 
@@ -155,6 +167,14 @@ function Core:PrintSummary()
         for key, data in pairs(raidMissing) do
             local coverage = data.missing and string.format(" (%d/%d covered)", data.total - data.missing, data.total) or ""
             print("    |cffffa900- " .. (data.name or key) .. coverage .. "|r")
+        end
+    end
+
+    -- Print presence buffs
+    if next(presenceMissing) then
+        print("  |cffffcc00Presence Buffs:|r")
+        for key, data in pairs(presenceMissing) do
+            print("    |cffffa900- " .. (data.name or key) .. "|r")
         end
     end
 

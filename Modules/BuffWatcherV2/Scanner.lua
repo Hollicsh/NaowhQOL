@@ -9,6 +9,39 @@ ns.BWV2Scanner = Scanner
 local BWV2 = ns.BWV2
 local Categories = ns.BWV2Categories
 
+
+-- Falls back to a direct aura scan if the player isn't found (safety net).
+function Scanner:GetPlayerBuffs()
+    if BWV2.raidResults["player"] then
+        return BWV2.raidResults["player"].buffs or {}
+    end
+
+    -- Raid path: player is stored as "raidN"
+    if IsInRaid() then
+        for i = 1, GetNumGroupMembers() do
+            local unit = "raid" .. i
+            if UnitIsUnit(unit, "player") and BWV2.raidResults[unit] then
+                return BWV2.raidResults[unit].buffs or {}
+            end
+        end
+    end
+    -- Fallback: direct scan of player buffs (shouldn't be needed, but just in case)
+    local buffs = {}
+    local idx = 1
+    local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+    while auraData do
+        buffs[auraData.spellId] = {
+            expiry = auraData.expirationTime,
+            icon = auraData.icon,
+            name = auraData.name,
+            sourceUnit = auraData.sourceUnit,
+        }
+        idx = idx + 1
+        auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+    end
+    return buffs
+end
+
 -- Texture cache for spell and item icons
 local textureCache = {}
 
@@ -169,7 +202,10 @@ end
 function Scanner:ScanPresenceBuffs()
     local missing = {}
 
-    for _, buff in ipairs(Categories.PRESENCE) do
+    -- Clear and rebuild scanResults.presenceBuffs
+    wipe(BWV2.scanResults.presenceBuffs)
+
+    for _, buff in ipairs(Categories.PRESENCE or {}) do
         -- Get primary spell ID to check if disabled
         local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
 
@@ -182,16 +218,33 @@ function Scanner:ScanPresenceBuffs()
         else
             local found = false
             local spellIDs = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+            local foundIcon = nil
 
             for unit, data in pairs(BWV2.raidResults) do
                 for _, spellID in ipairs(spellIDs) do
                     if data.buffs[spellID] then
                         found = true
+                        foundIcon = data.buffs[spellID].icon or GetCachedSpellTexture(spellID)
                         break
                     end
                 end
                 if found then break end
             end
+
+            -- Default icon if none found
+            if not foundIcon then
+                foundIcon = GetCachedSpellTexture(primaryID)
+            end
+
+            -- Add to scanResults for report card
+            BWV2.scanResults.presenceBuffs[#BWV2.scanResults.presenceBuffs + 1] = {
+                key = buff.key,
+                name = buff.name,
+                spellID = primaryID,
+                icon = foundIcon,
+                pass = found,
+                class = buff.class,
+            }
 
             if not found then
                 missing[buff.key] = {
@@ -207,7 +260,7 @@ end
 
 -- Helper: Check if player has any of the given spell IDs as a self buff
 function Scanner:CheckSelfBuffSpells(spellIDs, minRequired)
-    local playerBuffs = BWV2.raidResults["player"] and BWV2.raidResults["player"].buffs or {}
+    local playerBuffs = self:GetPlayerBuffs()
 
     local count = 0
     for _, spellID in ipairs(spellIDs) do
@@ -265,7 +318,7 @@ function Scanner:ScanClassBuffs()
         return missing
     end
 
-    local playerBuffs = BWV2.raidResults["player"] and BWV2.raidResults["player"].buffs or {}
+    local playerBuffs = self:GetPlayerBuffs()
 
     for _, group in ipairs(classData.groups or {}) do
         local shouldCheck = true
@@ -398,7 +451,7 @@ end
 function Scanner:ScanConsumables()
     local missing = {}
     local threshold = BWV2:GetThreshold()
-    local playerBuffs = BWV2.raidResults["player"] and BWV2.raidResults["player"].buffs or {}
+    local playerBuffs = self:GetPlayerBuffs()
     local db = BWV2:GetDB()
 
     -- Clear and rebuild scanResults.consumables
@@ -634,6 +687,12 @@ function Scanner:RunCategoryScans()
     -- Raid buffs (coverage check)
     local raidMissing = self:ScanRaidBuffs()
     for key, data in pairs(raidMissing) do
+        allMissing[key] = data
+    end
+
+    -- Presence buffs (anyone in group has it)
+    local presenceMissing = self:ScanPresenceBuffs()
+    for key, data in pairs(presenceMissing) do
         allMissing[key] = data
     end
 

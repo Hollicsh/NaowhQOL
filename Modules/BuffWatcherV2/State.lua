@@ -16,10 +16,11 @@ BWV2.lastScanTime = 0
 
 -- Report card results (full pass/fail data with icons)
 BWV2.scanResults = {
-    raidBuffs = {},     -- { key, name, spellID, icon, pass, covered, total }
-    consumables = {},   -- { key, name, spellID, icon, pass, remaining }
-    inventory = {},     -- { key, name, itemID, icon, pass, count }
-    classBuffs = {},    -- { key, name, spellID, icon, pass }
+    raidBuffs = {},      -- { key, name, spellID, icon, pass, covered, total }
+    presenceBuffs = {},  -- { key, name, spellID, icon, pass, class }
+    consumables = {},    -- { key, name, spellID, icon, pass, remaining }
+    inventory = {},      -- { key, name, itemID, icon, pass, count }
+    classBuffs = {},     -- { key, name, spellID, icon, pass }
 }
 
 -- Reset all state tables
@@ -29,6 +30,7 @@ function BWV2:ResetState()
     wipe(self.inventoryStatus)
     -- Reset scan results for report card
     wipe(self.scanResults.raidBuffs)
+    wipe(self.scanResults.presenceBuffs)
     wipe(self.scanResults.consumables)
     wipe(self.scanResults.inventory)
     wipe(self.scanResults.classBuffs)
@@ -236,6 +238,35 @@ function BWV2:InitSavedVars()
     end
     if NaowhQOL.buffWatcherV2.scanOnLogin == nil then
         NaowhQOL.buffWatcherV2.scanOnLogin = false
+    end
+
+    -- Apply default class buff groups for classes with empty groups (one-time migration)
+    if not NaowhQOL.buffWatcherV2._classBuffDefaultsVersion then
+        local Categories = ns.BWV2Categories
+        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
+        if defaults and NaowhQOL.buffWatcherV2.classBuffs then
+            for className, classData in pairs(NaowhQOL.buffWatcherV2.classBuffs) do
+                if classData.groups and #classData.groups == 0 and defaults[className] then
+                    for _, group in ipairs(defaults[className]) do
+                        -- Shallow+1 copy to avoid reference issues
+                        local copy = {}
+                        for k, v in pairs(group) do
+                            if type(v) == "table" then
+                                local t = {}
+                                for k2, v2 in pairs(v) do
+                                    t[k2] = v2
+                                end
+                                copy[k] = t
+                            else
+                                copy[k] = v
+                            end
+                        end
+                        classData.groups[#classData.groups + 1] = copy
+                    end
+                end
+            end
+        end
+        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 1
     end
 end
 

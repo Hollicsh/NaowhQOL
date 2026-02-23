@@ -59,13 +59,167 @@ Categories.CLASS_ORDER = {
     "SHAMAN", "MAGE", "WARLOCK", "MONK", "DRUID", "DEMONHUNTER", "EVOKER"
 }
 
+-- Default class-specific buff groups (pre-populated for convenience)
+-- Copied into saved vars on first use; users can customize afterwards.
+-- checkType: "self" = player has buff, "targeted" = player cast on ally, "weaponEnchant" = weapon enchant ID
+Categories.DEFAULT_CLASS_BUFFS = {
+    PALADIN = {
+        {
+            key = "devotionAura",
+            name = "Devotion Aura",
+            checkType = "self",
+            spellIDs = {465},
+            specFilter = {},
+        },
+        {
+            key = "riteOfAdjuration",
+            name = "Rite of Adjuration",
+            checkType = "weaponEnchant",
+            enchantIDs = {7144},
+            specFilter = {},
+            talentCondition = { talentID = 433583, mode = "activate" },
+        },
+        {
+            key = "riteOfSanctification",
+            name = "Rite of Sanctification",
+            checkType = "weaponEnchant",
+            enchantIDs = {7143},
+            specFilter = {},
+            talentCondition = { talentID = 433568, mode = "activate" },
+        },
+        {
+            key = "beaconOfLight",
+            name = "Beacon of Light",
+            checkType = "targeted",
+            spellIDs = {53563},
+            specFilter = {65}, -- Holy
+        },
+        {
+            key = "beaconOfFaith",
+            name = "Beacon of Faith",
+            checkType = "targeted",
+            spellIDs = {156910},
+            specFilter = {65}, -- Holy
+            talentCondition = { talentID = 156910, mode = "activate" },
+        },
+    },
+    SHAMAN = {
+        {
+            key = "shamanImbue",
+            name = "Weapon Imbue",
+            checkType = "weaponEnchant",
+            enchantIDs = {5400, 5401, 6498}, -- Flametongue, Windfury, Earthliving
+            specFilter = {},
+            minRequired = 1,
+        },
+        {
+            key = "shamanShield",
+            name = "Shield",
+            checkType = "self",
+            spellIDs = {974, 192106, 52127}, -- Earth Shield, Lightning Shield, Water Shield
+            specFilter = {},
+            minRequired = 1,
+        },
+    },
+    PRIEST = {
+        {
+            key = "shadowform",
+            name = "Shadowform",
+            checkType = "self",
+            spellIDs = {232698, 194249}, -- Shadowform, Voidform
+            specFilter = {258}, -- Shadow
+        },
+    },
+    MAGE = {
+        {
+            key = "arcaneFamiliar",
+            name = "Arcane Familiar",
+            checkType = "self",
+            spellIDs = {210126}, -- Arcane Familiar buff
+            specFilter = {},
+            talentCondition = { talentID = 205022, mode = "activate" },
+        },
+    },
+    WARLOCK = {
+        {
+            key = "grimoireOfSacrifice",
+            name = "Grimoire of Sacrifice",
+            checkType = "self",
+            spellIDs = {196099}, -- Grimoire of Sacrifice buff
+            specFilter = {},
+            talentCondition = { talentID = 108503, mode = "activate" },
+        },
+    },
+    EVOKER = {
+        {
+            key = "sourceOfMagic",
+            name = "Source of Magic",
+            checkType = "targeted",
+            spellIDs = {369459},
+            specFilter = {},
+        },
+        {
+            key = "blisteringScales",
+            name = "Blistering Scales",
+            checkType = "targeted",
+            spellIDs = {360827},
+            specFilter = {1473}, -- Augmentation
+            talentCondition = { talentID = 360827, mode = "activate" },
+        },
+    },
+    DRUID = {
+        {
+            key = "symbioticRelationship",
+            name = "Symbiotic Relationship",
+            checkType = "targeted",
+            spellIDs = {474750},
+            specFilter = {},
+            talentCondition = { talentID = 474750, mode = "activate" },
+        },
+    },
+}
+
+-- Presence buffs - checked on anyone in the group (at least one person must have it)
+Categories.PRESENCE = {
+    {
+        spellID = {381637, 5761},
+        key = "atrophicNumbingPoison",
+        name = "Atrophic/Numbing Poison",
+        class = "ROGUE",
+    },
+    {
+        spellID = 465,
+        key = "devotionAura",
+        name = "Devotion Aura",
+        class = "PALADIN",
+    },
+    {
+        spellID = 20707,
+        key = "soulstone",
+        name = "Soulstone",
+        class = "WARLOCK",
+    },
+}
+
 -- Consumables organized by type - each group is exclusive (only one needed)
 Categories.CONSUMABLE_GROUPS = {
     {
         key = "flask",
         name = "Flask",
         exclusive = true,
-        spellIDs = {},
+        spellIDs = {
+            -- The War Within
+            432021, -- Flask of Alchemical Chaos
+            431971, -- Flask of Tempered Aggression
+            431972, -- Flask of Tempered Swiftness
+            431973, -- Flask of Tempered Versatility
+            431974, -- Flask of Tempered Mastery
+            -- Midnight
+            1235057, -- Flask of Thalassian Resistance
+            1235108, -- Flask of the Magisters
+            1235110, -- Flask of the Blood Knights
+            1235111, -- Flask of the Shattered Sun
+        },
         fallbackIcon = 5931173,  -- inv-potion-orange
     },
     {
@@ -81,7 +235,14 @@ Categories.CONSUMABLE_GROUPS = {
         key = "rune",
         name = "Augment Rune",
         exclusive = true,
-        spellIDs = {},
+        spellIDs = {
+            1234969, -- Ethereal Augment Rune (TWW permanent)
+            1242347, -- Soulgorged Augment Rune (TWW raid drop)
+            453250,  -- Crystallized Augment Rune (TWW)
+            393438,  -- Draconic Augment Rune (Dragonflight)
+            1264426, -- Void-Touched Augment Rune (Midnight)
+            347901,  -- Veiled Augment Rune (Shadowlands)
+        },
         fallbackIcon = 4549102,  -- inv-10-enchanting-crystal-color5
     },
     {
@@ -90,6 +251,15 @@ Categories.CONSUMABLE_GROUPS = {
         exclusive = true,
         checkType = "weaponEnchant",
         spellIDs = {},
+        excludeIfSpellKnown = {
+            -- Shaman imbues (these classes use their own enchants)
+            382021, -- Earthliving Weapon
+            318038, -- Flametongue Weapon
+            33757,  -- Windfury Weapon
+            -- Paladin rites
+            433583, -- Rite of Adjuration
+            433568, -- Rite of Sanctification
+        },
         fallbackIcon = 463543,   -- inv-misc-potionseta (weapon oil)
     },
 }
