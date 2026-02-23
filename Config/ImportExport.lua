@@ -404,6 +404,43 @@ function ns:InitImportExport()
             end
         end)
 
+        -- Reset to Defaults button — wipes the active profile back to factory
+        -- settings (everything off, default colors).  Only works on the Default
+        -- profile to protect user-created named profiles from accidental resets.
+        local resetBtn = W:CreateButton(sc, { text = L["IMPORTEXPORT_RESET_BTN"], width = 120, height = 24 })
+        resetBtn:SetPoint("LEFT", newBtn, "RIGHT", 4, 0)
+        resetBtn:SetScript("OnClick", function()
+            local active = ns.SettingsIO:GetActiveProfile()
+            if active ~= "Default" then
+                profileStatus:SetText("|cffff4444" .. L["IMPORTEXPORT_RESET_ERR_NAMED"] .. "|r")
+                return
+            end
+            local dialog = StaticPopup_Show("NAOWH_QOL_PROFILE_CONFIRM",
+                L["IMPORTEXPORT_POPUP_RESET"])
+            if dialog then
+                dialog.data = {
+                    callback = function()
+                        -- Reset the AceDB profile to aceDBDefaults (all off)
+                        ns.db:ResetProfile()
+                        NaowhQOL = ns.db.profile
+                        -- Also clear snapshot data so reload doesn't restore old values
+                        if NaowhQOL_Profiles and NaowhQOL_Profiles.profileData then
+                            NaowhQOL_Profiles.profileData["Default"] = nil
+                        end
+                        -- Refresh everything
+                        if ns.SettingsIO then
+                            ns.SettingsIO:TriggerRefreshAll()
+                        end
+                        RefreshProfileDropdown()
+                        if RefreshSpecDropdowns then RefreshSpecDropdowns() end
+                        UpdateProfileStatus()
+                        profileStatus:SetText("|cff44ff44" .. L["IMPORTEXPORT_RESET_OK"] .. "|r")
+                        StaticPopup_Show("NAOWH_QOL_RELOAD")
+                    end
+                }
+            end
+        end)
+
         -- Copy profile section (AceDB profiles are account-wide)
         W:CreateSectionHeader(sc, L["IMPORTEXPORT_SECTION_COPY"], -180)
 

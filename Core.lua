@@ -60,7 +60,7 @@ local COMBAT_TIMER_DEFAULTS = {
 }
 
 local COMBAT_ALERT_DEFAULTS = {
-    enabled = true, unlock = false, font = NAOWH_FONT,
+    enabled = false, unlock = false, font = NAOWH_FONT,
     enterR = 0, enterG = 1, enterB = 0, leaveR = 1, leaveG = 0, leaveB = 0,
     point = "CENTER", x = 0, y = 100, width = 200, height = 50,
     enterText = "+Combat", leaveText = "-Combat",
@@ -94,7 +94,7 @@ local COMBAT_LOGGER_DEFAULTS = {
 }
 
 local DRAGONRIDING_DEFAULTS = {
-    enabled = true, barWidth = 36, speedHeight = 14, chargeHeight = 14,
+    enabled = false, barWidth = 36, speedHeight = 14, chargeHeight = 14,
     gap = 0, showSpeedText = true, swapPosition = false, hideWhenGroundedFull = false,
     showSecondWind = true, showWhirlingSurge = true, colorPreset = "Classic",
     unlocked = false, point = "BOTTOM", posX = 0, posY = 200,
@@ -112,7 +112,7 @@ local DRAGONRIDING_DEFAULTS = {
 }
 
 local BUFF_TRACKER_DEFAULTS = {
-    enabled = true, iconSize = 40, spacing = 4, textSize = 14,
+    enabled = false, iconSize = 40, spacing = 4, textSize = 14,
     font = NAOWH_FONT, showMissingOnly = false, combatOnly = false,
     showCooldown = true, showStacks = true, unlocked = false,
     showAllRaidBuffs = false, showRaidBuffs = true, showPersonalAuras = true,
@@ -176,10 +176,10 @@ local RANGE_CHECK_DEFAULTS = {
 }
 
 local EMOTE_DETECTION_DEFAULTS = {
-    enabled = true, unlock = false, font = NAOWH_FONT,
+    enabled = false, unlock = false, font = NAOWH_FONT,
     point = "TOP", x = 0, y = -50, width = 200, height = 60, fontSize = 16,
     textR = 1, textG = 1, textB = 1, emotePattern = "prepares,places", soundOn = true, soundID = 8959,
-    autoEmoteEnabled = true, autoEmoteCooldown = 2,
+    autoEmoteEnabled = false, autoEmoteCooldown = 2,
     autoEmotes = {
         { spellId = 29893, emoteText = "prepares soulwell", enabled = true },
         { spellId = 698, emoteText = "prepares ritual of summoning", enabled = true },
@@ -206,7 +206,7 @@ local TALENT_REMINDER_DEFAULTS = {
 }
 
 local RAID_ALERTS_DEFAULTS = {
-    enabled = true,
+    enabled = false,
 }
 
 local POISON_REMINDER_DEFAULTS = {
@@ -384,18 +384,18 @@ local aceDBDefaults = {
 
         -- Misc settings
         misc = {
-            autoFillDelete = true,
-            fasterLoot = true,
-            suppressLootWarnings = true,
+            autoFillDelete = false,
+            fasterLoot = false,
+            suppressLootWarnings = false,
             hideAlerts = false,
             hideTalkingHead = false,
             hideEventToasts = false,
             hideZoneText = false,
             autoRepair = false,
             guildRepair = false,
-            durabilityWarning = true,
+            durabilityWarning = false,
             durabilityThreshold = 30,
-            autoSlotKeystone = true,
+            autoSlotKeystone = false,
             skipQueueConfirm = false,
             deathReleaseProtection = false,
             ahCurrentExpansion = false,
@@ -404,7 +404,7 @@ local aceDBDefaults = {
 
         -- Slash commands
         slashCommands = {
-            enabled = true,
+            enabled = false,
             commands = {
                 { name = "cdm", frame = "CooldownViewerSettings", enabled = true, default = true },
                 { name = "em", frame = "EditModeManagerFrame", enabled = true, default = true },
@@ -414,7 +414,7 @@ local aceDBDefaults = {
 
         -- BuffWatcher
         buffWatcherV2 = {
-            enabled = true,
+            enabled = false,
             userEntries = {
                 raidBuffs = { spellIDs = {} },
                 consumables = { spellIDs = {} },
@@ -537,6 +537,87 @@ function ns:RestoreModuleDefaults(moduleName, skipKeys)
         end
     end
     return true
+end
+
+-- Migrate defaults v2: features previously defaulted to enabled=true now default
+-- to false.  For EXISTING users we must explicitly write the old true values so
+-- they don't lose features they were already using.  New installs (empty profiles)
+-- are unaffected because they have no in-use features to preserve.
+local OLD_TRUE_DEFAULTS = {
+    { module = "combatAlert",     key = "enabled" },
+    { module = "dragonriding",    key = "enabled" },
+    { module = "buffTracker",     key = "enabled" },
+    { module = "emoteDetection",  key = "enabled" },
+    { module = "emoteDetection",  key = "autoEmoteEnabled" },
+    { module = "raidAlerts",      key = "enabled" },
+    { module = "misc",            key = "autoFillDelete" },
+    { module = "misc",            key = "fasterLoot" },
+    { module = "misc",            key = "suppressLootWarnings" },
+    { module = "misc",            key = "durabilityWarning" },
+    { module = "misc",            key = "autoSlotKeystone" },
+    { module = "slashCommands",   key = "enabled" },
+    { module = "buffWatcherV2",   key = "enabled" },
+}
+
+local function MigrateDefaultsV2()
+    if not ns.db or not ns.db.sv then return end
+    -- Already migrated (account-wide flag)
+    if ns.db.global.defaultsV2Migrated then return end
+
+    local rawProfiles = ns.db.sv.profiles
+    if not rawProfiles then
+        -- No saved profiles at all → fresh install, nothing to migrate
+        ns.db.global.defaultsV2Migrated = true
+        return
+    end
+
+    local migrated = false
+    for profileName, profileData in pairs(rawProfiles) do
+        -- Skip completely empty profiles (brand-new, no user data)
+        if next(profileData) ~= nil then
+            for _, entry in ipairs(OLD_TRUE_DEFAULTS) do
+                local modData = profileData[entry.module]
+                if modData then
+                    -- Module table exists but the key is absent → user was
+                    -- relying on the old default of true
+                    if modData[entry.key] == nil then
+                        modData[entry.key] = true
+                        migrated = true
+                    end
+                else
+                    -- Entire module table missing in raw data → all keys were
+                    -- at their defaults, write the enabled flag explicitly
+                    profileData[entry.module] = {}
+                    profileData[entry.module][entry.key] = true
+                    migrated = true
+                end
+            end
+        end
+    end
+
+    -- Also preserve values in snapshot profiles stored in NaowhQOL_Profiles
+    if NaowhQOL_Profiles and NaowhQOL_Profiles.profileData then
+        for _, snapData in pairs(NaowhQOL_Profiles.profileData) do
+            if next(snapData) ~= nil then
+                for _, entry in ipairs(OLD_TRUE_DEFAULTS) do
+                    local modData = snapData[entry.module]
+                    if modData then
+                        if modData[entry.key] == nil then
+                            modData[entry.key] = true
+                        end
+                    else
+                        snapData[entry.module] = {}
+                        snapData[entry.module][entry.key] = true
+                    end
+                end
+            end
+        end
+    end
+
+    ns.db.global.defaultsV2Migrated = true
+    if migrated then
+        DebugPrint("Defaults v2 migration: preserved old enabled=true values for existing profiles.")
+    end
 end
 
 -- Migrate data from old per-character SavedVariables to AceDB profile
@@ -703,6 +784,9 @@ local function InitializeDB()
 
     -- Run migration for existing users (pass real legacy data)
     MigrateFromLegacy(legacyCharData)
+
+    -- Preserve old enabled=true defaults for existing users before new false defaults take effect
+    MigrateDefaultsV2()
 
     -- Restore the previously active profile (saved in NaowhQOL_Profiles.activeProfile).
     -- This must happen after migration so the profile data is already in place.

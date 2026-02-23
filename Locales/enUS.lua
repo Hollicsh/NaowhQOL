@@ -1002,6 +1002,10 @@ ns:RegisterLocale("enUS", {
     IMPORTEXPORT_POPUP_RENAME   = "Rename profile '%s' to:",
     IMPORTEXPORT_POPUP_NEW      = "Create new profile with default settings:",
     IMPORTEXPORT_POPUP_DELETE   = "Delete profile '%s'?",
+    IMPORTEXPORT_POPUP_RESET    = "Reset the Default profile to factory settings?\n\nThis will turn off ALL features and reset all colors/positions. A reload is required.",
+    IMPORTEXPORT_RESET_BTN      = "Reset to Defaults",
+    IMPORTEXPORT_RESET_OK       = "Default profile reset — reload to apply",
+    IMPORTEXPORT_RESET_ERR_NAMED = "Reset only works on the Default profile",
 
     ---------------------------------------------------------------------------
     -- COMBAT LOGGER (CONFIG)
