@@ -73,6 +73,10 @@ local function ActivateProtection()
     local db = NaowhQOL and NaowhQOL.misc
     if not db or not db.deathReleaseProtection then return end
 
+    -- Only active in dungeons and raids
+    local _, instanceType = GetInstanceInfo()
+    if instanceType ~= "party" and instanceType ~= "raid" then return end
+
     local visible, popup = StaticPopup_Visible("DEATH")
     if not visible or not popup then return end
 
