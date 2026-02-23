@@ -758,7 +758,7 @@ ns:RegisterLocale("frFR", {
     PETTRACKER_PASSIVE_DEFAULT = "Familier passif",
     PETTRACKER_WRONGPET_LABEL = "Texte mauvais familier :",
     PETTRACKER_WRONGPET_DEFAULT = "Mauvais familier",
-    PETTRACKER_FELGUARD_LABEL = "Paramètre régional Garde-fiel :",
+    PETTRACKER_FELGUARD_LABEL = "Gangregarde (remplacement) :",
     PETTRACKER_CLASS_NOTE = "Supporte : Chasseur, Démoniste, Chevalier de la mort (Infortune), Mage (Givre)",
 
     ---------------------------------------------------------------------------

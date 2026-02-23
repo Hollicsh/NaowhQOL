@@ -767,7 +767,7 @@ ns:RegisterLocale("enUS", {
     PETTRACKER_PASSIVE_DEFAULT = "Pet Passive",
     PETTRACKER_WRONGPET_LABEL = "Wrong Pet Text:",
     PETTRACKER_WRONGPET_DEFAULT = "Wrong Pet",
-    PETTRACKER_FELGUARD_LABEL = "Felguard Locale:",
+    PETTRACKER_FELGUARD_LABEL = "Felguard Override:",
     PETTRACKER_CLASS_NOTE = "Supports: Hunter, Warlock, Death Knight (Unholy), Mage (Frost)",
 
     ---------------------------------------------------------------------------

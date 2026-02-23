@@ -758,7 +758,7 @@ ns:RegisterLocale("zhTW", {
     PETTRACKER_PASSIVE_DEFAULT = "寵物被動",
     PETTRACKER_WRONGPET_LABEL = "錯誤寵物文字：",
     PETTRACKER_WRONGPET_DEFAULT = "錯誤寵物",
-    PETTRACKER_FELGUARD_LABEL = "地獄衛士本地化：",
+    PETTRACKER_FELGUARD_LABEL = "惡魔守衛覆蓋：",
     PETTRACKER_CLASS_NOTE = "支援：獵人、術士、死亡騎士（邪惡）、法師（冰霜）",
 
     ---------------------------------------------------------------------------

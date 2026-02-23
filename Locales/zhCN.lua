@@ -766,7 +766,7 @@ ns:RegisterLocale("zhCN", {
     PETTRACKER_PASSIVE_DEFAULT = "宠物被动",
     PETTRACKER_WRONGPET_LABEL = "错误宠物文本:",
     PETTRACKER_WRONGPET_DEFAULT = "宠物错误",
-    PETTRACKER_FELGUARD_LABEL = "恶魔卫士本地化名称:",
+    PETTRACKER_FELGUARD_LABEL = "恶魔卫士覆盖:",
     PETTRACKER_CLASS_NOTE = "支持职业：猎人、术士、死亡骑士 (邪恶)、法师 (冰霜)",
 
     ---------------------------------------------------------------------------

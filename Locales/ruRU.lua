@@ -764,7 +764,7 @@ ns:RegisterLocale("ruRU", {
     PETTRACKER_PASSIVE_DEFAULT = "Питомец пассивен",
     PETTRACKER_WRONGPET_LABEL = "Текст для неправильного питомца:",
     PETTRACKER_WRONGPET_DEFAULT = "Неправильный питомец",
-    PETTRACKER_FELGUARD_LABEL = "Локализация Стража Скверны:",
+    PETTRACKER_FELGUARD_LABEL = "Страж Скверны (переопр.):",
     PETTRACKER_CLASS_NOTE = "Поддерживаются: Охотник, Чернокнижник, Рыцарь смерти (Нечестивость), Маг (Лёд)",
     
     ---------------------------------------------------------------------------

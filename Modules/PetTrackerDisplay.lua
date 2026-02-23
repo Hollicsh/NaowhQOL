@@ -91,6 +91,21 @@ local function IsPetPassive()
     return false
 end
 
+-- Built-in Felguard creature family names per locale
+local FELGUARD_FAMILY_NAMES = {
+    ["enUS"] = "felguard",
+    ["enGB"] = "felguard",
+    ["deDE"] = "teufelswache",
+    ["esES"] = "guardia vil",
+    ["esMX"] = "guardia vil",
+    ["frFR"] = "gangregarde",
+    ["koKR"] = "지옥수호병",
+    ["ptBR"] = "guarda-vil",
+    ["ruRU"] = "страж скверны",
+    ["zhCN"] = "恶魔卫士",
+    ["zhTW"] = "惡魔守衛",
+}
+
 -- Check for wrong pet (Demo Warlock without Felguard)
 local function IsWrongPet()
     local cls = ns.SpecUtil.GetClassName()
@@ -101,18 +116,28 @@ local function IsWrongPet()
         if IsPlayerSpell(FELGUARD_SPELL) then
             local petFamily = UnitCreatureFamily("pet")
             if petFamily then
-                -- Check if pet is NOT a Felguard using user-configurable family name
-                local db = NaowhQOL.petTracker
-                local felguardNames = db and db.felguardFamily or "felguard,teufelswache"
                 local lowerFamily = petFamily:lower()
 
-                for name in felguardNames:gmatch("[^,]+") do
-                    local trimmed = name:match("^%s*(.-)%s*$"):lower()
-                    if trimmed ~= "" and lowerFamily:find(trimmed, 1, true) then
-                        return false  -- Pet is a Felguard variant
+                -- Check built-in locale table first
+                local locale = GetLocale()
+                local builtIn = FELGUARD_FAMILY_NAMES[locale]
+                if builtIn and lowerFamily:find(builtIn, 1, true) then
+                    return false  -- Pet is a Felguard variant
+                end
+
+                -- Fallback: check user-configured names (for unsupported locales)
+                local db = NaowhQOL.petTracker
+                local felguardNames = db and db.felguardFamily
+                if felguardNames and felguardNames ~= "" then
+                    for name in felguardNames:gmatch("[^,]+") do
+                        local trimmed = name:match("^%s*(.-)%s*$"):lower()
+                        if trimmed ~= "" and lowerFamily:find(trimmed, 1, true) then
+                            return false  -- Pet is a Felguard variant
+                        end
                     end
                 end
-                return true  -- Pet family didn't match any configured names
+
+                return true  -- Pet family didn't match any known names
             end
         end
     end

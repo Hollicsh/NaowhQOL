@@ -758,7 +758,7 @@ ns:RegisterLocale("koKR", {
     PETTRACKER_PASSIVE_DEFAULT = "동행 수동",
     PETTRACKER_WRONGPET_LABEL = "잘못된 동행 텍스트:",
     PETTRACKER_WRONGPET_DEFAULT = "잘못된 동행",
-    PETTRACKER_FELGUARD_LABEL = "지옥감시자 지역화:",
+    PETTRACKER_FELGUARD_LABEL = "지옥수호병 재정의:",
     PETTRACKER_CLASS_NOTE = "지원: 사냥꾼, 흑마법사, 죽음의 기사 (부정), 마법사 (냉기)",
 
     ---------------------------------------------------------------------------

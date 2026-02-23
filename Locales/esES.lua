@@ -758,7 +758,7 @@ ns:RegisterLocale("esES", {
     PETTRACKER_PASSIVE_DEFAULT = "Mascota pasiva",
     PETTRACKER_WRONGPET_LABEL = "Texto de mascota incorrecta:",
     PETTRACKER_WRONGPET_DEFAULT = "Mascota incorrecta",
-    PETTRACKER_FELGUARD_LABEL = "Configuración regional del guardia vil:",
+    PETTRACKER_FELGUARD_LABEL = "Guardia vil (override):",
     PETTRACKER_CLASS_NOTE = "Compatible con: Cazador, Brujo, Caballero de la muerte (Profano), Mago (Escarcha)",
 
     ---------------------------------------------------------------------------

@@ -758,7 +758,7 @@ ns:RegisterLocale("deDE", {
     PETTRACKER_PASSIVE_DEFAULT = "Begleiter passiv",
     PETTRACKER_WRONGPET_LABEL = "Falscher-Begleiter-Text:",
     PETTRACKER_WRONGPET_DEFAULT = "Falscher Begleiter",
-    PETTRACKER_FELGUARD_LABEL = "Felsenwächter-Gebietsschema:",
+    PETTRACKER_FELGUARD_LABEL = "Teufelswache Überschreibung:",
     PETTRACKER_CLASS_NOTE = "Unterstützt: Jäger, Hexenmeister, Todesritter (Unheilig), Magier (Frost)",
 
     ---------------------------------------------------------------------------
