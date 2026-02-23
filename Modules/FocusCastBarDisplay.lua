@@ -72,6 +72,16 @@ local iconFrame = CreateFrame("Frame", nil, castBarFrame)
 iconFrame:SetSize(24, 24)
 iconFrame:SetPoint("LEFT", castBarFrame, "LEFT", 0, 0)
 
+-- 1px black border around icon
+local iconBorder = CreateFrame("Frame", nil, iconFrame, "BackdropTemplate")
+iconBorder:SetPoint("TOPLEFT", -1, 1)
+iconBorder:SetPoint("BOTTOMRIGHT", 1, -1)
+iconBorder:SetBackdrop({
+    edgeFile = [[Interface\Buttons\WHITE8X8]],
+    edgeSize = 1,
+})
+iconBorder:SetBackdropBorderColor(0, 0, 0, 1)
+
 local iconTexture = iconFrame:CreateTexture(nil, "ARTWORK")
 iconTexture:SetAllPoints()
 iconTexture:SetTexCoord(0.07, 0.93, 0.07, 0.93)
@@ -281,16 +291,15 @@ local function UpdateLayout()
     local iconW, iconH
     if db.autoSizeIcon then
         -- Use live frame size (important during resize drag when db hasn't saved yet)
-        local barW = castBarFrame:GetWidth()
         local barH = castBarFrame:GetHeight()
         if iconPos == "LEFT" or iconPos == "RIGHT" then
-            -- Height matches the bar, width = height + 1% of bar width on each side
+            -- Square icon matching bar height
             iconH = barH
-            iconW = barH + math.floor(barW * 0.02)
+            iconW = barH
         else
-            -- Width matches the bar, height = width + 1% of bar height on each side
-            iconW = barW
-            iconH = barW + math.floor(barH * 0.02)
+            -- Square icon matching bar height
+            iconW = barH
+            iconH = barH
         end
     else
         local s = db.iconSize or 24
@@ -308,28 +317,43 @@ local function UpdateLayout()
         iconFrame:Show()
         iconFrame:ClearAllPoints()
 
-        -- Icon is always positioned OUTSIDE the cast bar frame
-        -- Use two-point anchoring flush with the border frame (which extends 1px beyond castBarFrame)
-        if iconPos == "LEFT" then
-            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 1)
-            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, -1)
-            iconFrame:SetWidth(iconW)
-        elseif iconPos == "RIGHT" then
-            iconFrame:SetPoint("TOPLEFT", castBarFrame, "TOPRIGHT", 1, 1)
-            iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "BOTTOMRIGHT", 1, -1)
-            iconFrame:SetWidth(iconW)
-        elseif iconPos == "TOP" then
-            iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "TOPLEFT", -1, 1)
-            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "TOPRIGHT", 1, 1)
-            iconFrame:SetHeight(iconH)
-        elseif iconPos == "BOTTOM" then
-            iconFrame:SetPoint("TOPLEFT", castBarFrame, "BOTTOMLEFT", -1, -1)
-            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "BOTTOMRIGHT", 1, -1)
-            iconFrame:SetHeight(iconH)
+        if db.autoSizeIcon then
+            -- Two-point anchoring: icon stretches to match bar height/width
+            if iconPos == "LEFT" then
+                iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 0)
+                iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, 0)
+                iconFrame:SetWidth(iconW)
+            elseif iconPos == "RIGHT" then
+                iconFrame:SetPoint("TOPLEFT", castBarFrame, "TOPRIGHT", 1, 0)
+                iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "BOTTOMRIGHT", 1, 0)
+                iconFrame:SetWidth(iconW)
+            elseif iconPos == "TOP" then
+                iconFrame:SetPoint("BOTTOMLEFT", castBarFrame, "TOPLEFT", 0, 1)
+                iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "TOPRIGHT", 0, 1)
+                iconFrame:SetHeight(iconH)
+            elseif iconPos == "BOTTOM" then
+                iconFrame:SetPoint("TOPLEFT", castBarFrame, "BOTTOMLEFT", 0, -1)
+                iconFrame:SetPoint("TOPRIGHT", castBarFrame, "BOTTOMRIGHT", 0, -1)
+                iconFrame:SetHeight(iconH)
+            else
+                iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 0)
+                iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, 0)
+                iconFrame:SetWidth(iconW)
+            end
         else
-            iconFrame:SetPoint("TOPRIGHT", castBarFrame, "TOPLEFT", -1, 1)
-            iconFrame:SetPoint("BOTTOMRIGHT", castBarFrame, "BOTTOMLEFT", -1, -1)
-            iconFrame:SetWidth(iconW)
+            -- Single-point anchoring: icon stays at its fixed size
+            iconFrame:SetSize(iconW, iconH)
+            if iconPos == "LEFT" then
+                iconFrame:SetPoint("RIGHT", castBarFrame, "LEFT", -1, 0)
+            elseif iconPos == "RIGHT" then
+                iconFrame:SetPoint("LEFT", castBarFrame, "RIGHT", 1, 0)
+            elseif iconPos == "TOP" then
+                iconFrame:SetPoint("BOTTOM", castBarFrame, "TOP", 0, 1)
+            elseif iconPos == "BOTTOM" then
+                iconFrame:SetPoint("TOP", castBarFrame, "BOTTOM", 0, -1)
+            else
+                iconFrame:SetPoint("RIGHT", castBarFrame, "LEFT", -1, 0)
+            end
         end
     else
         iconFrame:Hide()
@@ -632,20 +656,18 @@ function castBarFrame:UpdateDisplay()
         end
     end
 
-    -- Always apply saved size
+    -- Always apply saved size and position
     local width = db.width or 250
     local height = db.height or 24
     castBarFrame:SetSize(width, height)
 
-    if not castBarFrame.initialized then
-        castBarFrame:ClearAllPoints()
-        local point = db.point or "CENTER"
-        local x = db.x or 0
-        local y = db.y or 100
-        castBarFrame:SetPoint(point, UIParent, point, x, y)
-
-        castBarFrame.initialized = true
-    end
+    -- Always restore position from saved data to prevent drift
+    castBarFrame:ClearAllPoints()
+    local point = db.point or "CENTER"
+    local anchorTo = db.anchorTo or point
+    local x = db.x or 0
+    local y = db.y or 100
+    castBarFrame:SetPoint(point, UIParent, anchorTo, x, y)
 
     UpdateLayout()
     UpdateBarColor()
@@ -709,16 +731,21 @@ loader:SetScript("OnEvent", function(self, event, unit, ...)
         db.x = db.x or 0
         db.y = db.y or 100
 
-        W.MakeDraggable(castBarFrame, { db = db })
+        W.MakeDraggable(castBarFrame, {
+            db = db, userPlaced = false, anchorToKey = "anchorTo",
+            onDragStop = function()
+                if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
+            end,
+        })
         resizeHandle = W.CreateResizeHandle(castBarFrame, {
             db = db,
             onResize = function()
                 UpdateLayout()
                 UpdateEmpowerStages(#empowerMarkers + 1)
+                if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
             end,
         })
 
-        castBarFrame.initialized = false
         castBarFrame:UpdateDisplay()
 
         -- Cache interrupt spell ID

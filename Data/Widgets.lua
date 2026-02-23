@@ -1885,6 +1885,7 @@ function ns.Widgets.MakeDraggable(frame, opts)
             db[xKey] = math.floor(x)
             db[yKey] = math.floor(y)
         end
+        if opts.onDragStop then opts.onDragStop() end
     end)
 end
 
