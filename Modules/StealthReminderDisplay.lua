@@ -5,6 +5,7 @@ local W = ns.Widgets
 local inCombat = false
 local stealthed = false
 local isResting = false
+local inInstance = false
 
 local UNLOCK_BACKDROP = {
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -272,6 +273,12 @@ function stanceFrame:UpdateDisplay()
         return
     end
 
+    if db.stanceInstanceOnly and not inInstance and not db.stanceUnlock then
+        StopStanceSound()
+        stanceFrame:Hide()
+        return
+    end
+
     local expected = GetExpectedForm()
     if not expected then
         StopStanceSound()
@@ -320,6 +327,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Stealth/Stance", function(self,
         inCombat = UnitAffectingCombat("player")
         currentFormIndex = GetShapeshiftForm()
         isResting = IsResting()
+        inInstance = ns.ZoneUtil and ns.ZoneUtil.IsInInstance() or false
 
         db.width = db.width or 200
         db.height = db.height or 40
@@ -355,6 +363,18 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Stealth/Stance", function(self,
         stanceFrame.initialized = false
         stealthFrame:UpdateDisplay()
         stanceFrame:UpdateDisplay()
+
+        -- Re-evaluate on zone change
+        if ns.ZoneUtil then
+            ns.ZoneUtil.RegisterCallback("StealthStanceReminder_Zone", function(zoneData)
+                local wasInInstance = inInstance
+                inInstance = (zoneData.instanceType == "party" or zoneData.instanceType == "raid")
+                if wasInInstance ~= inInstance then
+                    stealthFrame:UpdateDisplay()
+                    stanceFrame:UpdateDisplay()
+                end
+            end)
+        end
 
         -- Re-evaluate both frames when spec changes
         ns.SpecUtil.RegisterCallback("StealthStanceReminder", function()

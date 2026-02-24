@@ -423,10 +423,6 @@ function ns:InitImportExport()
                         -- Reset the AceDB profile to aceDBDefaults (all off)
                         ns.db:ResetProfile()
                         NaowhQOL = ns.db.profile
-                        -- Also clear snapshot data so reload doesn't restore old values
-                        if NaowhQOL_Profiles and NaowhQOL_Profiles.profileData then
-                            NaowhQOL_Profiles.profileData["Default"] = nil
-                        end
                         -- Refresh everything
                         if ns.SettingsIO then
                             ns.SettingsIO:TriggerRefreshAll()

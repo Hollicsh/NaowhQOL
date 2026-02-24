@@ -107,6 +107,7 @@ Config/EquipmentReminder.lua
 Config/CRez.lua
 Config/PetTracker.lua
 Config/CoTank.lua
+Config/General.lua
 Config/Modules.lua
 Config/ImportExport.lua
 Config/SlashCommands.lua

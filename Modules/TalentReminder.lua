@@ -1,12 +1,7 @@
 local addonName, ns = ...
 local L = ns.L
 
-local COLORS = {
-    BLUE    = "018ee7",
-    ORANGE  = "ffa900",
-    SUCCESS = "00ff00",
-    ERROR   = "ff0000",
-}
+local COLORS = ns.COLORS
 
 local lastCheckedZone = nil
 

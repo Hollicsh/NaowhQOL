@@ -1088,4 +1088,31 @@ ns:RegisterLocale("zhTW", {
     -- BUFF WATCHER V2（額外）
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "通過前消失前的秒數（0 = 停用）",
+
+    ---------------------------------------------------------------------------
+    -- 一般設定
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "一般",
+    SIDEBAR_TAB_GENERAL = "一般",
+    GENERAL_TITLE_WORD1 = "一般",
+    GENERAL_TITLE_WORD2 = "設定",
+    GENERAL_SUBTITLE = "適用於所有模組的全域設定",
+
+    GENERAL_SECTION_FONT = "全域字型",
+    GENERAL_GLOBAL_FONT_DESC = "選擇一種字型並一次套用到所有模組。各模組的字型選擇將被覆蓋。",
+    GENERAL_APPLY_GLOBAL_FONT = "套用到所有模組",
+    GENERAL_GLOBAL_FONT_APPLIED = "全域字型已套用到所有模組。",
+
+    GENERAL_SECTION_LOCK = "全部鎖定 / 解鎖",
+    GENERAL_LOCK_DESC = "快速鎖定或解鎖所有可移動模組，以便一起重新定位。",
+    GENERAL_LOCK_STATUS = "%d / %d 個模組已解鎖",
+    GENERAL_UNLOCK_ALL = "全部解鎖",
+    GENERAL_LOCK_ALL = "全部鎖定",
+    GENERAL_ALL_UNLOCKED = "所有模組已解鎖。",
+    GENERAL_ALL_LOCKED = "所有模組已鎖定。",
+
+    GENERAL_SECTION_SEARCH = "模組搜尋",
+    GENERAL_SEARCH_DESC = "輸入模組名稱或設定項以快速尋找並導覽。",
+    GENERAL_SEARCH_PLACEHOLDER = "搜尋模組和設定...",
+    GENERAL_SEARCH_NO_RESULTS = "未找到符合的模組。",
 })

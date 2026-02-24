@@ -1088,4 +1088,31 @@ ns:RegisterLocale("frFR", {
     -- BUFF WATCHER V2 (supplémentaire)
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "Secondes avant la disparition en cas de réussite (0 = désactivé)",
+
+    ---------------------------------------------------------------------------
+    -- PARAMÈTRES GÉNÉRAUX
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "GÉNÉRAL",
+    SIDEBAR_TAB_GENERAL = "Général",
+    GENERAL_TITLE_WORD1 = "PARAMÈTRES",
+    GENERAL_TITLE_WORD2 = "GÉNÉRAUX",
+    GENERAL_SUBTITLE = "Paramètres globaux appliqués à tous les modules",
+
+    GENERAL_SECTION_FONT = "POLICE GLOBALE",
+    GENERAL_GLOBAL_FONT_DESC = "Choisissez une police et appliquez-la à tous les modules. Les sélecteurs de police individuels seront remplacés.",
+    GENERAL_APPLY_GLOBAL_FONT = "Appliquer à tous les modules",
+    GENERAL_GLOBAL_FONT_APPLIED = "Police globale appliquée à tous les modules.",
+
+    GENERAL_SECTION_LOCK = "VERROUILLER / DÉVERROUILLER TOUT",
+    GENERAL_LOCK_DESC = "Verrouillez ou déverrouillez rapidement tous les modules déplaçables pour les repositionner ensemble.",
+    GENERAL_LOCK_STATUS = "%d / %d modules déverrouillés",
+    GENERAL_UNLOCK_ALL = "Tout déverrouiller",
+    GENERAL_LOCK_ALL = "Tout verrouiller",
+    GENERAL_ALL_UNLOCKED = "Tous les modules déverrouillés.",
+    GENERAL_ALL_LOCKED = "Tous les modules verrouillés.",
+
+    GENERAL_SECTION_SEARCH = "RECHERCHE DE MODULE",
+    GENERAL_SEARCH_DESC = "Tapez un nom de module ou de paramètre pour le trouver et y accéder rapidement.",
+    GENERAL_SEARCH_PLACEHOLDER = "Rechercher modules et paramètres...",
+    GENERAL_SEARCH_NO_RESULTS = "Aucun module correspondant trouvé.",
 })

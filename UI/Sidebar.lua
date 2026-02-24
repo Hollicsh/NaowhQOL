@@ -256,6 +256,11 @@ local function CreateGroup(name, label, childDefs)
     return header, children
 end
 
+-- GENERAL group (top-level)
+CreateGroup("general", L["SIDEBAR_GROUP_GENERAL"], {
+    { key = "general", label = L["SIDEBAR_TAB_GENERAL"], onClick = function() if ns.InitGeneral then ns:InitGeneral() end end },
+})
+
 -- COMBAT group
 CreateGroup("combat", L["SIDEBAR_GROUP_COMBAT"], {
     { key = "combat_timer", label = L["SIDEBAR_TAB_COMBAT_TIMER"], onClick = function() if ns.InitCombatTimer then ns:InitCombatTimer() end end },
@@ -300,7 +305,10 @@ CreateGroup("system", L["SIDEBAR_GROUP_SYSTEM"], {
 
 function ns:ResetSidebarToOptimizations()
     -- Find Optimizations button (first child of SYSTEM group)
-    local systemGroup = allGroups[5]
+    local systemGroup
+    for _, group in ipairs(allGroups) do
+        if group.name == "system" then systemGroup = group; break end
+    end
     if systemGroup and systemGroup.children[1] and ActiveTabIndicator then
         ActiveTabIndicator:ClearAllPoints()
         ActiveTabIndicator:SetPoint("TOPLEFT", systemGroup.children[1], "TOPLEFT", 0, 0)

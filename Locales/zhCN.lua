@@ -1097,4 +1097,31 @@ ns:RegisterLocale("zhCN", {
     -- BUFF WATCHER V2 (additional)
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "通过前消失前的秒数（0 = 禁用）",
+
+    ---------------------------------------------------------------------------
+    -- 常规设置
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "常规",
+    SIDEBAR_TAB_GENERAL = "常规",
+    GENERAL_TITLE_WORD1 = "常规",
+    GENERAL_TITLE_WORD2 = "设置",
+    GENERAL_SUBTITLE = "适用于所有模块的全局设置",
+
+    GENERAL_SECTION_FONT = "全局字体",
+    GENERAL_GLOBAL_FONT_DESC = "选择一种字体并一次性应用到所有模块。各模块的字体选择将被覆盖。",
+    GENERAL_APPLY_GLOBAL_FONT = "应用到所有模块",
+    GENERAL_GLOBAL_FONT_APPLIED = "全局字体已应用到所有模块。",
+
+    GENERAL_SECTION_LOCK = "全部锁定 / 解锁",
+    GENERAL_LOCK_DESC = "快速锁定或解锁所有可移动模块，以便一起重新定位。",
+    GENERAL_LOCK_STATUS = "%d / %d 个模块已解锁",
+    GENERAL_UNLOCK_ALL = "全部解锁",
+    GENERAL_LOCK_ALL = "全部锁定",
+    GENERAL_ALL_UNLOCKED = "所有模块已解锁。",
+    GENERAL_ALL_LOCKED = "所有模块已锁定。",
+
+    GENERAL_SECTION_SEARCH = "模块搜索",
+    GENERAL_SEARCH_DESC = "输入模块名称或设置项以快速查找并导航。",
+    GENERAL_SEARCH_PLACEHOLDER = "搜索模块和设置...",
+    GENERAL_SEARCH_NO_RESULTS = "未找到匹配的模块。",
 })

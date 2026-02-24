@@ -251,6 +251,15 @@ function ns:InitStealthReminder()
         })
         stanceRestedCB:SetShown(db.stanceEnabled)
 
+        local stanceInstanceCB = W:CreateCheckbox(stanceKillArea, {
+            label = L["STEALTH_STANCE_INSTANCE_ONLY"],
+            db = db, key = "stanceInstanceOnly",
+            x = 200, y = -38,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshStance
+        })
+        stanceInstanceCB:SetShown(db.stanceEnabled)
+
         -- Stance sections container
         local stanceSections = CreateFrame("Frame", nil, sc)
         stanceSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
@@ -393,6 +402,7 @@ function ns:InitStealthReminder()
             stanceUnlockCB:SetShown(db.stanceEnabled)
             combatOnlyCB:SetShown(db.stanceEnabled)
             stanceRestedCB:SetShown(db.stanceEnabled)
+            stanceInstanceCB:SetShown(db.stanceEnabled)
             stanceSections:SetShown(db.stanceEnabled)
             RelayoutAll()
         end)

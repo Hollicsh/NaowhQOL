@@ -180,7 +180,11 @@ function ns:InitModuleOptions()
             onChange = function(val) db.durabilityThreshold = val end
         })
 
-        durContent:SetHeight(180)
+        W:CreateFontPicker(durContent, 10, -175, db.durabilityFont or ns.Media.DEFAULT_FONT, function(name)
+            db.durabilityFont = name
+        end)
+
+        durContent:SetHeight(225)
         durWrap:RecalcHeight()
 
         -- ============================================================

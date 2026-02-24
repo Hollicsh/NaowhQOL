@@ -4,18 +4,8 @@ ns.Profiler = {}
 
 local W = ns.Widgets
 
-local COLORS = {
-    BLUE = "018ee7",
-    ORANGE = "ffa900",
-    SUCCESS = "00ff00",
-    GREEN = "00ff00",
-    RED = "ff0000",
-    GRAY = "aaaaaa",
-}
-
-local function ColorizeText(text, color)
-    return "|cff" .. color .. text .. "|r"
-end
+local COLORS = ns.COLORS
+local ColorizeText = W.Colorize
 
 local isPaused = false
 

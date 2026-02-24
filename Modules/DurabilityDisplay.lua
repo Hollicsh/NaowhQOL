@@ -37,11 +37,22 @@ warnText:SetFont(ns.DefaultFontPath(), 22, "OUTLINE")
 warnText:SetPoint("CENTER")
 warnText:SetTextColor(PINK_R, PINK_G, PINK_B)
 
+-- Resolve the durability font from settings (misc.durabilityFont)
+local function ResolveDurabilityFont()
+    local db = NaowhQOL and NaowhQOL.misc
+    local fontName = db and db.durabilityFont
+    if fontName and ns.Media then
+        return ns.Media.ResolveFont(fontName)
+    end
+    return ns.DefaultFontPath()
+end
+
 ---------------------------------------------------------------------------
 -- Show / hide helpers
 ---------------------------------------------------------------------------
 local function ShowWarning(pct, threshold)
     local r, g, b = GetWarningColor(pct, threshold)
+    warnText:SetFont(ResolveDurabilityFont(), 22, "OUTLINE")
     warnText:SetTextColor(r, g, b)
     warnText:SetText(string.format(L["DURABILITY_WARNING"], pct))
     warnFrame:SetAlpha(1)

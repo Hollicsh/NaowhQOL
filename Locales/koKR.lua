@@ -1088,4 +1088,31 @@ ns:RegisterLocale("koKR", {
     -- BUFF WATCHER V2 (추가)
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "통과 시 사라지기 전 초 (0 = 비활성화)",
+
+    ---------------------------------------------------------------------------
+    -- 일반 설정
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "일반",
+    SIDEBAR_TAB_GENERAL = "일반",
+    GENERAL_TITLE_WORD1 = "일반",
+    GENERAL_TITLE_WORD2 = "설정",
+    GENERAL_SUBTITLE = "모든 모듈에 적용되는 전역 설정",
+
+    GENERAL_SECTION_FONT = "전역 글꼴",
+    GENERAL_GLOBAL_FONT_DESC = "글꼴을 선택하고 모든 모듈에 한 번에 적용합니다. 개별 모듈의 글꼴 선택이 덮어씌워집니다.",
+    GENERAL_APPLY_GLOBAL_FONT = "모든 모듈에 적용",
+    GENERAL_GLOBAL_FONT_APPLIED = "전역 글꼴이 모든 모듈에 적용되었습니다.",
+
+    GENERAL_SECTION_LOCK = "전체 잠금 / 잠금 해제",
+    GENERAL_LOCK_DESC = "이동 가능한 모든 모듈을 빠르게 잠금 또는 잠금 해제하여 함께 재배치할 수 있습니다.",
+    GENERAL_LOCK_STATUS = "%d / %d 모듈 잠금 해제됨",
+    GENERAL_UNLOCK_ALL = "모두 잠금 해제",
+    GENERAL_LOCK_ALL = "모두 잠금",
+    GENERAL_ALL_UNLOCKED = "모든 모듈이 잠금 해제되었습니다.",
+    GENERAL_ALL_LOCKED = "모든 모듈이 잠금되었습니다.",
+
+    GENERAL_SECTION_SEARCH = "모듈 검색",
+    GENERAL_SEARCH_DESC = "모듈 이름이나 설정을 입력하여 빠르게 찾고 이동하세요.",
+    GENERAL_SEARCH_PLACEHOLDER = "모듈 및 설정 검색...",
+    GENERAL_SEARCH_NO_RESULTS = "일치하는 모듈을 찾을 수 없습니다.",
 })

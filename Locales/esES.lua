@@ -1088,4 +1088,31 @@ ns:RegisterLocale("esES", {
     -- BUFF WATCHER V2 (adicional)
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "Segundos antes de desaparecer al aprobar (0 = desactivado)",
+
+    ---------------------------------------------------------------------------
+    -- CONFIGURACIÓN GENERAL
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "GENERAL",
+    SIDEBAR_TAB_GENERAL = "General",
+    GENERAL_TITLE_WORD1 = "CONFIGURACIÓN",
+    GENERAL_TITLE_WORD2 = "GENERAL",
+    GENERAL_SUBTITLE = "Ajustes globales que se aplican a todos los módulos",
+
+    GENERAL_SECTION_FONT = "FUENTE GLOBAL",
+    GENERAL_GLOBAL_FONT_DESC = "Elige una fuente y aplícala a todos los módulos a la vez. Los selectores de fuente individuales serán sobrescritos.",
+    GENERAL_APPLY_GLOBAL_FONT = "Aplicar a todos los módulos",
+    GENERAL_GLOBAL_FONT_APPLIED = "Fuente global aplicada a todos los módulos.",
+
+    GENERAL_SECTION_LOCK = "BLOQUEAR / DESBLOQUEAR TODO",
+    GENERAL_LOCK_DESC = "Bloquea o desbloquea rápidamente todos los módulos movibles para reposicionarlos juntos.",
+    GENERAL_LOCK_STATUS = "%d / %d módulos desbloqueados",
+    GENERAL_UNLOCK_ALL = "Desbloquear todo",
+    GENERAL_LOCK_ALL = "Bloquear todo",
+    GENERAL_ALL_UNLOCKED = "Todos los módulos desbloqueados.",
+    GENERAL_ALL_LOCKED = "Todos los módulos bloqueados.",
+
+    GENERAL_SECTION_SEARCH = "BUSCAR MÓDULO",
+    GENERAL_SEARCH_DESC = "Escribe el nombre de un módulo o ajuste para encontrarlo y navegar rápidamente.",
+    GENERAL_SEARCH_PLACEHOLDER = "Buscar módulos y ajustes...",
+    GENERAL_SEARCH_NO_RESULTS = "No se encontraron módulos coincidentes.",
 })

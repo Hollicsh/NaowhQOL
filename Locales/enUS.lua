@@ -137,6 +137,33 @@ ns:RegisterLocale("enUS", {
     SIDEBAR_TAB_SLASH_COMMANDS = "Slash Commands",
 
     ---------------------------------------------------------------------------
+    -- GENERAL SETTINGS
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "GENERAL",
+    SIDEBAR_TAB_GENERAL = "General",
+    GENERAL_TITLE_WORD1 = "GENERAL",
+    GENERAL_TITLE_WORD2 = "SETTINGS",
+    GENERAL_SUBTITLE = "Global settings that apply across all modules",
+
+    GENERAL_SECTION_FONT = "GLOBAL FONT",
+    GENERAL_GLOBAL_FONT_DESC = "Choose a font and apply it to all modules at once. Individual module font pickers will be overridden.",
+    GENERAL_APPLY_GLOBAL_FONT = "Apply to All Modules",
+    GENERAL_GLOBAL_FONT_APPLIED = "Global font applied to all modules.",
+
+    GENERAL_SECTION_LOCK = "LOCK / UNLOCK ALL",
+    GENERAL_LOCK_DESC = "Quickly lock or unlock all movable modules so you can reposition them together.",
+    GENERAL_LOCK_STATUS = "%d / %d modules unlocked",
+    GENERAL_UNLOCK_ALL = "Unlock All",
+    GENERAL_LOCK_ALL = "Lock All",
+    GENERAL_ALL_UNLOCKED = "All modules unlocked.",
+    GENERAL_ALL_LOCKED = "All modules locked.",
+
+    GENERAL_SECTION_SEARCH = "MODULE SEARCH",
+    GENERAL_SEARCH_DESC = "Type a module name or setting to quickly find and navigate to it.",
+    GENERAL_SEARCH_PLACEHOLDER = "Search modules & settings...",
+    GENERAL_SEARCH_NO_RESULTS = "No matching modules found.",
+
+    ---------------------------------------------------------------------------
     -- BUFF TRACKER
     ---------------------------------------------------------------------------
     BUFFTRACKER_TITLE = "BUFF TRACKER",
@@ -597,6 +624,7 @@ ns:RegisterLocale("enUS", {
     STEALTH_STANCE_DEFAULT_PALADIN = "CHECK AURA",
     STEALTH_ENABLE_SOUND = "Enable Sound Alert",
     STEALTH_REPEAT = "Repeat Interval (sec)",
+    STEALTH_STANCE_INSTANCE_ONLY = "Dungeons / Raids Only",
 
     ---------------------------------------------------------------------------
     -- COMBAT REZ
@@ -793,6 +821,13 @@ ns:RegisterLocale("enUS", {
     MOVEMENT_ALERT_TEXT_FORMAT_HELP = "%a = ability name, %t = time remaining, \\n = new line",
     MOVEMENT_ALERT_BAR_SHOW_ICON = "Show Icon on Progress Bar",
     MOVEMENT_ALERT_CLASS_FILTER = "Track on these classes:",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "TRACKED SPELLS",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Choose which spells to track and set custom display text:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Custom Text:",
+    MOVEMENT_ALERT_ADD_SPELL = "Add Spell ID:",
+    MOVEMENT_ALERT_ADD_BTN = "Add",
+    MOVEMENT_ALERT_REMOVE_BTN = "Remove",
+    MOVEMENT_ALERT_NO_SPELLS = "No spells configured for this class",
     TIME_SPIRAL_ENABLE = "Enable Time Spiral Tracker",
     TIME_SPIRAL_SETTINGS = "TIME SPIRAL SETTINGS",
     TIME_SPIRAL_TEXT = "Display Text:",

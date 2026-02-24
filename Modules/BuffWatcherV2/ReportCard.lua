@@ -784,6 +784,13 @@ end
 function ReportCard:CheckAutoClose()
     if not self.frame or not self.frame:IsShown() then return end
 
+    -- Never auto-close while unlocked (positioning mode)
+    local db = BWV2:GetDB()
+    if db and db.reportCardUnlock then
+        CancelAutoClose(self.frame)
+        return
+    end
+
     local autoCloseDelay = GetAutoCloseDelay()
 
     if autoCloseDelay > 0 then

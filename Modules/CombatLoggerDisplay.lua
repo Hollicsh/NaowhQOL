@@ -3,10 +3,7 @@ local L = ns.L
 
 -- Auto combat logging for raids/M+
 
-local COLORS = {
-    BLUE    = "018ee7",
-    ORANGE  = "ffa900",
-}
+local COLORS = ns.COLORS
 
 local isLogging = false
 

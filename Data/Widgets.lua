@@ -1149,8 +1149,8 @@ function ns.Widgets:CreateSlider(parent, opts)
                 initVal = defaults[opts.key]
                 opts.db[opts.key] = initVal
             else
-                print("|cffff6600NaowhQOL:|r Missing default for " .. (opts.moduleName or "?") .. "." .. opts.key)
-                initVal = min
+                initVal = 0
+                opts.db[opts.key] = initVal
             end
         else
             initVal = min

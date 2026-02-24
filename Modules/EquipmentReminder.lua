@@ -1,10 +1,6 @@
 local addonName, ns = ...
 
-local COLORS = {
-    BLUE    = "018ee7",
-    ORANGE  = "ffa900",
-    RED     = "ff3333",
-}
+local COLORS = ns.COLORS
 
 -- Equipment slots to display in the reminder frame
 local EQUIPMENT_SLOTS = {

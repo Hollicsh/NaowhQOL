@@ -1,23 +1,10 @@
 local addonName, ns = ...
 
-local COLORS = {
-    BLUE = "018ee7",
-    ORANGE = "ffa900",
-    SUCCESS = "00ff00",
-    ERROR = "ff0000",
-}
-
-local function ColorizeText(text, color)
-    return "|cff" .. color .. text .. "|r"
-end
-
 -- NaowhQOL will be set to point to ns.db.profile after AceDB init
 NaowhQOL = NaowhQOL or {}
 
 -- Session-only suppression flag (resets on reload)
 ns.notificationsSuppressed = false
-
-ns.DB = ns.DB or {}
 
 -- Debug flag for migration logging (set to true to see migration output)
 local MIGRATION_DEBUG = false
@@ -39,13 +26,6 @@ local function deepCopy(orig)
         copy[deepCopy(k)] = deepCopy(v)
     end
     return copy
-end
-
--- Apply default values to a settings table
-local function ApplyDefaults(target, defaults)
-    for k, v in pairs(defaults) do
-        if target[k] == nil then target[k] = v end
-    end
 end
 
 -- Module default settings tables
@@ -127,8 +107,9 @@ local GCD_TRACKER_DEFAULTS = {
     point = "CENTER", x = 0, y = -100, combatOnly = false,
     showInDungeon = true, showInRaid = true, showInArena = true,
     showInBattleground = true, showInWorld = true,
+    blocklist = { [6603] = true },
     timelineColorR = 0.01, timelineColorG = 0.56, timelineColorB = 0.91, timelineHeight = 4,
-    showDowntimeSummary = true,
+    downtimeSummaryEnabled = false,
 }
 
 local STEALTH_REMINDER_DEFAULTS = {
@@ -140,7 +121,7 @@ local STEALTH_REMINDER_DEFAULTS = {
     enableBalance = false, enableGuardian = false, enableResto = false,
     stanceEnabled = false, stanceUnlock = false, stanceWarnR = 1, stanceWarnG = 0.4, stanceWarnB = 0,
     stancePoint = "CENTER", stanceX = 0, stanceY = 100, stanceWidth = 200, stanceHeight = 40,
-    stanceCombatOnly = false, stanceDisableWhenRested = false,
+    stanceCombatOnly = false, stanceDisableWhenRested = false, stanceInstanceOnly = false,
     stanceSoundEnabled = false, stanceSound = "Raid Warning", stanceSoundInterval = 3,
 }
 
@@ -156,6 +137,7 @@ local MOVEMENT_ALERT_DEFAULTS = {
     point = "CENTER", x = 0, y = 50, width = 200, height = 40,
     combatOnly = false,
     disabledClasses = {},
+    spellOverrides = {},  -- Per-spell config: [spellId] = {enabled, customText, class}
     -- Time Spiral sub-feature
     tsEnabled = false, tsUnlock = false,
     tsText = "FREE MOVEMENT", tsColorR = 0.53, tsColorG = 1, tsColorB = 0,
@@ -229,27 +211,6 @@ local EQUIPMENT_REMINDER_DEFAULTS = {
     ecSpecRules = {},  -- { [specID] = { [slotID] = enchantID } } or { [0] = {...} } for all specs
 }
 
-local CURSOR_TRACKER_DEFAULTS = {
-    enabled = false,
-    size = 48,
-    shape = "ring.tga",
-    color = { r = 1.0, g = 0.66, b = 0.0 },
-    showOutOfCombat = true,
-    opacityInCombat = 1.0,
-    opacityOutOfCombat = 1.0,
-    trailEnabled = false,
-    trailDuration = 0.6,
-    gcdEnabled = true,
-    gcdColor = { r = 0.004, g = 0.56, b = 0.91 },
-    gcdReadyColor = { r = 0.0, g = 0.8, b = 0.3 },
-    gcdReadyMatchSwipe = false,
-    gcdAlpha = 1.0,
-    hideOnMouseClick = false,
-    hideBackground = false,
-    castSwipeEnabled = true,
-    castSwipeColor = { r = 1.0, g = 0.66, b = 0.0 },
-}
-
 local MOUSE_RING_DEFAULTS = {
     enabled = false,
     size = 48,
@@ -284,7 +245,7 @@ local CREZ_DEFAULTS = {
 }
 
 local PET_TRACKER_DEFAULTS = {
-    enabled = false, unlock = false,
+    enabled = false, unlock = false, font = NAOWH_FONT,
     showIcon = true, onlyInInstance = false,
     point = "CENTER", x = 0, y = 200,
     width = 200, height = 50,
@@ -343,6 +304,11 @@ local aceDBDefaults = {
             lastTab = nil,
         },
 
+        -- General settings
+        general = {
+            globalFont = NAOWH_FONT,
+        },
+
         -- Module settings
         combatTimer = COMBAT_TIMER_DEFAULTS,
         combatAlert = COMBAT_ALERT_DEFAULTS,
@@ -353,18 +319,7 @@ local aceDBDefaults = {
         },
         dragonriding = DRAGONRIDING_DEFAULTS,
         buffTracker = BUFF_TRACKER_DEFAULTS,
-        gcdTracker = {
-            enabled = false, unlock = false, duration = 5, iconSize = 32,
-            direction = "RIGHT", spacing = 4, fadeStart = 0.5,
-            stackOverlapping = true,
-            point = "CENTER", x = 0, y = -100, combatOnly = false,
-            showInDungeon = true, showInRaid = true, showInArena = true,
-            showInBattleground = true, showInWorld = true,
-            blocklist = { [6603] = true },
-            timelineColorR = 0.01, timelineColorG = 0.56, timelineColorB = 0.91,
-            timelineHeight = 4,
-            downtimeSummaryEnabled = false,
-        },
+        gcdTracker = GCD_TRACKER_DEFAULTS,
         stealthReminder = STEALTH_REMINDER_DEFAULTS,
         movementAlert = MOVEMENT_ALERT_DEFAULTS,
         rangeCheck = RANGE_CHECK_DEFAULTS,
@@ -381,7 +336,6 @@ local aceDBDefaults = {
         cRez = CREZ_DEFAULTS,
         petTracker = PET_TRACKER_DEFAULTS,
         coTank = CO_TANK_DEFAULTS,
-        CursorTracker = {},
 
         -- Misc settings
         misc = {
@@ -396,6 +350,7 @@ local aceDBDefaults = {
             guildRepair = false,
             durabilityWarning = false,
             durabilityThreshold = 30,
+            durabilityFont = NAOWH_FONT,
             autoSlotKeystone = false,
             skipQueueConfirm = false,
             deathReleaseProtection = false,
@@ -506,17 +461,7 @@ function ns:RestoreModuleDefaults(moduleName, skipKeys)
     local defaults = ns.ModuleDefaults[moduleName]
     if not defaults then return false end
 
-    -- CursorTracker stores settings per-spec
-    local db
-    if moduleName == "CursorTracker" then
-        local specIndex = GetSpecialization()
-        local specName = specIndex and select(2, GetSpecializationInfo(specIndex)) or "NoSpec"
-        NaowhQOL.CursorTracker = NaowhQOL.CursorTracker or {}
-        NaowhQOL.CursorTracker[specName] = NaowhQOL.CursorTracker[specName] or {}
-        db = NaowhQOL.CursorTracker[specName]
-    else
-        db = NaowhQOL[moduleName]
-    end
+    local db = NaowhQOL[moduleName]
 
     if not db then return false end
 
@@ -596,28 +541,63 @@ local function MigrateDefaultsV2()
         end
     end
 
-    -- Also preserve values in snapshot profiles stored in NaowhQOL_Profiles
-    if NaowhQOL_Profiles and NaowhQOL_Profiles.profileData then
-        for _, snapData in pairs(NaowhQOL_Profiles.profileData) do
-            if next(snapData) ~= nil then
-                for _, entry in ipairs(OLD_TRUE_DEFAULTS) do
-                    local modData = snapData[entry.module]
-                    if modData then
-                        if modData[entry.key] == nil then
-                            modData[entry.key] = true
-                        end
-                    else
-                        snapData[entry.module] = {}
-                        snapData[entry.module][entry.key] = true
-                    end
-                end
+    ns.db.global.defaultsV2Migrated = true
+    if migrated then
+        DebugPrint("Defaults v2 migration: preserved old enabled=true values for existing profiles.")
+    end
+end
+
+local function MigrateSnapshotProfiles()
+    if not ns.db or not ns.db.sv then return end
+
+    if ns.db.global.profileSnapshotMigrated then return end
+
+    local snapDB = rawget(_G, "NaowhQOL_Profiles")
+    if not snapDB or not snapDB.profileData then
+        -- Nothing to migrate
+        ns.db.global.profileSnapshotMigrated = true
+        return
+    end
+
+    DebugPrint("Migrating snapshot profiles to AceDB format...")
+
+    -- Ensure raw storage tables exist
+    ns.db.sv.profiles = ns.db.sv.profiles or {}
+    ns.db.sv.profileKeys = ns.db.sv.profileKeys or {}
+
+    local migrated = 0
+    for profileName, profileData in pairs(snapDB.profileData) do
+        if type(profileData) == "table" and next(profileData) then
+            -- Snapshot is source of truth — overwrite whatever AceDB had
+            ns.db.sv.profiles[profileName] = deepCopy(profileData)
+            migrated = migrated + 1
+            DebugPrint("  Migrated profile: " .. profileName)
+
+            -- Track in savedProfiles registry so it survives AceDB cleanup
+            if ns.db.global then
+                ns.db.global.savedProfiles = ns.db.global.savedProfiles or {}
+                ns.db.global.savedProfiles[profileName] = true
             end
         end
     end
 
-    ns.db.global.defaultsV2Migrated = true
-    if migrated then
-        DebugPrint("Defaults v2 migration: preserved old enabled=true values for existing profiles.")
+    -- Restore the active profile for this character
+    if snapDB.activeProfile then
+        local target = snapDB.activeProfile
+        if ns.db.sv.profiles[target] then
+            ns.db:SetProfile(target)
+            NaowhQOL = ns.db.profile
+            DebugPrint("  Restored active profile: " .. target)
+        end
+    end
+
+    -- Mark migration complete
+    ns.db.global.profileSnapshotMigrated = true
+
+    if migrated > 0 then
+        DebugPrint("Snapshot migration completed: " .. migrated .. " profile(s) migrated to AceDB format.")
+    else
+        DebugPrint("No snapshot profiles found to migrate.")
     end
 end
 
@@ -786,34 +766,12 @@ local function InitializeDB()
     -- Run migration for existing users (pass real legacy data)
     MigrateFromLegacy(legacyCharData)
 
+    -- Migrate snapshot profiles from NaowhQOL_Profiles → AceDB profiles.
+    -- Must run before MigrateDefaultsV2 so snapshot data is in ns.db.sv.profiles.
+    MigrateSnapshotProfiles()
+
     -- Preserve old enabled=true defaults for existing users before new false defaults take effect
     MigrateDefaultsV2()
-
-    -- Restore the previously active profile (saved in NaowhQOL_Profiles.activeProfile).
-    -- This must happen after migration so the profile data is already in place.
-    if NaowhQOL_Profiles and NaowhQOL_Profiles.activeProfile then
-        local target = NaowhQOL_Profiles.activeProfile
-
-        -- Only restore if the profile still has snapshot data.
-        -- If profileData[target] was removed (e.g. the profile was deleted),
-        -- skip restoration so we don't accidentally re-create it.
-        local snap = NaowhQOL_Profiles.profileData and NaowhQOL_Profiles.profileData[target]
-        if snap then
-            local profiles = ns.db:GetProfiles({})
-            -- Ensure the profile exists in AceDB (may have been stripped if all-defaults)
-            ns.db:SetProfile(target)
-            -- Apply snapshot data over whatever AceDB loaded.
-            -- Use deepCopy so the live profile shares no table references with the
-            -- stored snapshot — mutations to ns.db.profile won't corrupt the snapshot.
-            for k, v in pairs(snap) do
-                ns.db.profile[k] = deepCopy(v)
-            end
-            NaowhQOL = ns.db.profile
-        else
-            -- Snapshot was removed (profile deleted); clear stale activeProfile
-            NaowhQOL_Profiles.activeProfile = nil
-        end
-    end
 
     -- Initialize locale (always follow the WoW client locale, never a saved value)
     if ns.SetLocale then
@@ -896,8 +854,6 @@ function ns:ApplyFPSOptimization()
     SetCVar("processPriority", 3)
     SetCVar("WorldTextScale", 1)
     SetCVar("nameplateMaxDistance", 41)
-
-    NaowhQOL.config.optimized = true
 
     ns:LogSuccess("FPS optimization applied.")
     StaticPopup_Show("NAOWH_QOL_RELOAD")

@@ -1088,4 +1088,31 @@ ns:RegisterLocale("deDE", {
     -- BUFF WATCHER V2 (zusätzlich)
     ---------------------------------------------------------------------------
     BWV2_FADE_TOOLTIP               = "Sekunden vor dem Ausblenden bei Bestehen (0 = deaktiviert)",
+
+    ---------------------------------------------------------------------------
+    -- ALLGEMEINE EINSTELLUNGEN
+    ---------------------------------------------------------------------------
+    SIDEBAR_GROUP_GENERAL = "ALLGEMEIN",
+    SIDEBAR_TAB_GENERAL = "Allgemein",
+    GENERAL_TITLE_WORD1 = "ALLGEMEINE",
+    GENERAL_TITLE_WORD2 = "EINSTELLUNGEN",
+    GENERAL_SUBTITLE = "Globale Einstellungen, die für alle Module gelten",
+
+    GENERAL_SECTION_FONT = "GLOBALE SCHRIFTART",
+    GENERAL_GLOBAL_FONT_DESC = "Wähle eine Schriftart und wende sie auf alle Module gleichzeitig an. Einzelne Schriftart-Auswahlen werden überschrieben.",
+    GENERAL_APPLY_GLOBAL_FONT = "Auf alle Module anwenden",
+    GENERAL_GLOBAL_FONT_APPLIED = "Globale Schriftart auf alle Module angewendet.",
+
+    GENERAL_SECTION_LOCK = "ALLE SPERREN / ENTSPERREN",
+    GENERAL_LOCK_DESC = "Alle beweglichen Module schnell sperren oder entsperren, um sie gemeinsam neu zu positionieren.",
+    GENERAL_LOCK_STATUS = "%d / %d Module entsperrt",
+    GENERAL_UNLOCK_ALL = "Alle entsperren",
+    GENERAL_LOCK_ALL = "Alle sperren",
+    GENERAL_ALL_UNLOCKED = "Alle Module entsperrt.",
+    GENERAL_ALL_LOCKED = "Alle Module gesperrt.",
+
+    GENERAL_SECTION_SEARCH = "MODULSUCHE",
+    GENERAL_SEARCH_DESC = "Gib einen Modulnamen oder eine Einstellung ein, um sie schnell zu finden und dorthin zu navigieren.",
+    GENERAL_SEARCH_PLACEHOLDER = "Module & Einstellungen suchen...",
+    GENERAL_SEARCH_NO_RESULTS = "Keine passenden Module gefunden.",
 })

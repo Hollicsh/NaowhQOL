@@ -209,6 +209,271 @@ function ns:InitMovementAlert()
         appWrap:RecalcHeight()
 
         -- ============================================================
+        -- TRACKED SPELLS
+        -- ============================================================
+
+        if not db.spellOverrides then db.spellOverrides = {} end
+
+        local spellsWrap, spellsContent = W:CreateCollapsibleSection(movementSections, {
+            text = L["MOVEMENT_ALERT_TRACKED_SPELLS"],
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local spellRows = {}
+        local spellsAddBox
+
+        local function GetClassSpellList()
+            local playerClass = select(2, UnitClass("player"))
+            local classAbilities = ns.MOVEMENT_ABILITIES and ns.MOVEMENT_ABILITIES[playerClass]
+            local spells = {}
+            local seen = {}
+
+            -- Add default spells from all specs for this class
+            if classAbilities then
+                for key, value in pairs(classAbilities) do
+                    if type(key) == "number" and type(value) == "table" then
+                        for _, spellId in ipairs(value) do
+                            if not seen[spellId] then
+                                seen[spellId] = true
+                                table.insert(spells, { spellId = spellId, isDefault = true })
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Add custom spells from overrides
+            for spellId, override in pairs(db.spellOverrides) do
+                if not seen[spellId] and override.class == playerClass then
+                    seen[spellId] = true
+                    table.insert(spells, { spellId = spellId, isDefault = false })
+                end
+            end
+
+            return spells
+        end
+
+        local function RebuildSpellRows()
+            -- Clean up old rows
+            for _, row in ipairs(spellRows) do
+                row:Hide()
+                row:SetParent(nil)
+            end
+            wipe(spellRows)
+
+            local spells = GetClassSpellList()
+            local ROW_HEIGHT = 52
+            local yOffset = -4
+
+            if #spells == 0 then
+                local noSpells = CreateFrame("Frame", nil, spellsContent)
+                noSpells:SetSize(440, ROW_HEIGHT)
+                noSpells:SetPoint("TOPLEFT", 10, yOffset)
+                local txt = noSpells:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+                txt:SetPoint("LEFT", 0, 0)
+                txt:SetText(L["MOVEMENT_ALERT_NO_SPELLS"])
+                spellRows[#spellRows + 1] = noSpells
+                yOffset = yOffset - ROW_HEIGHT
+            else
+                for _, spellData in ipairs(spells) do
+                    local spellId = spellData.spellId
+                    local spellInfo = C_Spell and C_Spell.GetSpellInfo(spellId) or nil
+                    local spellName = spellInfo and spellInfo.name or ("Spell " .. spellId)
+                    local spellIcon = spellInfo and spellInfo.iconID or nil
+                    local override = db.spellOverrides[spellId]
+                    local isEnabled = not override or override.enabled ~= false
+                    local customText = override and override.customText or ""
+
+                    local row = CreateFrame("Frame", nil, spellsContent)
+                    row:SetSize(440, ROW_HEIGHT)
+                    row:SetPoint("TOPLEFT", 10, yOffset)
+
+                    -- Spell icon
+                    if spellIcon then
+                        local icon = row:CreateTexture(nil, "ARTWORK")
+                        icon:SetSize(20, 20)
+                        icon:SetPoint("LEFT", 0, 0)
+                        icon:SetTexture(spellIcon)
+                        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                    end
+
+                    -- Enable checkbox
+                    local cb = W:CreateCheckbox(row, {
+                        label = spellName .. "  |cff888888(" .. spellId .. ")|r",
+                        x = 24, y = -5,
+                        template = "ChatConfigCheckButtonTemplate",
+                        onChange = function(checked)
+                            if not db.spellOverrides[spellId] then
+                                db.spellOverrides[spellId] = {}
+                            end
+                            db.spellOverrides[spellId].enabled = checked
+                            if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                            if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                            refreshMovement()
+                        end
+                    })
+                    cb:SetChecked(isEnabled)
+
+                    -- Custom text label + input (second line, below checkbox)
+                    local ctLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                    ctLabel:SetPoint("TOPLEFT", row, "TOPLEFT", 26, -28)
+                    ctLabel:SetText(W.Colorize(L["MOVEMENT_ALERT_CUSTOM_TEXT"], C.WHITE))
+
+                    local ctBox = CreateFrame("EditBox", nil, row, "BackdropTemplate")
+                    ctBox:SetSize(120, 22)
+                    ctBox:SetPoint("LEFT", ctLabel, "RIGHT", 6, 0)
+                    ctBox:SetBackdrop({
+                        bgFile = [[Interface\Buttons\WHITE8x8]],
+                        edgeFile = [[Interface\Buttons\WHITE8x8]],
+                        edgeSize = 1,
+                    })
+                    ctBox:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
+                    ctBox:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+                    ctBox:SetFont(ns.DefaultFontPath(), 11, "")
+                    ctBox:SetTextColor(1, 1, 1, 0.9)
+                    ctBox:SetTextInsets(6, 6, 0, 0)
+                    ctBox:SetAutoFocus(false)
+                    ctBox:SetMaxLetters(40)
+                    ctBox:SetText(customText)
+                    ctBox:SetScript("OnEnterPressed", function(self)
+                        if not db.spellOverrides[spellId] then
+                            db.spellOverrides[spellId] = {}
+                        end
+                        local txt = self:GetText()
+                        db.spellOverrides[spellId].customText = (txt ~= "") and txt or nil
+                        if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                        refreshMovement()
+                        self:ClearFocus()
+                    end)
+                    ctBox:SetScript("OnEscapePressed", function(self)
+                        self:SetText(customText)
+                        self:ClearFocus()
+                    end)
+                    ctBox:SetScript("OnEditFocusGained", function(self)
+                        self:SetBackdropBorderColor(1, 0.66, 0, 0.8)
+                    end)
+                    ctBox:SetScript("OnEditFocusLost", function(self)
+                        self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+                    end)
+
+                    -- Remove button for custom spells
+                    if not spellData.isDefault then
+                        local removeBtn = CreateFrame("Button", nil, row, "BackdropTemplate")
+                        removeBtn:SetSize(16, 16)
+                        removeBtn:SetPoint("LEFT", ctBox, "RIGHT", 6, 0)
+                        removeBtn:SetBackdrop({
+                            bgFile = [[Interface\Buttons\WHITE8x8]],
+                            edgeFile = [[Interface\Buttons\WHITE8x8]],
+                            edgeSize = 1,
+                        })
+                        removeBtn:SetBackdropColor(0.6, 0.1, 0.1, 0.8)
+                        removeBtn:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
+                        local xTex = removeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        xTex:SetPoint("CENTER", 0, 0)
+                        xTex:SetText("X")
+                        xTex:SetTextColor(1, 1, 1)
+                        removeBtn:SetScript("OnClick", function()
+                            db.spellOverrides[spellId] = nil
+                            if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                            if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                            refreshMovement()
+                            RebuildSpellRows()
+                        end)
+                    end
+
+                    spellRows[#spellRows + 1] = row
+                    yOffset = yOffset - ROW_HEIGHT
+                end
+            end
+
+            -- Add spell row
+            local addRow = CreateFrame("Frame", nil, spellsContent)
+            addRow:SetSize(440, ROW_HEIGHT + 4)
+            addRow:SetPoint("TOPLEFT", 10, yOffset - 4)
+
+            local addLabel = addRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            addLabel:SetPoint("LEFT", 0, 0)
+            addLabel:SetText(W.Colorize(L["MOVEMENT_ALERT_ADD_SPELL"], C.WHITE))
+
+            spellsAddBox = CreateFrame("EditBox", nil, addRow, "BackdropTemplate")
+            spellsAddBox:SetSize(80, 22)
+            spellsAddBox:SetPoint("LEFT", addLabel, "RIGHT", 6, 0)
+            spellsAddBox:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Buttons\WHITE8x8]],
+                edgeSize = 1,
+            })
+            spellsAddBox:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
+            spellsAddBox:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+            spellsAddBox:SetFont(ns.DefaultFontPath(), 11, "")
+            spellsAddBox:SetTextColor(1, 1, 1, 0.9)
+            spellsAddBox:SetTextInsets(6, 6, 0, 0)
+            spellsAddBox:SetAutoFocus(false)
+            spellsAddBox:SetMaxLetters(10)
+            spellsAddBox:SetNumeric(true)
+            spellsAddBox:SetScript("OnEditFocusGained", function(self)
+                self:SetBackdropBorderColor(1, 0.66, 0, 0.8)
+            end)
+            spellsAddBox:SetScript("OnEditFocusLost", function(self)
+                self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+            end)
+
+            local addBtn = CreateFrame("Button", nil, addRow, "BackdropTemplate")
+            addBtn:SetSize(40, 22)
+            addBtn:SetPoint("LEFT", spellsAddBox, "RIGHT", 6, 0)
+            addBtn:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Buttons\WHITE8x8]],
+                edgeSize = 1,
+            })
+            addBtn:SetBackdropColor(0.1, 0.4, 0.1, 0.8)
+            addBtn:SetBackdropBorderColor(0.2, 0.6, 0.2, 1)
+            local addBtnText = addBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            addBtnText:SetPoint("CENTER", 0, 0)
+            addBtnText:SetText(L["MOVEMENT_ALERT_ADD_BTN"])
+            addBtn:SetScript("OnClick", function()
+                local inputId = spellsAddBox:GetNumber()
+                if inputId and inputId > 0 then
+                    local playerClass = select(2, UnitClass("player"))
+                    if not db.spellOverrides[inputId] then
+                        db.spellOverrides[inputId] = { enabled = true, class = playerClass }
+                    end
+                    spellsAddBox:SetText("")
+                    spellsAddBox:ClearFocus()
+                    if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                    if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                    refreshMovement()
+                    RebuildSpellRows()
+                end
+            end)
+            spellsAddBox:SetScript("OnEnterPressed", function()
+                addBtn:GetScript("OnClick")(addBtn)
+            end)
+
+            spellRows[#spellRows + 1] = addRow
+            yOffset = yOffset - (ROW_HEIGHT + 8)
+
+            -- Description
+            local helpFrame = CreateFrame("Frame", nil, spellsContent)
+            helpFrame:SetSize(440, 16)
+            helpFrame:SetPoint("TOPLEFT", 10, yOffset)
+            local helpText = helpFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            helpText:SetPoint("LEFT", 0, 0)
+            helpText:SetText(L["MOVEMENT_ALERT_TRACKED_SPELLS_DESC"])
+            spellRows[#spellRows + 1] = helpFrame
+
+            -- Update content height
+            local totalHeight = math.abs(yOffset) + 20
+            spellsContent:SetHeight(totalHeight)
+            spellsWrap:RecalcHeight()
+
+            if RelayoutAll then RelayoutAll() end
+        end
+
+        RebuildSpellRows()
+
+        -- ============================================================
         -- TIME SPIRAL
         -- ============================================================
 
@@ -421,7 +686,7 @@ function ns:InitMovementAlert()
         -- Layout
         -- ============================================================
 
-        local movementSectionList = { appWrap }
+        local movementSectionList = { spellsWrap, appWrap }
         local tsSectionList = { tsColWrap }
         local gwSectionList = { gwColWrap }
 

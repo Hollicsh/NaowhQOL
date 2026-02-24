@@ -43,15 +43,30 @@ local MOVEMENT_ABILITIES = {
 
 -- Build lookup tables from class data
 local allMobilitySpells = {}
-for _, classData in pairs(MOVEMENT_ABILITIES) do
-    for key, value in pairs(classData) do
-        if type(key) == "number" and type(value) == "table" then
-            for _, spellId in ipairs(value) do
+
+local function RebuildMobilitySpellLookup()
+    wipe(allMobilitySpells)
+    for _, classData in pairs(MOVEMENT_ABILITIES) do
+        for key, value in pairs(classData) do
+            if type(key) == "number" and type(value) == "table" then
+                for _, spellId in ipairs(value) do
+                    allMobilitySpells[spellId] = true
+                end
+            end
+        end
+    end
+    -- Include custom spells from overrides
+    local db = NaowhQOL and NaowhQOL.movementAlert
+    if db and db.spellOverrides then
+        for spellId, override in pairs(db.spellOverrides) do
+            if override.enabled ~= false then
                 allMobilitySpells[spellId] = true
             end
         end
     end
 end
+
+RebuildMobilitySpellLookup()
 
 -- Glow validation state
 local glowCooldown = 0
@@ -139,9 +154,7 @@ movementBar.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 movementBar:Hide()
 
 local movementResizeHandle
-local cachedMovementSpellId = nil
-local cachedMovementSpellName = nil
-local cachedMovementSpellIcon = nil
+local cachedMovementSpells = {} -- Array of {spellId, spellName, spellIcon, customText}
 
 -- Timer handles for countdown updates
 local movementCountdownTimer = nil
@@ -190,51 +203,80 @@ local gatewayPollTicker = nil
 -- Helper Functions
 -- ----------------------------------------------------------------
 
-local function GetPlayerMovementSpell()
+local function GetPlayerMovementSpells()
     local class = select(2, UnitClass("player"))
     local spec = GetSpecialization()
-    if not spec then return nil end
+    if not spec then return {} end
     local specId = select(1, GetSpecializationInfo(spec))
 
+    local db = NaowhQOL and NaowhQOL.movementAlert
+    local overrides = db and db.spellOverrides or {}
+
     local classAbilities = MOVEMENT_ABILITIES[class]
-    if not classAbilities then return nil end
+    if not classAbilities then return {} end
 
     local specAbilities = classAbilities[specId]
-    if not specAbilities then return nil end
+    if not specAbilities then return {} end
 
+    local result = {}
+    local seen = {}
+
+    -- Add default spells (if not disabled via override)
     for _, spellId in ipairs(specAbilities) do
-        if IsPlayerSpell(spellId) then
-            return spellId
+        if not seen[spellId] then
+            local override = overrides[spellId]
+            if not override or override.enabled ~= false then
+                if IsPlayerSpell(spellId) then
+                    seen[spellId] = true
+                    local spellInfo = C_Spell.GetSpellInfo(spellId)
+                    if spellInfo then
+                        table.insert(result, {
+                            spellId = spellId,
+                            spellName = spellInfo.name,
+                            spellIcon = spellInfo.iconID,
+                            customText = override and override.customText ~= "" and override.customText or nil,
+                        })
+                    end
+                end
+            end
         end
     end
-    return nil
+
+    -- Add custom (user-added) spells for this class
+    for spellId, override in pairs(overrides) do
+        if not seen[spellId] and override.class == class and override.enabled ~= false then
+            if IsPlayerSpell(spellId) then
+                seen[spellId] = true
+                local spellInfo = C_Spell.GetSpellInfo(spellId)
+                if spellInfo then
+                    table.insert(result, {
+                        spellId = spellId,
+                        spellName = spellInfo.name,
+                        spellIcon = spellInfo.iconID,
+                        customText = override.customText ~= "" and override.customText or nil,
+                    })
+                end
+            end
+        end
+    end
+
+    return result
 end
 
-local function CacheMovementSpell()
+local function CacheMovementSpells()
     local class = select(2, UnitClass("player"))
     local spec = GetSpecialization()
     local specId = spec and select(1, GetSpecializationInfo(spec)) or nil
 
     if DEBUG_MODE then
-        print("[MovementAlert] CacheMovementSpell - Class:", class, "SpecID:", specId)
+        print("[MovementAlert] CacheMovementSpells - Class:", class, "SpecID:", specId)
     end
 
-    cachedMovementSpellId = GetPlayerMovementSpell()
-    if cachedMovementSpellId then
-        local spellInfo = C_Spell.GetSpellInfo(cachedMovementSpellId)
-        if spellInfo then
-            cachedMovementSpellName = spellInfo.name
-            cachedMovementSpellIcon = spellInfo.iconID
-        end
-        if DEBUG_MODE then
-            print("[MovementAlert] Cached spell:", cachedMovementSpellId, cachedMovementSpellName)
-            print("[MovementAlert] IsPlayerSpell:", IsPlayerSpell(cachedMovementSpellId))
-        end
-    else
-        cachedMovementSpellName = nil
-        cachedMovementSpellIcon = nil
-        if DEBUG_MODE then
-            print("[MovementAlert] No movement spell found for this spec")
+    cachedMovementSpells = GetPlayerMovementSpells()
+    if DEBUG_MODE then
+        print("[MovementAlert] Cached", #cachedMovementSpells, "spells")
+        for _, entry in ipairs(cachedMovementSpells) do
+            print("  -", entry.spellId, entry.spellName, entry.customText or "(default)")
         end
     end
 end
@@ -453,13 +495,14 @@ end
 
 -- Show movement cooldown display (no arithmetic on secret values)
 -- Secret values can be passed to string.format and SetText, just not used in arithmetic
-local function ShowMovementDisplay(cdInfo)
+local function ShowMovementDisplay(cdInfo, spellEntry)
     local db = NaowhQOL.movementAlert
     if not db then return end
 
     local displayMode = db.displayMode or "text"
     local precision = db.precision or 1
-    local spellName = cachedMovementSpellName or L["MOVEMENT_ALERT_FALLBACK"] or "Movement"
+    local spellName = spellEntry.customText or spellEntry.spellName or L["MOVEMENT_ALERT_FALLBACK"] or "Movement"
+    local spellIcon = spellEntry.spellIcon
 
     -- Hide all elements first
     movementText:Hide()
@@ -475,8 +518,8 @@ local function ShowMovementDisplay(cdInfo)
         movementText:Show()
     elseif displayMode == "icon" then
         -- Icon mode: use cooldown frame with SetCooldown (AllowedWhenTainted)
-        if cachedMovementSpellIcon then
-            movementIcon.tex:SetTexture(cachedMovementSpellIcon)
+        if spellIcon then
+            movementIcon.tex:SetTexture(spellIcon)
             movementIcon.cooldown:SetCooldown(cdInfo.startTime, cdInfo.duration, cdInfo.modRate or 1)
             movementIcon.cooldown:SetHideCountdownNumbers(false)
             movementIcon:Show()
@@ -500,8 +543,8 @@ local function ShowMovementDisplay(cdInfo)
         movementBar.text:SetText(timeStr)
 
         -- Optional icon
-        if db.barShowIcon ~= false and cachedMovementSpellIcon then
-            movementBar.icon:SetTexture(cachedMovementSpellIcon)
+        if db.barShowIcon ~= false and spellIcon then
+            movementBar.icon:SetTexture(spellIcon)
             movementBar.icon:Show()
         else
             movementBar.icon:Hide()
@@ -539,33 +582,43 @@ CheckMovementCooldown = function()
         return
     end
 
-    -- Skip if no cached movement spell
-    if not cachedMovementSpellId then
-        if DEBUG_MODE then print("[MovementAlert] No cached spell") end
+    -- Skip if no cached movement spells
+    if #cachedMovementSpells == 0 then
+        if DEBUG_MODE then print("[MovementAlert] No cached spells") end
         HideMovementDisplay()
         return
     end
 
-    -- Get cooldown info
-    local cdInfo = C_Spell.GetSpellCooldown(cachedMovementSpellId)
+    -- Find the spell on CD with shortest remaining time
+    local bestCdInfo = nil
+    local bestEntry = nil
 
-    if DEBUG_MODE then
-        print("[MovementAlert] cdInfo:", cdInfo and "exists" or "nil",
-              "isOnGCD:", cdInfo and cdInfo.isOnGCD)
+    for _, entry in ipairs(cachedMovementSpells) do
+        local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
+        if DEBUG_MODE then
+            print("[MovementAlert] Checking:", entry.spellId, entry.spellName,
+                  "cdInfo:", cdInfo and "exists" or "nil",
+                  "isOnGCD:", cdInfo and cdInfo.isOnGCD)
+        end
+        -- isOnGCD: nil for double jumps, true for GCD, false for actual cooldown
+        if cdInfo and cdInfo.isOnGCD == false and cdInfo.timeUntilEndOfStartRecovery then
+            if not bestCdInfo or cdInfo.timeUntilEndOfStartRecovery < bestCdInfo.timeUntilEndOfStartRecovery then
+                bestCdInfo = cdInfo
+                bestEntry = entry
+            end
+        end
     end
 
-    -- Check if on actual cooldown (not GCD)
-    -- isOnGCD: nil for double jumps, true for GCD, false for actual cooldown
-    if cdInfo and cdInfo.isOnGCD == false and cdInfo.timeUntilEndOfStartRecovery then
+    if bestCdInfo and bestEntry then
         -- Spell is on cooldown - show and schedule next poll
-        ShowMovementDisplay(cdInfo)
+        ShowMovementDisplay(bestCdInfo, bestEntry)
 
         -- Schedule next poll for smooth countdown updates
         CancelMovementCountdown()
         local pollMs = math.max(50, db.pollRate or 100)
         movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
     else
-        -- Spell is ready or just GCD - hide display
+        -- All spells are ready or just GCD - hide display
         HideMovementDisplay()
     end
 end
@@ -748,7 +801,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 
     if event == "PLAYER_LOGIN" then
         if DEBUG_MODE then print("[MovementAlert] PLAYER_LOGIN - initializing") end
-        CacheMovementSpell()
+        RebuildMobilitySpellLookup()
+        CacheMovementSpells()
         inCombat = UnitAffectingCombat("player")
 
         db.width = db.width or 200
@@ -809,7 +863,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 
         -- Re-evaluate on spec change
         ns.SpecUtil.RegisterCallback("MovementAlert", function()
-            CacheMovementSpell()
+            CacheMovementSpells()
             movementFrame:UpdateDisplay()
             timeSpiralFrame:UpdateDisplay()
             gatewayFrame:UpdateDisplay()
@@ -828,7 +882,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 
         -- Register for profile refresh
         ns.SettingsIO:RegisterRefresh("movementAlert", function()
-            CacheMovementSpell()
+            RebuildMobilitySpellLookup()
+            CacheMovementSpells()
             movementFrame:UpdateDisplay()
             timeSpiralFrame:UpdateDisplay()
             gatewayFrame:UpdateDisplay()
@@ -847,7 +902,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 
     if event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED" then
         if not InCombatLockdown() then
-            CacheMovementSpell()
+            CacheMovementSpells()
             CheckMovementCooldown()
             RefreshCastFilters()
         end
@@ -859,7 +914,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CheckGatewayUsable()
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
-        CacheMovementSpell()
+        CacheMovementSpells()
         CheckMovementCooldown()
         CheckGatewayUsable()
     elseif event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_CHARGES" then
@@ -895,3 +950,6 @@ end))
 ns.MovementAlertDisplay = movementFrame
 ns.TimeSpiralDisplay = timeSpiralFrame
 ns.GatewayShardDisplay = gatewayFrame
+ns.MOVEMENT_ABILITIES = MOVEMENT_ABILITIES
+ns.RebuildMobilitySpellLookup = RebuildMobilitySpellLookup
+ns.CacheMovementSpells = CacheMovementSpells
