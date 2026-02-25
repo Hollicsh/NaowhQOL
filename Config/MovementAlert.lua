@@ -355,6 +355,13 @@ function ns:InitMovementAlert()
                     end)
                     ctBox:SetScript("OnEditFocusLost", function(self)
                         self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+                        if not db.spellOverrides[spellId] then
+                            db.spellOverrides[spellId] = {}
+                        end
+                        local txt = self:GetText()
+                        db.spellOverrides[spellId].customText = (txt ~= "") and txt or nil
+                        if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                        refreshMovement()
                     end)
 
                     -- Remove button for custom spells

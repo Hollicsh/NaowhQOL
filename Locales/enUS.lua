@@ -838,7 +838,7 @@ ns:RegisterLocale("enUS", {
     MOVEMENT_ALERT_CLASS_FILTER = "Track on these classes:",
     MOVEMENT_ALERT_TRACKED_SPELLS = "TRACKED SPELLS",
     MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Choose which spells to track and set custom display text:",
-    MOVEMENT_ALERT_CUSTOM_TEXT = "Custom Text:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Custom Name:",
     MOVEMENT_ALERT_ADD_SPELL = "Add Spell ID:",
     MOVEMENT_ALERT_ADD_BTN = "Add",
     MOVEMENT_ALERT_REMOVE_BTN = "Remove",

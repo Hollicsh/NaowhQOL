@@ -1951,6 +1951,11 @@ function ns.Widgets:CreateTextInput(parent, opts)
     end)
     box:SetScript("OnEditFocusLost", function(self)
         self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+        if opts.db and opts.key then
+            opts.db[opts.key] = self:GetText()
+            if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
+            if opts.onChange then opts.onChange(opts.db[opts.key]) end
+        end
     end)
 
     return box
