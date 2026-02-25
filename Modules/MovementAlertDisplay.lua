@@ -17,7 +17,7 @@ local MOVEMENT_ABILITIES = {
     DEMONHUNTER = {
         [577] = {195072}, [581] = {189110}, [1480] = {1234796},
         filter = {
-            [427640] = {198793, 370965},
+            [427640] = {198793, 370965, 195072},
             [427794] = {195072},
         },
     },
@@ -81,7 +81,7 @@ end
 
 local function OnSpellCast(spellId)
     if castFilters[spellId] then
-        glowCooldown = GetTime() + 0.7
+        glowCooldown = GetTime() + 1.5
     end
 end
 

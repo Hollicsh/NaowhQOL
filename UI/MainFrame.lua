@@ -172,6 +172,57 @@ function NaowhQOL_OnAddonCompartmentClick(addonName, buttonName)
 end
 
 
+-- Register in ESC > Options > AddOns (Blizzard Settings panel)
+do
+    if Settings and Settings.RegisterCanvasLayoutCategory then
+        local panel = CreateFrame("Frame")
+        panel.name = "NaowhQOL"
+
+        -- Background
+        local bg = panel:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(0.02, 0.02, 0.02, 0.6)
+
+        -- Logo icon
+        local icon = panel:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(64, 64)
+        icon:SetPoint("TOP", 0, -40)
+        icon:SetTexture("Interface\\AddOns\\NaowhQOL\\Assets\\LogoAddon.tga")
+
+        -- Title
+        local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        title:SetPoint("TOP", icon, "BOTTOM", 0, -12)
+        title:SetText("|cff0091edNaowh|r|cffffa300QOL|r")
+
+        -- Subtitle
+        local sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        sub:SetPoint("TOP", title, "BOTTOM", 0, -6)
+        sub:SetText("Quality of Life improvements")
+
+        -- Open button
+        local btn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        btn:SetSize(180, 32)
+        btn:SetPoint("TOP", sub, "BOTTOM", 0, -20)
+        btn:SetText("Open NaowhQOL")
+        btn:SetScript("OnClick", function()
+            -- Defer to next frame to break out of the Blizzard secure execution context
+            C_Timer.After(0, function()
+                SlashCmdList["NAOWHQOL"]()
+            end)
+        end)
+
+        -- Slash hint
+        local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        hint:SetPoint("TOP", btn, "BOTTOM", 0, -10)
+        hint:SetText("or type  /nao  in chat")
+
+        local category = Settings.RegisterCanvasLayoutCategory(panel, "NaowhQOL")
+        category.ID = "NaowhQOL"
+        Settings.RegisterAddOnCategory(category)
+    end
+end
+
+
 local WelcomeFrame = CreateFrame("Frame")
 WelcomeFrame:RegisterEvent("PLAYER_LOGIN")
 WelcomeFrame:SetScript("OnEvent", function()
