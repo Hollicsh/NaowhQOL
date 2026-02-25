@@ -232,6 +232,18 @@ local gatewayPollTicker = nil
 -- Helper Functions
 -- ----------------------------------------------------------------
 
+local function SafeGetChargeInfo(spellId)
+    local ok, isCharge, maxCh, rechDur = pcall(function()
+        local chargeInfo = C_Spell.GetSpellCharges(spellId)
+        if not chargeInfo then return false, 1, 0 end
+        local m = tonumber(chargeInfo.maxCharges) or 1
+        local r = tonumber(chargeInfo.cooldownDuration) or 0
+        return m > 1, m, r
+    end)
+    if not ok then return false, 1, 0 end
+    return isCharge, maxCh, rechDur
+end
+
 local function GetPlayerMovementSpells()
     local class = select(2, UnitClass("player"))
     local spec = GetSpecialization()
@@ -257,16 +269,14 @@ local function GetPlayerMovementSpells()
                 if IsPlayerSpell(spellId) then
                     seen[spellId] = true
                     local spellInfo = C_Spell.GetSpellInfo(spellId)
-                    local chargeInfo = C_Spell.GetSpellCharges(spellId)
-                    local maxCh = chargeInfo and tonumber(chargeInfo.maxCharges) or 1
-                    local rechDur = chargeInfo and tonumber(chargeInfo.cooldownDuration) or 0
+                    local isCharge, maxCh, rechDur = SafeGetChargeInfo(spellId)
                     if spellInfo then
                         table.insert(result, {
                             spellId = spellId,
                             spellName = spellInfo.name,
                             spellIcon = spellInfo.iconID,
                             customText = override and override.customText ~= "" and override.customText or nil,
-                            isChargeSpell = maxCh > 1,
+                            isChargeSpell = isCharge,
                             maxCharges = maxCh,
                             rechargeDuration = rechDur,
                         })
@@ -281,16 +291,14 @@ local function GetPlayerMovementSpells()
             if IsPlayerSpell(spellId) then
                 seen[spellId] = true
                 local spellInfo = C_Spell.GetSpellInfo(spellId)
-                local chargeInfo = C_Spell.GetSpellCharges(spellId)
-                local maxCh = chargeInfo and tonumber(chargeInfo.maxCharges) or 1
-                local rechDur = chargeInfo and tonumber(chargeInfo.cooldownDuration) or 0
+                local isCharge, maxCh, rechDur = SafeGetChargeInfo(spellId)
                 if spellInfo then
                     table.insert(result, {
                         spellId = spellId,
                         spellName = spellInfo.name,
                         spellIcon = spellInfo.iconID,
                         customText = override.customText ~= "" and override.customText or nil,
-                        isChargeSpell = maxCh > 1,
+                        isChargeSpell = isCharge,
                         maxCharges = maxCh,
                         rechargeDuration = rechDur,
                     })
@@ -306,9 +314,14 @@ local function UpdateCachedCharges()
     if inCombat then return end
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.isChargeSpell then
-            local chargeInfo = C_Spell.GetSpellCharges(entry.spellId)
-            if chargeInfo then
-                cachedChargeCount[entry.spellId] = tonumber(chargeInfo.currentCharges) or 0
+            local ok, charges = pcall(function()
+                local chargeInfo = C_Spell.GetSpellCharges(entry.spellId)
+                if chargeInfo then
+                    return tonumber(chargeInfo.currentCharges) or 0
+                end
+            end)
+            if ok and charges then
+                cachedChargeCount[entry.spellId] = charges
             end
         end
     end
@@ -641,8 +654,7 @@ local function ShowMovementSlot(index, cdInfo, spellEntry)
         local barR, barG, barB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
         slot.bar:SetStatusBarColor(barR, barG, barB)
 
-        local timeStr = string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery)
-        slot.bar.text:SetText(timeStr)
+        slot.bar.text:SetFormattedText("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery)
 
         if db.barShowIcon ~= false and spellIcon then
             slot.bar.icon:SetTexture(spellIcon)
