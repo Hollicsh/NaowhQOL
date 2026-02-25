@@ -110,38 +110,78 @@ local movementText = movementFrame:CreateFontString(nil, "OVERLAY")
 movementText:SetFont(ns.DefaultFontPath(), 24, "OUTLINE")
 movementText:SetPoint("CENTER")
 
-local movementIcon = CreateFrame("Frame", nil, movementFrame)
-movementIcon:SetSize(40, 40)
-movementIcon:SetPoint("CENTER")
-movementIcon.border = movementIcon:CreateTexture(nil, "BACKGROUND")
-movementIcon.border:SetAllPoints()
-movementIcon.border:SetColorTexture(0, 0, 0, 1)
-movementIcon.tex = movementIcon:CreateTexture(nil, "ARTWORK")
-movementIcon.tex:SetPoint("TOPLEFT", 2, -2)
-movementIcon.tex:SetPoint("BOTTOMRIGHT", -2, 2)
-movementIcon.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-movementIcon.cooldown = CreateFrame("Cooldown", nil, movementIcon, "CooldownFrameTemplate")
-movementIcon.cooldown:SetAllPoints(movementIcon.tex)
-movementIcon.cooldown:SetDrawEdge(false)
-movementIcon:Hide()
+-- Display pool for stacking multiple cooldowns vertically
+local displayPool = {}
+local activeSlotCount = 0
 
-local movementBar = CreateFrame("StatusBar", nil, movementFrame)
-movementBar:SetSize(150, 20)
-movementBar:SetPoint("CENTER")
-movementBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-movementBar:SetMinMaxValues(0, 1)
-movementBar:SetValue(0)
-movementBar.bg = movementBar:CreateTexture(nil, "BACKGROUND")
-movementBar.bg:SetAllPoints()
-movementBar.bg:SetColorTexture(0.1, 0.1, 0.1, 0.8)
-movementBar.text = movementBar:CreateFontString(nil, "OVERLAY")
-movementBar.text:SetFont(ns.DefaultFontPath(), 12, "OUTLINE")
-movementBar.text:SetPoint("CENTER")
-movementBar.icon = movementBar:CreateTexture(nil, "OVERLAY")
-movementBar.icon:SetSize(20, 20)
-movementBar.icon:SetPoint("RIGHT", movementBar, "LEFT", -4, 0)
-movementBar.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-movementBar:Hide()
+local function CreateDisplaySlot()
+    local slot = CreateFrame("Frame", nil, movementFrame)
+    slot:SetSize(200, 40)
+
+    slot.text = slot:CreateFontString(nil, "OVERLAY")
+    slot.text:SetFont(ns.DefaultFontPath(), 24, "OUTLINE")
+    slot.text:SetPoint("CENTER")
+
+    slot.icon = CreateFrame("Frame", nil, slot)
+    slot.icon:SetSize(40, 40)
+    slot.icon:SetPoint("CENTER")
+    slot.icon.border = slot.icon:CreateTexture(nil, "BACKGROUND")
+    slot.icon.border:SetAllPoints()
+    slot.icon.border:SetColorTexture(0, 0, 0, 1)
+    slot.icon.tex = slot.icon:CreateTexture(nil, "ARTWORK")
+    slot.icon.tex:SetPoint("TOPLEFT", 2, -2)
+    slot.icon.tex:SetPoint("BOTTOMRIGHT", -2, 2)
+    slot.icon.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    slot.icon.cooldown = CreateFrame("Cooldown", nil, slot.icon, "CooldownFrameTemplate")
+    slot.icon.cooldown:SetAllPoints(slot.icon.tex)
+    slot.icon.cooldown:SetDrawEdge(false)
+    slot.icon:Hide()
+
+    slot.bar = CreateFrame("StatusBar", nil, slot)
+    slot.bar:SetSize(150, 20)
+    slot.bar:SetPoint("CENTER")
+    slot.bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    slot.bar:SetMinMaxValues(0, 1)
+    slot.bar:SetValue(0)
+    slot.bar.bg = slot.bar:CreateTexture(nil, "BACKGROUND")
+    slot.bar.bg:SetAllPoints()
+    slot.bar.bg:SetColorTexture(0.1, 0.1, 0.1, 0.8)
+    slot.bar.text = slot.bar:CreateFontString(nil, "OVERLAY")
+    slot.bar.text:SetFont(ns.DefaultFontPath(), 12, "OUTLINE")
+    slot.bar.text:SetPoint("CENTER")
+    slot.bar.icon = slot.bar:CreateTexture(nil, "OVERLAY")
+    slot.bar.icon:SetSize(20, 20)
+    slot.bar.icon:SetPoint("RIGHT", slot.bar, "LEFT", -4, 0)
+    slot.bar.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    slot.bar:Hide()
+
+    return slot
+end
+
+local function GetDisplaySlot(index)
+    if not displayPool[index] then
+        displayPool[index] = CreateDisplaySlot()
+    end
+    return displayPool[index]
+end
+
+local function LayoutDisplaySlots(count)
+    local frameW = movementFrame:GetWidth()
+    local frameH = movementFrame:GetHeight()
+    local spacing = 2
+    for i = 1, count do
+        local slot = displayPool[i]
+        if slot then
+            slot:ClearAllPoints()
+            slot:SetSize(frameW, frameH)
+            if i == 1 then
+                slot:SetPoint("TOP", movementFrame, "TOP", 0, 0)
+            else
+                slot:SetPoint("TOP", displayPool[i - 1], "BOTTOM", 0, -spacing)
+            end
+        end
+    end
+end
 
 local movementResizeHandle
 local cachedMovementSpells = {}
@@ -368,6 +408,30 @@ end
 -- Movement Frame Display
 -- ----------------------------------------------------------------
 
+local function StyleSlot(slot, db)
+    local fontPath = ns.Media.ResolveFont(db.font)
+    local frameH = movementFrame:GetHeight()
+    local frameW = movementFrame:GetWidth()
+    local fontSize = math.max(10, math.min(72, math.floor(frameH * 0.55)))
+    local tR, tG, tB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
+
+    local s = slot.text:SetFont(fontPath, fontSize, "OUTLINE")
+    if not s then slot.text:SetFont(ns.DefaultFontPath(), fontSize, "OUTLINE") end
+    slot.text:SetTextColor(tR, tG, tB)
+
+    local barH = math.max(12, math.floor(frameH * 0.5))
+    local barIconSize = barH
+    local barW = frameW - (db.barShowIcon ~= false and (barIconSize + 8) or 0) - 10
+    local barFontSize = math.max(8, math.min(24, math.floor(barH * 0.6)))
+    slot.bar:SetSize(math.max(50, barW), barH)
+    slot.bar.icon:SetSize(barIconSize, barIconSize)
+    local bs = slot.bar.text:SetFont(fontPath, barFontSize, "OUTLINE")
+    if not bs then slot.bar.text:SetFont(ns.DefaultFontPath(), barFontSize, "OUTLINE") end
+
+    local iconSize = math.max(20, math.min(frameW, frameH) - 4)
+    slot.icon:SetSize(iconSize, iconSize)
+end
+
 function movementFrame:UpdateDisplay()
     local db = NaowhQOL.movementAlert
     if not db then return end
@@ -410,18 +474,9 @@ function movementFrame:UpdateDisplay()
     local tR, tG, tB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
     movementText:SetTextColor(tR, tG, tB)
 
-    local barH = math.max(12, math.floor(frameH * 0.5))
-    local barIconSize = barH
-    local barW = frameW - (db.barShowIcon ~= false and (barIconSize + 8) or 0) - 10
-    movementBar:SetSize(math.max(50, barW), barH)
-    movementBar.icon:SetSize(barIconSize, barIconSize)
-    local barFontSize = math.max(8, math.min(24, math.floor(barH * 0.6)))
-    movementBar.text:SetFont(fontPath, barFontSize, "OUTLINE")
-
-    local iconSize = math.max(20, math.min(frameW, frameH) - 4)
-    movementIcon:SetSize(iconSize, iconSize)
-    movementIcon.tex:SetPoint("TOPLEFT", 2, -2)
-    movementIcon.tex:SetPoint("BOTTOMRIGHT", -2, 2)
+    for _, slot in ipairs(displayPool) do
+        StyleSlot(slot, db)
+    end
 
     UpdateEventRegistration()
     if db.enabled and not db.unlock then
@@ -530,62 +585,69 @@ local function HideMovementDisplay()
         movementFrame:Hide()
     end
     movementText:Hide()
-    movementIcon:Hide()
-    movementIcon.cooldown:Clear()
-    movementBar:Hide()
+    for _, slot in ipairs(displayPool) do
+        slot.text:Hide()
+        slot.icon:Hide()
+        slot.icon.cooldown:Clear()
+        slot.bar:Hide()
+        slot:Hide()
+    end
+    activeSlotCount = 0
     CancelMovementCountdown()
 end
 
-local function ShowMovementDisplay(cdInfo, spellEntry)
+local function ShowMovementSlot(index, cdInfo, spellEntry)
     local db = NaowhQOL.movementAlert
     if not db then return end
 
+    local slot = GetDisplaySlot(index)
+    StyleSlot(slot, db)
     local displayMode = db.displayMode or "text"
     local precision = db.precision or 1
     local spellName = spellEntry.customText or spellEntry.spellName or L["MOVEMENT_ALERT_FALLBACK"] or "Movement"
     local spellIcon = spellEntry.spellIcon
 
-    movementText:Hide()
-    movementIcon:Hide()
-    movementBar:Hide()
+    slot.text:Hide()
+    slot.icon:Hide()
+    slot.bar:Hide()
 
     if displayMode == "text" then
         local textFormat = db.textFormat or "%ts\nNo %a"
         local fmtStr = textFormat:gsub("\\n", "\n"):gsub("%%a", spellName):gsub("%%t", "%%s")
-        movementText:SetFormattedText(fmtStr, string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery))
-        movementText:Show()
+        slot.text:SetFormattedText(fmtStr, string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery))
+        slot.text:Show()
     elseif displayMode == "icon" then
         if spellIcon then
-            movementIcon.tex:SetTexture(spellIcon)
-            movementIcon.cooldown:SetCooldown(cdInfo.startTime, cdInfo.duration, cdInfo.modRate or 1)
-            movementIcon.cooldown:SetHideCountdownNumbers(false)
-            movementIcon:Show()
+            slot.icon.tex:SetTexture(spellIcon)
+            slot.icon.cooldown:SetCooldown(cdInfo.startTime, cdInfo.duration, cdInfo.modRate or 1)
+            slot.icon.cooldown:SetHideCountdownNumbers(false)
+            slot.icon:Show()
         else
             local textFormat = db.textFormat or "%ts\nNo %a"
             local fmtStr = textFormat:gsub("\\n", "\n"):gsub("%%a", spellName):gsub("%%t", "%%s")
-            movementText:SetFormattedText(fmtStr, string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery))
-            movementText:Show()
+            slot.text:SetFormattedText(fmtStr, string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery))
+            slot.text:Show()
         end
     elseif displayMode == "bar" then
-        movementBar:SetMinMaxValues(0, cdInfo.duration)
-        movementBar:SetValue(cdInfo.timeUntilEndOfStartRecovery)
+        slot.bar:SetMinMaxValues(0, cdInfo.duration)
+        slot.bar:SetValue(cdInfo.timeUntilEndOfStartRecovery)
         local barR, barG, barB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
-        movementBar:SetStatusBarColor(barR, barG, barB)
+        slot.bar:SetStatusBarColor(barR, barG, barB)
 
         local timeStr = string.format("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery)
-        movementBar.text:SetText(timeStr)
+        slot.bar.text:SetText(timeStr)
 
         if db.barShowIcon ~= false and spellIcon then
-            movementBar.icon:SetTexture(spellIcon)
-            movementBar.icon:Show()
+            slot.bar.icon:SetTexture(spellIcon)
+            slot.bar.icon:Show()
         else
-            movementBar.icon:Hide()
+            slot.bar.icon:Hide()
         end
 
-        movementBar:Show()
+        slot.bar:Show()
     end
 
-    movementFrame:Show()
+    slot:Show()
 end
 
 CheckMovementCooldown = function()
@@ -617,8 +679,7 @@ CheckMovementCooldown = function()
         return
     end
 
-    local bestCdInfo = nil
-    local bestEntry = nil
+    local count = 0
 
     for _, entry in ipairs(cachedMovementSpells) do
         local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
@@ -641,19 +702,34 @@ CheckMovementCooldown = function()
                 end
             end
 
-            if showThis and not bestCdInfo then
-                bestCdInfo = cdInfo
-                bestEntry = entry
+            if showThis then
+                count = count + 1
+                ShowMovementSlot(count, cdInfo, entry)
             end
         end
     end
 
-    if bestCdInfo and bestEntry then
-        ShowMovementDisplay(bestCdInfo, bestEntry)
+    -- Hide any extra slots from a previous check
+    for i = count + 1, activeSlotCount do
+        local slot = displayPool[i]
+        if slot then
+            slot.text:Hide()
+            slot.icon:Hide()
+            slot.icon.cooldown:Clear()
+            slot.bar:Hide()
+            slot:Hide()
+        end
+    end
+
+    if count > 0 then
+        activeSlotCount = count
+        LayoutDisplaySlots(count)
+        movementFrame:Show()
         CancelMovementCountdown()
         local pollMs = math.max(50, db.pollRate or 100)
         movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
     else
+        activeSlotCount = 0
         HideMovementDisplay()
     end
 end
