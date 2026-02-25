@@ -1130,4 +1130,9 @@ ns:RegisterLocale("zhTW", {
     GENERAL_SEARCH_DESC = "輸入模組名稱或設定項以快速尋找並導覽。",
     GENERAL_SEARCH_PLACEHOLDER = "搜尋模組和設定...",
     GENERAL_SEARCH_NO_RESULTS = "未找到符合的模組。",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "追蹤法術",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "選擇要追蹤的法術並設定自訂名稱:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "自訂名稱:",
+    MOVEMENT_ALERT_ADD_SPELL = "新增法術ID:",
+    MOVEMENT_ALERT_NO_SPELLS = "此職業未設定法術",
 })

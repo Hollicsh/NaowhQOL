@@ -1130,4 +1130,9 @@ ns:RegisterLocale("esES", {
     GENERAL_SEARCH_DESC = "Escribe el nombre de un módulo o ajuste para encontrarlo y navegar rápidamente.",
     GENERAL_SEARCH_PLACEHOLDER = "Buscar módulos y ajustes...",
     GENERAL_SEARCH_NO_RESULTS = "No se encontraron módulos coincidentes.",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "HECHIZOS RASTREADOS",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Elige qué hechizos rastrear y establece nombres personalizados:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Nombre personalizado:",
+    MOVEMENT_ALERT_ADD_SPELL = "Añadir ID de hechizo:",
+    MOVEMENT_ALERT_NO_SPELLS = "No hay hechizos configurados para esta clase",
 })

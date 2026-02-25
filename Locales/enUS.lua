@@ -840,8 +840,6 @@ ns:RegisterLocale("enUS", {
     MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Choose which spells to track and set custom display text:",
     MOVEMENT_ALERT_CUSTOM_TEXT = "Custom Name:",
     MOVEMENT_ALERT_ADD_SPELL = "Add Spell ID:",
-    MOVEMENT_ALERT_ADD_BTN = "Add",
-    MOVEMENT_ALERT_REMOVE_BTN = "Remove",
     MOVEMENT_ALERT_NO_SPELLS = "No spells configured for this class",
     TIME_SPIRAL_ENABLE = "Enable Time Spiral Tracker",
     TIME_SPIRAL_SETTINGS = "TIME SPIRAL SETTINGS",

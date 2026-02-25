@@ -1130,4 +1130,9 @@ ns:RegisterLocale("frFR", {
     GENERAL_SEARCH_DESC = "Tapez un nom de module ou de paramètre pour le trouver et y accéder rapidement.",
     GENERAL_SEARCH_PLACEHOLDER = "Rechercher modules et paramètres...",
     GENERAL_SEARCH_NO_RESULTS = "Aucun module correspondant trouvé.",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "SORTS SUIVIS",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Choisissez les sorts à suivre et définissez des noms personnalisés :",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Nom personnalisé :",
+    MOVEMENT_ALERT_ADD_SPELL = "Ajouter un ID de sort :",
+    MOVEMENT_ALERT_NO_SPELLS = "Aucun sort configuré pour cette classe",
 })

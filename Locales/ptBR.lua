@@ -1130,4 +1130,9 @@ ns:RegisterLocale("ptBR", {
     GENERAL_SEARCH_DESC = "Digite o nome de um módulo ou configuração para encontrá-lo e navegar rapidamente.",
     GENERAL_SEARCH_PLACEHOLDER = "Buscar módulos e configurações...",
     GENERAL_SEARCH_NO_RESULTS = "Nenhum módulo correspondente encontrado.",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "FEITIÇOS RASTREADOS",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Escolha quais feitiços rastrear e defina nomes personalizados:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Nome personalizado:",
+    MOVEMENT_ALERT_ADD_SPELL = "Adicionar ID do feitiço:",
+    MOVEMENT_ALERT_NO_SPELLS = "Nenhum feitiço configurado para esta classe",
 })

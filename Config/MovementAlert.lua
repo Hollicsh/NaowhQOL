@@ -438,7 +438,7 @@ function ns:InitMovementAlert()
             addBtn:SetBackdropBorderColor(0.2, 0.6, 0.2, 1)
             local addBtnText = addBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             addBtnText:SetPoint("CENTER", 0, 0)
-            addBtnText:SetText(L["MOVEMENT_ALERT_ADD_BTN"])
+            addBtnText:SetText(L["COMMON_ADD"])
             addBtn:SetScript("OnClick", function()
                 local inputId = spellsAddBox:GetNumber()
                 if inputId and inputId > 0 then

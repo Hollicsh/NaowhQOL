@@ -1130,4 +1130,9 @@ ns:RegisterLocale("koKR", {
     GENERAL_SEARCH_DESC = "모듈 이름이나 설정을 입력하여 빠르게 찾고 이동하세요.",
     GENERAL_SEARCH_PLACEHOLDER = "모듈 및 설정 검색...",
     GENERAL_SEARCH_NO_RESULTS = "일치하는 모듈을 찾을 수 없습니다.",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "추적 주문",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "추적할 주문을 선택하고 사용자 지정 이름을 설정하세요:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "사용자 지정 이름:",
+    MOVEMENT_ALERT_ADD_SPELL = "주문 ID 추가:",
+    MOVEMENT_ALERT_NO_SPELLS = "이 직업에 설정된 주문이 없습니다",
 })

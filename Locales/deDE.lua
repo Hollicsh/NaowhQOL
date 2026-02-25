@@ -1130,4 +1130,9 @@ ns:RegisterLocale("deDE", {
     GENERAL_SEARCH_DESC = "Gib einen Modulnamen oder eine Einstellung ein, um sie schnell zu finden und dorthin zu navigieren.",
     GENERAL_SEARCH_PLACEHOLDER = "Module & Einstellungen suchen...",
     GENERAL_SEARCH_NO_RESULTS = "Keine passenden Module gefunden.",
+    MOVEMENT_ALERT_TRACKED_SPELLS = "VERFOLGTE ZAUBER",
+    MOVEMENT_ALERT_TRACKED_SPELLS_DESC = "Wähle Zauber zum Verfolgen und setze eigene Namen:",
+    MOVEMENT_ALERT_CUSTOM_TEXT = "Eigener Name:",
+    MOVEMENT_ALERT_ADD_SPELL = "Zauber-ID hinzufügen:",
+    MOVEMENT_ALERT_NO_SPELLS = "Keine Zauber für diese Klasse konfiguriert",
 })
