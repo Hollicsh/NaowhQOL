@@ -41,6 +41,4 @@ By submitting this pull request, you confirm that you have permission to submit 
 
 You also agree that, if this PR is accepted, the maintainers of NaowhQOL may review, modify, merge, and distribute your contribution as part of the project.
 
-Type the following on its own line exactly as written:
-
-I agree
+If you agree to this type _I agree_ below on its own line:
