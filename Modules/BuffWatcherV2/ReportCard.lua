@@ -859,6 +859,7 @@ function ReportCard:ShowPreview()
             { name = "Arcane Intellect", icon = 135932, pass = true, covered = 5, total = 5 },
             { name = "Power Word: Fortitude", icon = 135987, pass = false, covered = 3, total = 5 },
         },
+        presenceBuffs = {},
         consumables = {
             { name = "Flask", icon = 134830, pass = true },
             { name = "Food", icon = 133565, pass = false, remaining = 0 },

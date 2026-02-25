@@ -28,6 +28,15 @@ function BWV2:ResetState()
     wipe(self.raidResults)
     wipe(self.missingByPlayer)
     wipe(self.inventoryStatus)
+    -- Ensure scanResults sub-tables exist before wiping
+    if not self.scanResults then
+        self.scanResults = {}
+    end
+    self.scanResults.raidBuffs = self.scanResults.raidBuffs or {}
+    self.scanResults.presenceBuffs = self.scanResults.presenceBuffs or {}
+    self.scanResults.consumables = self.scanResults.consumables or {}
+    self.scanResults.inventory = self.scanResults.inventory or {}
+    self.scanResults.classBuffs = self.scanResults.classBuffs or {}
     -- Reset scan results for report card
     wipe(self.scanResults.raidBuffs)
     wipe(self.scanResults.presenceBuffs)
