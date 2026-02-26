@@ -41,6 +41,9 @@ local castingLookup   = {}
 local recentCasts     = {}
 local DEDUP_WINDOW    = 0.15
 local gcdSpellID      = nil
+local activeChannelSpellID = nil   
+local pendingChannelBreaker = nil  
+local playerSentSpells = {}        
 local recentSpells    = {}
 local recentSpellIdx  = {}  -- spellId -> index for O(1) lookup
 local MAX_RECENT      = 10
@@ -600,6 +603,18 @@ local function OnCastSucceeded(castGUID, spellId)
 
     if db.blocklist and db.blocklist[spellId] then return end
 
+
+    if activeChannelSpellID then
+        if playerSentSpells[spellId] then
+            playerSentSpells[spellId] = nil
+            local icon = GetSpellIcon(spellId)
+            if icon then
+                pendingChannelBreaker = { spellId = spellId, icon = icon }
+            end
+        end
+        return
+    end
+
     local now = GetTime()
     local lastSeen = recentCasts[spellId]
     if lastSeen and (now - lastSeen) < DEDUP_WINDOW then return end
@@ -668,6 +683,7 @@ eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "player")
+eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SENT", "player")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "player")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -735,6 +751,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         inCombat = false
         wipe(recentCasts)
+        wipe(playerSentSpells)
         -- Close current segment but let existing ones fade naturally
         local lastSeg = SegmentGetNewest()
         if lastSeg and not lastSeg.endTime then
@@ -743,12 +760,43 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         lastActivityState = false
         RefreshVisibility()
     else
+        if event == "UNIT_SPELLCAST_SENT" then
+            local _, _, _, sentSpellId = ...
+            if sentSpellId then
+                playerSentSpells[sentSpellId] = true
+                -- Clean stale entries to prevent memory leak
+                if next(playerSentSpells) then
+                    local count = 0
+                    for _ in pairs(playerSentSpells) do count = count + 1 end
+                    if count > 20 then wipe(playerSentSpells) end
+                end
+            end
+            return
+        end
         local unit, castGUID, spellId = ...
         if unit ~= "player" then return end
         if GetTime() < suppressUntil then return end
-        if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+        if event == "UNIT_SPELLCAST_CHANNEL_START" then
+            if activeChannelSpellID == spellId then
+                -- Same channel restarted (e.g. spamming SCK) - skip
+            else
+                activeChannelSpellID = spellId
+                OnCastStart(castGUID, spellId)
+            end
+        elseif event == "UNIT_SPELLCAST_START" then
             OnCastStart(castGUID, spellId)
-        elseif event == "UNIT_SPELLCAST_SUCCEEDED" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+            activeChannelSpellID = nil
+            -- Flush buffered channel-breaking spell if any
+            if pendingChannelBreaker then
+                local p = pendingChannelBreaker
+                pendingChannelBreaker = nil
+                local db = GetDB()
+                if db and not (db.blocklist and db.blocklist[p.spellId]) then
+                    AddHistoryEntry(p.spellId, p.icon, false, nil)
+                end
+            end
+        elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             OnCastSucceeded(castGUID, spellId)
         elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
             OnCastFailed(castGUID)
