@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 ns.Version = {
     stage = "RELEASE",
-    number = "v1.6.7"
+    number = "v1.6.8"
 }
 
 _G.NaowhQOL_VersionStage = ns.Version.stage
