@@ -47,7 +47,7 @@ local function ShouldHavePet()
     if cls == "HUNTER" then
         -- Check for no-pet talents (Lone Wolf, etc.)
         for _, spellID in ipairs(HUNTER_NO_PET_TALENTS) do
-            if IsPlayerSpell(spellID) then
+            if ns.IsPlayerSpell(spellID) then
                 return false
             end
         end
@@ -55,7 +55,7 @@ local function ShouldHavePet()
 
     elseif cls == "WARLOCK" then
         -- Check for Grimoire of Sacrifice
-        if IsPlayerSpell(GRIMOIRE_OF_SACRIFICE) then
+        if ns.IsPlayerSpell(GRIMOIRE_OF_SACRIFICE) then
             local auraData = C_UnitAuras.GetPlayerAuraBySpellID(GRIMOIRE_SACRIFICE_BUFF)
             if auraData then
                 return false  -- Pet is sacrificed, no pet needed
@@ -70,7 +70,7 @@ local function ShouldHavePet()
     elseif cls == "MAGE" then
         -- Only Frost with Water Elemental talent
         if specIdx == FROST_MAGE_SPEC then
-            return IsPlayerSpell(WATER_ELEMENTAL_SPELL)
+            return ns.IsPlayerSpell(WATER_ELEMENTAL_SPELL)
         end
         return false
     end
@@ -113,7 +113,7 @@ local function IsWrongPet()
 
     if cls == "WARLOCK" and specIdx == DEMONOLOGY_SPEC then
         -- Check if player has Felguard talent
-        if IsPlayerSpell(FELGUARD_SPELL) then
+        if ns.IsPlayerSpell(FELGUARD_SPELL) then
             local petFamily = UnitCreatureFamily("pet")
             if petFamily then
                 local lowerFamily = petFamily:lower()

@@ -242,7 +242,7 @@ local function ConfigureClickAction(cell, data, cellType)
 
         if cellType == "raid" and data.spellID then
             -- Only enable if player can cast this spell
-            if IsPlayerSpell(data.spellID) then
+            if ns.IsPlayerSpell(data.spellID) then
                 cell:SetAttribute("type", "spell")
                 cell:SetAttribute("spell", data.spellID)
                 cell:SetAttribute("unit", "player")
@@ -250,21 +250,21 @@ local function ConfigureClickAction(cell, data, cellType)
         elseif cellType == "consumable" and data.itemID then
             -- Use item from bags if available
             local itemName = C_Item.GetItemInfo(data.itemID)
-            if itemName and GetItemCount(data.itemID) > 0 then
+            if itemName and C_Item.GetItemCount(data.itemID) > 0 then
                 cell:SetAttribute("type", "macro")
                 cell:SetAttribute("macrotext1", "/use " .. itemName)
             end
         -- Inventory items (healthstones, potions) are not clickable - save them for combat
         elseif cellType == "classBuff" and data.spellID then
             -- Only enable if player can cast this spell
-            if IsPlayerSpell(data.spellID) then
+            if ns.IsPlayerSpell(data.spellID) then
                 cell:SetAttribute("type", "spell")
                 cell:SetAttribute("spell", data.spellID)
                 cell:SetAttribute("unit", "player")
             end
         elseif cellType == "presence" and data.spellID then
             -- Only enable if player can cast this spell
-            if IsPlayerSpell(data.spellID) then
+            if ns.IsPlayerSpell(data.spellID) then
                 cell:SetAttribute("type", "spell")
                 cell:SetAttribute("spell", data.spellID)
                 cell:SetAttribute("unit", "player")

@@ -176,7 +176,7 @@ local function OnPlayerCastStart(spellId)
     local emoteText = autoEmoteLookup[spellId]
     if emoteText then
         pcall(function()
-            SendChatMessage(emoteText, "EMOTE")
+            C_ChatInfo.SendChatMessage(emoteText, "EMOTE")
         end)
         lastEmoteTime = now
     end

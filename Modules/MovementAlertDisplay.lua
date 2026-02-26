@@ -266,7 +266,7 @@ local function GetPlayerMovementSpells()
         if not seen[spellId] then
             local override = overrides[spellId]
             if not override or override.enabled ~= false then
-                if IsPlayerSpell(spellId) then
+                if ns.IsPlayerSpell(spellId) then
                     seen[spellId] = true
                     local spellInfo = C_Spell.GetSpellInfo(spellId)
                     local isCharge, maxCh, rechDur = SafeGetChargeInfo(spellId)
@@ -288,7 +288,7 @@ local function GetPlayerMovementSpells()
 
     for spellId, override in pairs(overrides) do
         if not seen[spellId] and override.class == class and override.enabled ~= false then
-            if IsPlayerSpell(spellId) then
+            if ns.IsPlayerSpell(spellId) then
                 seen[spellId] = true
                 local spellInfo = C_Spell.GetSpellInfo(spellId)
                 local isCharge, maxCh, rechDur = SafeGetChargeInfo(spellId)
@@ -366,7 +366,8 @@ local function StartRechargeTimer(entry)
     if duration <= 0 then return end
     rechargeTimers[entry.spellId] = C_Timer.NewTimer(duration, function()
         rechargeTimers[entry.spellId] = nil
-        local cur = tonumber(cachedChargeCount[entry.spellId]) or 0
+        local rawCur = cachedChargeCount[entry.spellId]
+        local cur = (rawCur ~= nil and tonumber(tostring(rawCur)) or 0)
         local max = entry.maxCharges or 1
         cachedChargeCount[entry.spellId] = math.min(cur + 1, max)
         if cachedChargeCount[entry.spellId] < max then
@@ -382,7 +383,8 @@ local function OnTrackedSpellCast(spellId)
     if not inCombat then return end
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.spellId == spellId and entry.isChargeSpell then
-            local cur = tonumber(cachedChargeCount[spellId])
+            local rawCur = cachedChargeCount[spellId]
+            local cur = rawCur ~= nil and tonumber(tostring(rawCur)) or nil
             if cur == nil then cur = entry.maxCharges or 1 end
             cachedChargeCount[spellId] = math.max(0, cur - 1)
             if not rechargeTimers[spellId] then
@@ -715,7 +717,8 @@ CheckMovementCooldown = function()
                 local showThis = true
 
                 if entry.isChargeSpell then
-                    local charges = tonumber(cachedChargeCount[entry.spellId])
+                    local raw = cachedChargeCount[entry.spellId]
+                    local charges = raw ~= nil and tonumber(tostring(raw)) or nil
                     if charges == nil then charges = entry.maxCharges or 1 end
                     if charges > 0 then
                         showThis = false
@@ -1031,7 +1034,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         inCombat = true
         for _, entry in ipairs(cachedMovementSpells) do
             if entry.isChargeSpell then
-                local cur = tonumber(cachedChargeCount[entry.spellId])
+                local rawCur = cachedChargeCount[entry.spellId]
+                local cur = rawCur ~= nil and tonumber(tostring(rawCur)) or nil
                 if cur and cur < (entry.maxCharges or 1) and not rechargeTimers[entry.spellId] then
                     StartRechargeTimer(entry)
                 end

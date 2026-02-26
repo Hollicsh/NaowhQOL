@@ -5,6 +5,9 @@ if not ns then
     return
 end
 
+-- Compat shim: IsPlayerSpell deprecated -> C_SpellBook.IsSpellKnown
+ns.IsPlayerSpell = C_SpellBook and C_SpellBook.IsSpellKnown or function() return false end
+
 -- Shared logging utility
 local ADDON_PREFIX = "|cff018ee7Naowh|r |cffffa900QOL|r"
 

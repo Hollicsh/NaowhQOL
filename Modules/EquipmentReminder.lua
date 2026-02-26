@@ -113,12 +113,8 @@ end
 -- Get enchant name from spell ID
 local function GetEnchantName(enchantID)
     if not enchantID or enchantID == 0 then return nil end
-    if C_Spell and C_Spell.GetSpellInfo then
-        local info = C_Spell.GetSpellInfo(enchantID)
-        if info and info.name then return info.name end
-    end
-    local name = GetSpellInfo(enchantID)
-    return name
+    local info = C_Spell.GetSpellInfo(enchantID)
+    return info and info.name or nil
 end
 
 -- Check all configured slots for enchant mismatches

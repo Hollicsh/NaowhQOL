@@ -100,7 +100,7 @@ end
 
 -- Check if player has a specific talent/spell known
 function BWV2:PlayerHasTalent(spellID)
-    return IsPlayerSpell(spellID)
+    return ns.IsPlayerSpell(spellID)
 end
 
 -- Initialize default saved variables if needed

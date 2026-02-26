@@ -79,18 +79,38 @@ frame:SetScript("OnEvent", function(self, event, ...)
         if event == "QUEST_GREETING" then
             -- Select completed quests first (turn-in)
             if db.autoQuestTurnIn then
-                for i = 1, GetNumActiveQuests() do
-                    local title, isComplete = GetActiveTitle(i)
-                    if title and isComplete then
-                        return SelectActiveQuest(i)
+                local activeQuests = C_QuestLog.GetActiveQuests and C_QuestLog.GetActiveQuests()
+                if activeQuests then
+                    for _, questInfo in ipairs(activeQuests) do
+                        if questInfo.title and questInfo.isComplete and questInfo.questID then
+                            return C_GossipInfo.SelectActiveQuest(questInfo.questID)
+                        end
+                    end
+                else
+                    for i = 1, GetNumActiveQuests() do
+                        local title, isComplete = GetActiveTitle(i)
+                        if title and isComplete then
+                            SelectActiveQuest(i)
+                            return
+                        end
                     end
                 end
             end
 
             -- Select available quests (accept)
             if db.autoQuestAccept then
-                for i = 1, GetNumAvailableQuests() do
-                    return SelectAvailableQuest(i)
+                local availableQuests = C_QuestLog.GetAvailableQuests and C_QuestLog.GetAvailableQuests()
+                if availableQuests then
+                    for _, questInfo in ipairs(availableQuests) do
+                        if questInfo.questID then
+                            return C_GossipInfo.SelectAvailableQuest(questInfo.questID)
+                        end
+                    end
+                else
+                    for i = 1, GetNumAvailableQuests() do
+                        SelectAvailableQuest(i)
+                        return
+                    end
                 end
             end
         else

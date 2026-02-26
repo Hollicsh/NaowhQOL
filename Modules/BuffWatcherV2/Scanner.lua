@@ -69,7 +69,7 @@ local function FindFirstAvailableItem(itemIDString)
     if not itemIDString then return nil end
     for id in tostring(itemIDString):gmatch("%d+") do
         local itemID = tonumber(id)
-        if itemID and GetItemCount(itemID) > 0 then
+        if itemID and C_Item.GetItemCount(itemID) > 0 then
             return itemID
         end
     end
@@ -499,7 +499,7 @@ function Scanner:ScanConsumables()
             local skip = false
             if buff.excludeIfSpellKnown then
                 for _, spellID in ipairs(buff.excludeIfSpellKnown) do
-                    if IsPlayerSpell(spellID) then
+                    if ns.IsPlayerSpell(spellID) then
                         skip = true
                         break
                     end

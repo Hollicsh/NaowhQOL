@@ -12,3 +12,4 @@ Libs/AceDB-3.0/
 
 
 # Ace3 is included statically (not ignored)
+.vscode/settings.json

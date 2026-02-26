@@ -637,7 +637,7 @@ function ns.SettingsIO:RegisterSpecSwap()
             if exists then
                 ns.db:SetProfile(profileName)
                 local _, specName = GetSpecializationInfo(specIndex)
-                print("|cff00aaff[Naowh QOL]|r Profile: " .. (specName or "Spec " .. specIndex) .. " -> " .. profileName)
+                print("|cff00aaff[Naowh QOL]|r Profile: " .. (specName or ("Spec " .. specIndex)) .. " -> " .. profileName)
             end
         end
     end)

@@ -242,13 +242,8 @@ local function TrackDowntime()
 end
 
 local function GetSpellIcon(spellId)
-    if C_Spell and C_Spell.GetSpellInfo then
-        local info = C_Spell.GetSpellInfo(spellId)
-        return info and info.iconID
-    else
-        local _, _, icon = GetSpellInfo(spellId)
-        return icon
-    end
+    local info = C_Spell.GetSpellInfo(spellId)
+    return info and info.iconID
 end
 
 local container = CreateFrame("Frame", "NaowhQOL_GcdTrackerDisplay", UIParent, "BackdropTemplate")
