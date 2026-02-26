@@ -897,6 +897,8 @@ ns:RegisterLocale("esES", {
     BWV2_NO_ID = "Sin ID",
     BWV2_NO_SPELL_ID_ADDED = "No se ha añadido ningún ID de hechizo",
     BWV2_CLASSIC_DISPLAY = "Pantalla clásica",
+    BWV2_BUFF_DROP_REMINDER = "Recordatorio de buffs caídos",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Muestra alertas de iconos cuando los buffs de tu último escaneo o chequeo de preparación expiran, incluso en combate. Las alertas se ocultan automáticamente al recibir el buff de nuevo y finalizar el combate. Solo rastrea buffs activos en el momento del escaneo.",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

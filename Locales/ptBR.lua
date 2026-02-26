@@ -897,6 +897,8 @@ ns:RegisterLocale("ptBR", {
     BWV2_NO_ID = "Sem ID",
     BWV2_NO_SPELL_ID_ADDED = "Nenhum ID de magia adicionado",
     BWV2_CLASSIC_DISPLAY = "Exibição Clássica",
+    BWV2_BUFF_DROP_REMINDER = "Lembrete de Buffs Expirados",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Mostra alertas de ícones quando buffs do último escaneamento ou verificação de prontidão expiram, mesmo em combate. Os alertas desaparecem automaticamente ao receber o buff novamente e o combate terminar. Apenas rastreia buffs ativos no momento do escaneamento.",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

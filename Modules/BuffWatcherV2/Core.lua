@@ -11,6 +11,7 @@ local Categories = ns.BWV2Categories
 local Watchers = ns.BWV2Watchers
 local Scanner = ns.BWV2Scanner
 local ReportCard = ns.BWV2ReportCard
+local BuffDropAlert = ns.BWV2BuffDropAlert
 
 -- Scan ticker (0.5s interval while report card visible)
 local SCAN_INTERVAL = 0.5
@@ -82,6 +83,14 @@ local function TriggerScan()
 
     BWV2.scanInProgress = false
     BWV2.lastScanTime = GetTime()
+
+    -- Build snapshot for buff-drop monitoring
+    local db = BWV2:GetDB()
+    if db.buffDropReminder then
+        -- Dismiss any existing drop alerts (a fresh scan replaces them)
+        if BuffDropAlert then BuffDropAlert:DismissAll() end
+        BWV2:BuildBuffSnapshot()
+    end
 
     Core:PrintSummary()
     ReportCard:Show()
@@ -222,23 +231,33 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 ReportCard:Hide()
             end
         end
+    elseif event == "UNIT_AURA" then
+        local unit = ...
+        if unit == "player" then
+            Core:OnPlayerAuraChanged()
+        end
+
     elseif event == "PLAYER_REGEN_DISABLED" then
         -- Combat started - hide report card and stop ticker
+        -- Keep buff snapshot alive so we can detect drops during combat
         StopTicker()
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Combat ended - do nothing
+        -- Combat ended - check if any tracked buffs dropped during combat
+        Core:OnPlayerAuraChanged()
         return
 
     elseif event == "CHALLENGE_MODE_START" then
-        -- M+ started - hide report card and stop ticker
+        -- M+ started - hide report card, stop ticker, dismiss drop alerts
         StopTicker()
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
+        if BuffDropAlert then BuffDropAlert:DismissAll() end
+        BWV2:ClearBuffSnapshot()
 
     elseif event == "PLAYER_LOGIN" then
         -- Localize spec names now that API is available
@@ -278,6 +297,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("CHALLENGE_MODE_START")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:RegisterEvent("UNIT_AURA")
 
 -- Slash command for manual scan
 SLASH_NSCAN1 = "/nscan"
@@ -295,9 +315,40 @@ SlashCmdList["NSUP"] = function(msg)
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
+        if BuffDropAlert then BuffDropAlert:DismissAll() end
+        BWV2:ClearBuffSnapshot()
         print("|cffff6600[BuffWatcher]|r Suppressed until reload or /nsup")
     else
         print("|cff00ff00[BuffWatcher]|r No longer suppressed")
+    end
+end
+
+-- Buff-drop monitoring: called on UNIT_AURA for player
+local BUFF_DROP_THROTTLE = 0.5
+local lastBuffDropCheck = 0
+
+function Core:OnPlayerAuraChanged()
+    local db = BWV2:GetDB()
+    if not db.enabled or not db.buffDropReminder then return end
+    if suppressed then return end
+
+    -- Don't check if no scan has happened yet
+    if BWV2.lastScanTime == 0 then return end
+
+    -- Always check rebuffs immediately (cheap: only iterates active alert cells)
+    if BuffDropAlert and BuffDropAlert:HasAlerts() then
+        BuffDropAlert:CheckRebuffs()
+    end
+
+    -- Throttle drop detection (UNIT_AURA can fire rapidly)
+    local now = GetTime()
+    if now - lastBuffDropCheck < BUFF_DROP_THROTTLE then return end
+    lastBuffDropCheck = now
+
+    -- Check for newly dropped buffs and show icon alerts
+    local dropped = BWV2:CheckBuffDrops()
+    if dropped and BuffDropAlert then
+        BuffDropAlert:AddAlerts(dropped)
     end
 end
 

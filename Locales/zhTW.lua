@@ -897,6 +897,8 @@ ns:RegisterLocale("zhTW", {
     BWV2_NO_ID = "無 ID",
     BWV2_NO_SPELL_ID_ADDED = "未新增法術 ID",
     BWV2_CLASSIC_DISPLAY = "經典顯示",
+    BWV2_BUFF_DROP_REMINDER = "增益消失提醒",
+    BWV2_BUFF_DROP_REMINDER_DESC = "當上次掃描或準備確認中的增益消失時顯示圖示警報，即使在戰鬥中也會提醒。警報會在重新獲得增益且戰鬥結束後自動消失。僅追蹤掃描時通過的增益。",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

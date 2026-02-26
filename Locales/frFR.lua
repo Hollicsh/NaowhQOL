@@ -897,6 +897,8 @@ ns:RegisterLocale("frFR", {
     BWV2_NO_ID = "Aucun ID",
     BWV2_NO_SPELL_ID_ADDED = "Aucun ID de sort ajouté",
     BWV2_CLASSIC_DISPLAY = "Affichage classique",
+    BWV2_BUFF_DROP_REMINDER = "Rappel de buffs expirés",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Affiche des alertes d'icônes lorsque les buffs de votre dernier scan ou vérification de préparation expirent, même en combat. Les alertes disparaissent automatiquement une fois rebuffé et le combat terminé. Ne suit que les buffs actifs au moment du scan.",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

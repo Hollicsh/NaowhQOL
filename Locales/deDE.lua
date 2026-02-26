@@ -897,6 +897,8 @@ ns:RegisterLocale("deDE", {
     BWV2_NO_ID = "Keine ID",
     BWV2_NO_SPELL_ID_ADDED = "Keine Zauber-ID hinzugefügt",
     BWV2_CLASSIC_DISPLAY = "Klassische Anzeige",
+    BWV2_BUFF_DROP_REMINDER = "Buff-Ablauf-Erinnerung",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Zeigt Symbol-Warnungen an, wenn Buffs seit dem letzten Scan oder der Bereitschaftsabfrage auslaufen, auch mitten im Kampf. Warnungen verschwinden automatisch nach erneutem Buffen und Kampfende. Verfolgt nur Buffs, die beim Scan aktiv waren.",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

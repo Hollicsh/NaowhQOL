@@ -14,6 +14,10 @@ BWV2.inventoryStatus = {}   -- key -> { name, count, pass = true }
 BWV2.scanInProgress = false
 BWV2.lastScanTime = 0
 
+-- Buff-drop monitoring: tracks buffs that were present at last scan
+BWV2.buffSnapshot = {}        -- key -> { name, spellIDs, icon, category, iconCheck }
+BWV2.buffDropReminded = {}    -- key -> true (already reminded, won't re-remind)
+
 -- Report card results (full pass/fail data with icons)
 BWV2.scanResults = {
     raidBuffs = {},      -- { key, name, spellID, icon, pass, covered, total }
@@ -176,6 +180,8 @@ function BWV2:InitSavedVars()
             },
             -- Report card frame position
             reportCardPosition = nil,  -- { point, x, y }
+            -- Buff drop alert position
+            buffDropPosition = nil,    -- { point, x, y }
             -- Report card display settings
             reportCardIconSize = 32,
             reportCardUnlock = false,
@@ -186,6 +192,8 @@ function BWV2:InitSavedVars()
             lastSection = "classBuffs",
             -- Chat output toggle
             chatReportEnabled = false,
+            -- Buff-drop reminder (notify when a previously-present buff expires)
+            buffDropReminder = true,
         }
     end
 
@@ -248,6 +256,9 @@ function BWV2:InitSavedVars()
     if NaowhQOL.buffWatcherV2.scanOnLogin == nil then
         NaowhQOL.buffWatcherV2.scanOnLogin = false
     end
+    if NaowhQOL.buffWatcherV2.buffDropReminder == nil then
+        NaowhQOL.buffWatcherV2.buffDropReminder = true
+    end
 
     -- Apply default class buff groups for classes with empty groups (one-time migration)
     if not NaowhQOL.buffWatcherV2._classBuffDefaultsVersion then
@@ -296,4 +307,151 @@ function BWV2:GetThreshold()
     local db = self:GetDB()
     local contentType = self:GetCurrentContentType()
     return db.thresholds[contentType] or 300
+end
+
+---------------------------------------------------------------------------
+-- BUFF-DROP MONITORING
+-- After a scan, snapshot which tracked buffs the player currently has.
+-- Then on UNIT_AURA we check if any snapshot buff disappeared.
+-- Only reminds once per buff until the next full scan or /nscan.
+---------------------------------------------------------------------------
+
+-- Build a snapshot of all passing buffs on the player after a scan.
+function BWV2:BuildBuffSnapshot()
+    wipe(self.buffSnapshot)
+    wipe(self.buffDropReminded)
+
+    local results = self.scanResults
+    local Categories = ns.BWV2Categories
+    if not results or not Categories then return end
+
+    -- Raid buffs that passed — store all variant spellIDs so we detect any variant
+    for _, entry in ipairs(results.raidBuffs or {}) do
+        if entry.pass then
+            for _, buff in ipairs(Categories.RAID) do
+                if buff.key == entry.key then
+                    local ids = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+                    self.buffSnapshot[entry.key] = {
+                        name = entry.name,
+                        spellIDs = ids,
+                        icon = entry.icon,
+                        category = "raidBuff",
+                    }
+                    break
+                end
+            end
+        end
+    end
+
+    -- Consumables that passed (spell-based only; skip icon-only / weapon / inventory)
+    for _, entry in ipairs(results.consumables or {}) do
+        if entry.pass and not entry.unconfigured then
+            local ids = {}
+            local iconCheck = nil
+            for _, grp in ipairs(Categories.CONSUMABLE_GROUPS) do
+                if grp.key == entry.key then
+                    if grp.checkType == "icon" and grp.buffIconID then
+                        -- Icon-based (e.g. food) — store iconID for matching
+                        iconCheck = grp.buffIconID
+                    elseif grp.checkType == "weaponEnchant" then
+                        -- skip weapon enchants (not aura-based)
+                        break
+                    elseif grp.spellIDs then
+                        for _, id in ipairs(grp.spellIDs) do
+                            ids[#ids + 1] = id
+                        end
+                    end
+                    break
+                end
+            end
+            if #ids > 0 or iconCheck then
+                self.buffSnapshot[entry.key] = {
+                    name = entry.name,
+                    spellIDs = ids,
+                    icon = entry.icon,
+                    category = "consumable",
+                    iconCheck = iconCheck,
+                }
+            end
+        end
+    end
+
+    -- Class buffs that passed (self-buff type only — those are auras on player)
+    for _, entry in ipairs(results.classBuffs or {}) do
+        if entry.pass and entry.checkType == "self" then
+            local _, playerClass = UnitClass("player")
+            local db = self:GetDB()
+            local classData = db.classBuffs and db.classBuffs[playerClass]
+            if classData then
+                for _, group in ipairs(classData.groups or {}) do
+                    if group.key == entry.key and group.spellIDs then
+                        self.buffSnapshot[entry.key] = {
+                            name = entry.name,
+                            spellIDs = group.spellIDs,
+                            icon = entry.icon,
+                            category = "classBuff",
+                        }
+                        break
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Check if any snapshot buffs have dropped from the player.
+-- Returns a list of dropped buff entries (empty if nothing dropped).
+function BWV2:CheckBuffDrops()
+    if not self.buffSnapshot or not next(self.buffSnapshot) then
+        return nil
+    end
+
+    local dropped = {}
+
+    for key, data in pairs(self.buffSnapshot) do
+        if not self.buffDropReminded[key] then
+            local stillPresent = false
+
+            -- Spell-ID based check
+            if data.spellIDs and #data.spellIDs > 0 then
+                for _, spellID in ipairs(data.spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        stillPresent = true
+                        break
+                    end
+                end
+            end
+
+            -- Icon-based check (e.g. food buff)
+            if not stillPresent and data.iconCheck then
+                local idx = 1
+                local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                while auraData do
+                    if auraData.icon == data.iconCheck then
+                        stillPresent = true
+                        break
+                    end
+                    idx = idx + 1
+                    auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                end
+            end
+
+            if not stillPresent then
+                local entry = {}
+                for k, v in pairs(data) do entry[k] = v end
+                entry.key = key
+                dropped[#dropped + 1] = entry
+                self.buffDropReminded[key] = true
+            end
+        end
+    end
+
+    return (#dropped > 0) and dropped or nil
+end
+
+-- Clear the snapshot (called on scan reset or disable)
+function BWV2:ClearBuffSnapshot()
+    wipe(self.buffSnapshot)
+    wipe(self.buffDropReminded)
 end

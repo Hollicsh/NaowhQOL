@@ -911,6 +911,8 @@ ns:RegisterLocale("zhCN", {
     BWV2_NO_ID = "无 ID",
     BWV2_NO_SPELL_ID_ADDED = "未添加技能 ID",
     BWV2_CLASSIC_DISPLAY = "经典显示",
+    BWV2_BUFF_DROP_REMINDER = "增益消失提醒",
+    BWV2_BUFF_DROP_REMINDER_DESC = "当上次扫描或就绪确认中的增益消失时显示图标警报，即使在战斗中也会提醒。警报会在重新获得增益且战斗结束后自动消失。仅追踪扫描时通过的增益。",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME (副坦框架)

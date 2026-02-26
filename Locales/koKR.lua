@@ -897,6 +897,8 @@ ns:RegisterLocale("koKR", {
     BWV2_NO_ID = "ID 없음",
     BWV2_NO_SPELL_ID_ADDED = "주문 ID가 추가되지 않음",
     BWV2_CLASSIC_DISPLAY = "클래식 표시",
+    BWV2_BUFF_DROP_REMINDER = "버프 만료 알림",
+    BWV2_BUFF_DROP_REMINDER_DESC = "마지막 스캔 또는 준비 확인 시 활성화된 버프가 만료되면 전투 중에도 아이콘 알림을 표시합니다. 버프가 다시 적용되고 전투가 종료되면 알림이 자동으로 사라집니다. 스캔 시 통과한 버프만 추적합니다.",
 
     ---------------------------------------------------------------------------
     -- CO-TANK FRAME

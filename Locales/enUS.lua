@@ -879,6 +879,8 @@ ns:RegisterLocale("enUS", {
     BWV2_SCAN_NOW = "Scan Now",
     BWV2_SCAN_HINT = "or use /nscan. /nsup to suppress scans until reload.",
     BWV2_SCAN_ON_LOGIN = "Scan on Login",
+    BWV2_BUFF_DROP_REMINDER = "Buff Drop Reminder",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Shows icon alerts when buffs from your last scan or ready check expire, even mid-combat. Alerts auto-dismiss when rebuffed and combat has ended. Only tracks buffs that passed at scan time.",
     BWV2_CHAT_REPORT = "Print to Chat",
     BWV2_UNKNOWN = "Unknown",
     BWV2_DEFAULT_TAG = "[Default]",

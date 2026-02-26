@@ -1114,7 +1114,28 @@ function ns:InitBuffWatcherV2()
             x = rcG:Col(2), y = rcG:Row(3),
         })
 
-        rcContent:SetHeight(rcG:Height(3))
+        -- Row 4: Buff Drop Reminder (full width with description underneath)
+        W:CreateCheckbox(rcContent, {
+            label = L["BWV2_BUFF_DROP_REMINDER"] or "Buff Drop Reminder",
+            db = db, key = "buffDropReminder",
+            x = rcG:Col(1), y = rcG:Row(4),
+            onChange = function()
+                if not db.buffDropReminder then
+                    BWV2:ClearBuffSnapshot()
+                    if ns.BWV2BuffDropAlert then
+                        ns.BWV2BuffDropAlert:DismissAll()
+                    end
+                end
+            end,
+        })
+
+        local dropDesc = rcContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        dropDesc:SetPoint("TOPLEFT", rcG:Col(1) + 30, rcG:Row(4) - 20)
+        dropDesc:SetWidth(420)
+        dropDesc:SetJustifyH("LEFT")
+        dropDesc:SetText(W.Colorize(L["BWV2_BUFF_DROP_REMINDER_DESC"], C.GRAY))
+
+        rcContent:SetHeight(rcG:Height(4) + 20)
         rcWrap:RecalcHeight()
 
         ---------------------------------------------------------------

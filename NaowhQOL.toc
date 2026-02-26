@@ -8,7 +8,7 @@
 ## Notes-koKR: 삶의 질 향상과 최적화에 중점을 둔 고성능 World of Warcraft 애드온
 ## Notes-zhTW: 專注於生活品質改善和最佳化的高效能 World of Warcraft 插件
 ## Notes-ptBR: Addon de alto desempenho para World of Warcraft focado em melhorias de qualidade de vida e otimização
-## Version: 1.6.8
+## Version: 1.7.0
 ## SavedVariablesPerCharacter: NaowhQOL
 ## SavedVariables: NaowhQOLDB, NaowhQOL_Profiles
 ## AddonCompartmentFunc: NaowhQOL_OnAddonCompartmentClick
@@ -85,6 +85,7 @@ Modules/BuffWatcherV2/Categories.lua
 Modules/BuffWatcherV2/Watchers.lua
 Modules/BuffWatcherV2/Scanner.lua
 Modules/BuffWatcherV2/ReportCard.lua
+Modules/BuffWatcherV2/BuffDropAlert.lua
 Modules/BuffWatcherV2/Core.lua
 Config/Profiler.lua
 Config/MouseCursor.lua
