@@ -39,9 +39,12 @@ local PERP_VECTORS = {
 local CLUSTER_WINDOW  = 0.3
 local castingLookup   = {}
 local recentCasts     = {}
+local recentCastGUIDs = {}   -- castGUID -> GetTime(); dedup multi-ID casts
+local recentCastNames = {}   -- spellName -> GetTime(); dedup multi-variant casts
 local DEDUP_WINDOW    = 0.15
 local gcdSpellID      = nil
-local activeChannelSpellID = nil   
+local activeChannelSpellID = nil
+local activeChannelSpellName = nil
 local pendingChannelBreaker = nil  
 local playerSentSpells = {}        
 local recentSpells    = {}
@@ -598,26 +601,65 @@ local function OnCastSucceeded(castGUID, spellId)
         tracked.casting = false
         castingLookup[castGUID] = nil
         recentCasts[spellId] = GetTime()
+        if castGUID then recentCastGUIDs[castGUID] = GetTime() end
         return
+    end
+
+    -- Deduplicate by castGUID: some spells fire SUCCEEDED multiple times
+    -- with different spellIDs for a single cast (e.g. talent replacements)
+    if castGUID then
+        local guidSeen = recentCastGUIDs[castGUID]
+        if guidSeen then return end
+        recentCastGUIDs[castGUID] = GetTime()
+        -- Prune stale entries (older than 2s) to prevent unbounded growth
+        for guid, t in pairs(recentCastGUIDs) do
+            if (GetTime() - t) > 2 then
+                recentCastGUIDs[guid] = nil
+            end
+        end
+        for name, t in pairs(recentCastNames) do
+            if (GetTime() - t) > 2 then
+                recentCastNames[name] = nil
+            end
+        end
     end
 
     if db.blocklist and db.blocklist[spellId] then return end
 
-
     if activeChannelSpellID then
-        if playerSentSpells[spellId] then
-            playerSentSpells[spellId] = nil
-            local icon = GetSpellIcon(spellId)
-            if icon then
-                pendingChannelBreaker = { spellId = spellId, icon = icon }
+        -- Check if this SUCCEEDED is for the same channel being re-pressed
+        -- (compare by name to catch variant spellIDs, e.g. SCK 107270 / 322729)
+        local info = C_Spell.GetSpellInfo(spellId)
+        local name = info and info.name
+        if not name or name ~= activeChannelSpellName then
+            -- Different spell during a channel: buffer until channel ends
+            if playerSentSpells[spellId] then
+                playerSentSpells[spellId] = nil
+                local icon = GetSpellIcon(spellId)
+                if icon then
+                    pendingChannelBreaker = { spellId = spellId, icon = icon }
+                end
             end
+            return
         end
-        return
+        -- Same channel re-pressed: fall through to add immediately
     end
 
     local now = GetTime()
     local lastSeen = recentCasts[spellId]
     if lastSeen and (now - lastSeen) < DEDUP_WINDOW then return end
+
+    -- Deduplicate by spell name: some abilities fire SUCCEEDED with multiple
+    -- different spellIDs AND different castGUIDs for a single press
+    -- (e.g. Fracture: 225919, 263642, 225921 all in one press)
+    local spellInfo = C_Spell.GetSpellInfo(spellId)
+    local spellName = spellInfo and spellInfo.name
+    if spellName then
+        local nameSeen = recentCastNames[spellName]
+        if nameSeen and (now - nameSeen) < DEDUP_WINDOW then return end
+        recentCastNames[spellName] = now
+    end
+
     recentCasts[spellId] = now
 
     local icon = GetSpellIcon(spellId)
@@ -751,6 +793,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
         inCombat = false
         wipe(recentCasts)
+        wipe(recentCastGUIDs)
+        wipe(recentCastNames)
         wipe(playerSentSpells)
         -- Close current segment but let existing ones fade naturally
         local lastSeg = SegmentGetNewest()
@@ -777,16 +821,17 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if unit ~= "player" then return end
         if GetTime() < suppressUntil then return end
         if event == "UNIT_SPELLCAST_CHANNEL_START" then
-            if activeChannelSpellID == spellId then
-                -- Same channel restarted (e.g. spamming SCK) - skip
-            else
-                activeChannelSpellID = spellId
-                OnCastStart(castGUID, spellId)
-            end
+            -- SUCCEEDED already fired and added the history entry;
+            -- just track the active channel so we can buffer non-channel
+            -- spells cast during it.
+            activeChannelSpellID = spellId
+            local chInfo = C_Spell.GetSpellInfo(spellId)
+            activeChannelSpellName = chInfo and chInfo.name
         elseif event == "UNIT_SPELLCAST_START" then
             OnCastStart(castGUID, spellId)
         elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
             activeChannelSpellID = nil
+            activeChannelSpellName = nil
             -- Flush buffered channel-breaking spell if any
             if pendingChannelBreaker then
                 local p = pendingChannelBreaker

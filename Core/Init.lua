@@ -5,8 +5,13 @@ if not ns then
     return
 end
 
--- Compat shim: IsPlayerSpell deprecated -> C_SpellBook.IsSpellKnown
-ns.IsPlayerSpell = C_SpellBook and C_SpellBook.IsSpellKnown or function() return false end
+-- Compat shim: C_SpellBook.PlayerHasSpell (11.1.0+) replaces deprecated IsPlayerSpell.
+-- PlayerHasSpell handles talent-replacement spells (e.g. Death Charge replacing Death's Advance).
+-- Falls back to IsPlayerSpell (deprecated 11.2.0) then C_SpellBook.IsSpellKnown.
+ns.IsPlayerSpell = (C_SpellBook and C_SpellBook.PlayerHasSpell)
+    or IsPlayerSpell
+    or (C_SpellBook and C_SpellBook.IsSpellKnown)
+    or function() return false end
 
 -- Shared logging utility
 local ADDON_PREFIX = "|cff018ee7Naowh|r |cffffa900QOL|r"

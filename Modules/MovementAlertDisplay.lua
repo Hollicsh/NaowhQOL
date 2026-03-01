@@ -13,7 +13,7 @@ local UNLOCK_BACKDROP = {
 }
 
 local MOVEMENT_ABILITIES = {
-    DEATHKNIGHT = {[250] = {48265}, [251] = {48265}, [252] = {48265, 391612}},
+    DEATHKNIGHT = {[250] = {48265}, [251] = {48265}, [252] = {48265, 444010, 444347}},
     DEMONHUNTER = {
         [577] = {195072}, [581] = {189110}, [1480] = {1234796},
         filter = {
