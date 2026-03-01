@@ -32,7 +32,7 @@ function Scanner:GetPlayerBuffs()
     while auraData do
         buffs[auraData.spellId] = {
             expiry = auraData.expirationTime,
-            icon = auraData.icon,
+            icon = tonumber(auraData.icon),
             name = auraData.name,
             sourceUnit = auraData.sourceUnit,
         }
@@ -114,7 +114,7 @@ function Scanner:ScanUnitBuffs(unit)
     while auraData do
         buffs[auraData.spellId] = {
             expiry = auraData.expirationTime,
-            icon = auraData.icon,
+            icon = tonumber(auraData.icon),
             name = auraData.name,
             sourceUnit = auraData.sourceUnit,
         }

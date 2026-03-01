@@ -13,7 +13,7 @@ local UNLOCK_BACKDROP = {
 }
 
 local MOVEMENT_ABILITIES = {
-    DEATHKNIGHT = {[250] = {48265}, [251] = {48265}, [252] = {48265}},
+    DEATHKNIGHT = {[250] = {48265}, [251] = {48265}, [252] = {48265, 391612}},
     DEMONHUNTER = {
         [577] = {195072}, [581] = {189110}, [1480] = {1234796},
         filter = {
@@ -1046,7 +1046,15 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
         CancelAllRechargeTimers()
-        wipe(spellWasCast)
+        -- Only clear spellWasCast for spells no longer on cooldown;
+        -- preserve tracking for abilities still cooling down so the display persists.
+        for spellId in pairs(spellWasCast) do
+            local cdInfo = C_Spell.GetSpellCooldown(spellId)
+            if not cdInfo or not cdInfo.timeUntilEndOfStartRecovery
+               or cdInfo.timeUntilEndOfStartRecovery <= 0 then
+                spellWasCast[spellId] = nil
+            end
+        end
         CacheMovementSpells()
         CheckMovementCooldown()
         CheckGatewayUsable()

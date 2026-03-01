@@ -12,10 +12,10 @@ local L = ns.L
 
 -- Layout
 local ICON_SPACING = 6
-local BORDER_SIZE = 2
-local GLOW_PULSE_MIN = 0.45
-local GLOW_PULSE_MAX = 1.0
-local GLOW_PULSE_SPEED = 2.2   -- full cycles per second
+
+-- LibCustomGlow for proc-style glow effects
+local LCG = LibStub("LibCustomGlow-1.0")
+local GLOW_KEY = "NaowhQOL_BuffDrop"
 
 -- Helper to read icon size from report card settings
 local function GetIconSize()
@@ -28,54 +28,19 @@ BuffDropAlert.activeCells = {}
 BuffDropAlert.frame = nil
 
 ---------------------------------------------------------------------------
--- GLOW ANIMATION (proc-style pulsing border)
+-- GLOW (LibCustomGlow proc glow)
 ---------------------------------------------------------------------------
 
-local glowFrames = {}
-
 local function StartGlow(cell)
-    if cell._glowAG then
-        cell._glowAG:Play()
-        cell.glowOverlay:Show()
-        return
-    end
-
-    -- Four edge textures forming a bright border that pulses
-    local g = CreateFrame("Frame", nil, cell)
-    g:SetAllPoints()
-    g:SetFrameLevel(cell:GetFrameLevel() + 2)
-
-    -- Overlay texture (fullscreen glow)
-    local overlay = g:CreateTexture(nil, "OVERLAY")
-    overlay:SetPoint("TOPLEFT", -4, 4)
-    overlay:SetPoint("BOTTOMRIGHT", 4, -4)
-    overlay:SetTexture([[Interface\SpellActivationOverlay\IconAlert]])
-    overlay:SetTexCoord(0.00781250, 0.50781250, 0.27734375, 0.52734375)
-    overlay:SetBlendMode("ADD")
-    cell.glowOverlay = overlay
-
-    -- Pulse animation
-    local ag = overlay:CreateAnimationGroup()
-    ag:SetLooping("BOUNCE")
-    local pulse = ag:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(GLOW_PULSE_MAX)
-    pulse:SetToAlpha(GLOW_PULSE_MIN)
-    pulse:SetDuration(1 / GLOW_PULSE_SPEED)
-    pulse:SetSmoothing("IN_OUT")
-    ag:Play()
-
-    cell._glowAG = ag
-    cell._glowFrame = g
-    glowFrames[cell] = true
+    if cell._hasGlow then return end
+    cell._hasGlow = true
+    LCG.ProcGlow_Start(cell, { color = {0.95, 0.95, 0.32, 1}, key = GLOW_KEY, duration = 1, startAnim = false })
 end
 
 local function StopGlow(cell)
-    if cell._glowAG then
-        cell._glowAG:Stop()
-    end
-    if cell.glowOverlay then
-        cell.glowOverlay:Hide()
-    end
+    if not cell._hasGlow then return end
+    cell._hasGlow = false
+    LCG.ProcGlow_Stop(cell, GLOW_KEY)
 end
 
 ---------------------------------------------------------------------------
@@ -91,24 +56,17 @@ local function AcquireCell(parent)
         cell:SetParent(parent)
         cell:SetSize(iconSize, iconSize)
         cell.icon:ClearAllPoints()
-        cell.icon:SetPoint("TOPLEFT", BORDER_SIZE, -BORDER_SIZE)
-        cell.icon:SetPoint("BOTTOMRIGHT", -BORDER_SIZE, BORDER_SIZE)
+        cell.icon:SetAllPoints()
         cell:Show()
         return cell
     end
 
     -- Create new cell
-    cell = CreateFrame("Button", nil, parent, "BackdropTemplate")
+    cell = CreateFrame("Button", nil, parent)
     cell:SetSize(iconSize, iconSize)
-    cell:SetBackdrop({
-        edgeFile = [[Interface\Buttons\WHITE8x8]],
-        edgeSize = BORDER_SIZE,
-    })
-    cell:SetBackdropBorderColor(0.9, 0.3, 0.1, 1)
 
     local icon = cell:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", BORDER_SIZE, -BORDER_SIZE)
-    icon:SetPoint("BOTTOMRIGHT", -BORDER_SIZE, BORDER_SIZE)
+    icon:SetAllPoints()
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     cell.icon = icon
 
@@ -160,6 +118,8 @@ local function ReleaseCell(cell)
     cell.closeBtn:SetScript("OnClick", nil)
     cell._alertKey = nil
     cell._alertName = nil
+    cell._spellIDs = nil
+    cell._isAlwaysOn = nil
     table.insert(cellPool, cell)
 end
 
@@ -215,6 +175,8 @@ function BuffDropAlert:AddAlerts(droppedList)
             local cell = AcquireCell(parent)
             cell._alertKey = key
             cell._alertName = data.name
+            cell._spellIDs = data.spellIDs  -- store for always-on rebuff checks
+            cell._isAlwaysOn = (key:sub(1, 11) == "raidAlways_")
 
             -- Icon
             if data.icon then
@@ -228,6 +190,20 @@ function BuffDropAlert:AddAlerts(droppedList)
             -- Close button dismisses this specific alert
             cell.closeBtn:SetScript("OnClick", function()
                 BuffDropAlert:DismissAlert(key)
+            end)
+
+            -- Tooltip - adjust text based on alert type
+            cell:SetScript("OnEnter", function(self)
+                self.closeBtn:Show()
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:AddLine(self._alertName or "", 1, 1, 1)
+                if self._isAlwaysOn then
+                    GameTooltip:AddLine("You know this buff but it's not active!", 1, 0.4, 0.0)
+                else
+                    GameTooltip:AddLine("This buff has expired!", 1, 0.4, 0.0)
+                end
+                GameTooltip:AddLine("Right-click or click X to dismiss.", 0.6, 0.6, 0.6)
+                GameTooltip:Show()
             end)
 
             self.activeCells[key] = cell
@@ -338,7 +314,7 @@ function BuffDropAlert:CheckRebuffs()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if auraData.icon == snap.iconCheck then
+                    if tonumber(auraData.icon) == snap.iconCheck then
                         isBack = true
                         break
                     end
@@ -363,4 +339,53 @@ end
 -- Check if any alerts are currently showing
 function BuffDropAlert:HasAlerts()
     return next(self.activeCells) ~= nil
+end
+
+-- Check rebuffs only for alerts whose keys start with a given prefix.
+-- Used for always-on raid buff alerts that track their own spellIDs.
+function BuffDropAlert:CheckRebuffsForPrefix(prefix)
+    local anyDismissed = false
+
+    for key, cell in pairs(self.activeCells) do
+        if key:sub(1, #prefix) == prefix then
+            -- Always-on alerts store their spellIDs directly on the cell
+            local spellIDs = cell._spellIDs
+            if spellIDs then
+                local isBack = false
+                for _, spellID in ipairs(spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        isBack = true
+                        break
+                    end
+                end
+                if isBack then
+                    self.activeCells[key] = nil
+                    ReleaseCell(cell)
+                    anyDismissed = true
+                end
+            end
+        end
+    end
+
+    if anyDismissed then
+        self:Relayout()
+    end
+end
+
+-- Dismiss all alerts whose key starts with a given prefix.
+function BuffDropAlert:DismissByPrefix(prefix)
+    local anyDismissed = false
+
+    for key, cell in pairs(self.activeCells) do
+        if key:sub(1, #prefix) == prefix then
+            self.activeCells[key] = nil
+            ReleaseCell(cell)
+            anyDismissed = true
+        end
+    end
+
+    if anyDismissed then
+        self:Relayout()
+    end
 end

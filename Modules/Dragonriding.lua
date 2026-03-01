@@ -263,9 +263,10 @@ local function UpdateLayout()
     speedTextFrame:SetSize(math.max(44, fontSize * 2.5), math.max(24, fontSize + 12))
     speedTextFrame:ClearAllPoints()
     speedTextFrame:SetPoint("RIGHT", mainFrame, "RIGHT", Get("speedTextOffsetX"), Get("speedTextOffsetY"))
-    speedTextFrame:SetShown(Get("showSpeedText"))
-    speedTextFrame:EnableMouse(Get("unlocked"))
-    if Get("unlocked") and Get("showSpeedText") then
+    local moduleEnabled = IsEnabled()
+    speedTextFrame:SetShown(moduleEnabled and Get("showSpeedText"))
+    speedTextFrame:EnableMouse(moduleEnabled and Get("unlocked"))
+    if moduleEnabled and Get("unlocked") and Get("showSpeedText") then
         speedTextFrame:SetBackdrop({
             bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",

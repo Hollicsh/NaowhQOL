@@ -495,7 +495,7 @@ function Categories:UnitHasBuffByIcon(unit, iconID, threshold)
     local i = 1
     local auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
     while auraData do
-        if auraData.icon == iconID then
+        if tonumber(auraData.icon) == iconID then
             local remaining = (auraData.expirationTime or 0) - now
             if auraData.expirationTime == 0 or remaining > threshold then
                 return true, remaining

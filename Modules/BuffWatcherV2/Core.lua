@@ -46,9 +46,52 @@ local function StartTicker()
             StopTicker()
             return
         end
+
+        -- Snapshot previous pass/fail state so we can detect fail→pass transitions
+        local db = BWV2:GetDB()
+        local prevPassState = {}
+        if db.buffDropReminder then
+            local results = BWV2.scanResults
+            if results then
+                for _, cat in ipairs({"raidBuffs", "consumables", "classBuffs"}) do
+                    local items = results[cat]
+                    if items then
+                        for _, item in ipairs(items) do
+                            prevPassState[item.key] = item.pass
+                        end
+                    end
+                end
+            end
+        end
+
         -- Perform scan and update display
         Scanner:PerformScan()
         ReportCard:Update()
+
+        -- Update buff snapshot for items that transitioned fail→pass
+        -- (e.g. player consumed food AFTER the initial scan)
+        if db.buffDropReminder then
+            local results = BWV2.scanResults
+            if results then
+                for _, cat in ipairs({"raidBuffs", "consumables", "classBuffs"}) do
+                    local items = results[cat]
+                    if items then
+                        for _, item in ipairs(items) do
+                            if item.pass and prevPassState[item.key] == false then
+                                -- This item just went from fail → pass; add to snapshot
+                                BWV2:AddToBuffSnapshot(item, cat)
+                                -- Dismiss any existing drop alert for this item
+                                if BuffDropAlert then
+                                    BuffDropAlert:DismissAlert(item.key)
+                                end
+                                -- Allow re-alerting if it drops again
+                                BWV2.buffDropReminded[item.key] = nil
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end)
 end
 
@@ -287,6 +330,30 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 TriggerScan()
             end)
         end
+
+        -- Always-on raid buff check on login (delayed for auras to load)
+        if db.enabled and db.raidBuffAlwaysCheck and BuffDropAlert then
+            C_Timer.After(3, function()
+                local missing = BWV2:CheckAlwaysOnRaidBuffs()
+                if missing then
+                    BuffDropAlert:AddAlerts(missing)
+                end
+            end)
+        end
+
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        -- Fires on reload / zone change — re-check always-on raid buffs
+        local db = BWV2:GetDB()
+        if db and db.enabled and db.raidBuffAlwaysCheck and BuffDropAlert then
+            C_Timer.After(1.5, function()
+                -- Dismiss stale alerts then re-evaluate
+                BuffDropAlert:DismissByPrefix("raidAlways_")
+                local missing = BWV2:CheckAlwaysOnRaidBuffs()
+                if missing then
+                    BuffDropAlert:AddAlerts(missing)
+                end
+            end)
+        end
     end
 end)
 
@@ -297,6 +364,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("CHALLENGE_MODE_START")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("UNIT_AURA")
 
 -- Slash command for manual scan
@@ -326,13 +394,37 @@ end
 -- Buff-drop monitoring: called on UNIT_AURA for player
 local BUFF_DROP_THROTTLE = 0.5
 local lastBuffDropCheck = 0
+local RAID_BUFF_THROTTLE = 1.0
+local lastRaidBuffCheck = 0
 
 function Core:OnPlayerAuraChanged()
     local db = BWV2:GetDB()
-    if not db.enabled or not db.buffDropReminder then return end
+    if not db.enabled then return end
     if suppressed then return end
 
-    -- Don't check if no scan has happened yet
+    local now = GetTime()
+
+    -- Always-on raid buff monitoring (independent of scan state)
+    if db.raidBuffAlwaysCheck and BuffDropAlert then
+        -- Check rebuffs first (auto-dismiss when buff is reapplied)
+        if BuffDropAlert:HasAlerts() then
+            BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
+        end
+
+        if now - lastRaidBuffCheck >= RAID_BUFF_THROTTLE then
+            lastRaidBuffCheck = now
+            local missing = BWV2:CheckAlwaysOnRaidBuffs()
+            if missing then
+                BuffDropAlert:AddAlerts(missing)
+            else
+                -- All raid buffs present - dismiss any active always-on alerts
+                BuffDropAlert:DismissByPrefix("raidAlways_")
+            end
+        end
+    end
+
+    -- Buff-drop reminder system (requires a scan to have happened)
+    if not db.buffDropReminder then return end
     if BWV2.lastScanTime == 0 then return end
 
     -- Always check rebuffs immediately (cheap: only iterates active alert cells)
@@ -341,7 +433,6 @@ function Core:OnPlayerAuraChanged()
     end
 
     -- Throttle drop detection (UNIT_AURA can fire rapidly)
-    local now = GetTime()
     if now - lastBuffDropCheck < BUFF_DROP_THROTTLE then return end
     lastBuffDropCheck = now
 

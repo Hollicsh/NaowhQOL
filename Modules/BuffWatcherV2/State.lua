@@ -194,6 +194,8 @@ function BWV2:InitSavedVars()
             chatReportEnabled = false,
             -- Buff-drop reminder (notify when a previously-present buff expires)
             buffDropReminder = true,
+            -- Always monitor raid buffs the player can provide
+            raidBuffAlwaysCheck = false,
         }
     end
 
@@ -258,6 +260,9 @@ function BWV2:InitSavedVars()
     end
     if NaowhQOL.buffWatcherV2.buffDropReminder == nil then
         NaowhQOL.buffWatcherV2.buffDropReminder = true
+    end
+    if NaowhQOL.buffWatcherV2.raidBuffAlwaysCheck == nil then
+        NaowhQOL.buffWatcherV2.raidBuffAlwaysCheck = false
     end
 
     -- Apply default class buff groups for classes with empty groups (one-time migration)
@@ -325,18 +330,28 @@ function BWV2:BuildBuffSnapshot()
     local Categories = ns.BWV2Categories
     if not results or not Categories then return end
 
-    -- Raid buffs that passed — store all variant spellIDs so we detect any variant
+    -- Raid buffs that passed — only track buffs the player can actually cast
     for _, entry in ipairs(results.raidBuffs or {}) do
         if entry.pass then
             for _, buff in ipairs(Categories.RAID) do
                 if buff.key == entry.key then
                     local ids = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
-                    self.buffSnapshot[entry.key] = {
-                        name = entry.name,
-                        spellIDs = ids,
-                        icon = entry.icon,
-                        category = "raidBuff",
-                    }
+                    -- Skip raid buffs the player cannot cast (e.g. druid MotW on a mage)
+                    local playerKnows = false
+                    for _, spellID in ipairs(ids) do
+                        if ns.IsPlayerSpell(spellID) then
+                            playerKnows = true
+                            break
+                        end
+                    end
+                    if playerKnows then
+                        self.buffSnapshot[entry.key] = {
+                            name = entry.name,
+                            spellIDs = ids,
+                            icon = entry.icon,
+                            category = "raidBuff",
+                        }
+                    end
                     break
                 end
             end
@@ -428,7 +443,7 @@ function BWV2:CheckBuffDrops()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if auraData.icon == data.iconCheck then
+                    if tonumber(auraData.icon) == data.iconCheck then
                         stillPresent = true
                         break
                     end
@@ -448,6 +463,138 @@ function BWV2:CheckBuffDrops()
     end
 
     return (#dropped > 0) and dropped or nil
+end
+
+-- Add a newly-passing item to the buff snapshot so we can monitor its expiry.
+-- Called from the scan ticker when an item transitions fail → pass.
+function BWV2:AddToBuffSnapshot(item, categoryKey)
+    if not item or not item.key then return end
+    local Categories = ns.BWV2Categories
+    if not Categories then return end
+
+    if categoryKey == "raidBuffs" then
+        for _, buff in ipairs(Categories.RAID) do
+            if buff.key == item.key then
+                local ids = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+                -- Skip raid buffs the player cannot cast
+                local playerKnows = false
+                for _, spellID in ipairs(ids) do
+                    if ns.IsPlayerSpell(spellID) then
+                        playerKnows = true
+                        break
+                    end
+                end
+                if playerKnows then
+                    self.buffSnapshot[item.key] = {
+                        name = item.name,
+                        spellIDs = ids,
+                        icon = item.icon,
+                        category = "raidBuff",
+                    }
+                end
+                return
+            end
+        end
+    elseif categoryKey == "consumables" then
+        for _, grp in ipairs(Categories.CONSUMABLE_GROUPS) do
+            if grp.key == item.key then
+                local ids = {}
+                local iconCheck = nil
+                if grp.checkType == "icon" and grp.buffIconID then
+                    iconCheck = grp.buffIconID
+                elseif grp.checkType == "weaponEnchant" then
+                    return  -- weapon enchants are not aura-based
+                elseif grp.spellIDs then
+                    for _, id in ipairs(grp.spellIDs) do
+                        ids[#ids + 1] = id
+                    end
+                end
+                if #ids > 0 or iconCheck then
+                    self.buffSnapshot[item.key] = {
+                        name = item.name,
+                        spellIDs = ids,
+                        icon = item.icon,
+                        category = "consumable",
+                        iconCheck = iconCheck,
+                    }
+                end
+                return
+            end
+        end
+    elseif categoryKey == "classBuffs" then
+        if item.checkType == "self" then
+            local _, playerClass = UnitClass("player")
+            local db = self:GetDB()
+            local classData = db.classBuffs and db.classBuffs[playerClass]
+            if classData then
+                for _, group in ipairs(classData.groups or {}) do
+                    if group.key == item.key and group.spellIDs then
+                        self.buffSnapshot[item.key] = {
+                            name = item.name,
+                            spellIDs = group.spellIDs,
+                            icon = item.icon,
+                            category = "classBuff",
+                        }
+                        return
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Check raid buffs the player can provide and is currently missing.
+-- Returns a list of missing entries for BuffDropAlert display.
+function BWV2:CheckAlwaysOnRaidBuffs()
+    local db = self:GetDB()
+    if not db or not db.raidBuffAlwaysCheck then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
+
+    local missing = {}
+
+    for _, buff in ipairs(Categories.RAID) do
+        local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
+        -- Check if this category is enabled
+        if primaryID and not Categories:IsDefaultDisabled("raidBuffs", primaryID)
+           and Categories:IsCategoryEnabled(buff.key) then
+            -- Check if the player knows this spell (i.e. can provide this buff)
+            local playerKnows = false
+            local spellIDs = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+            for _, spellID in ipairs(spellIDs) do
+                if ns.IsPlayerSpell(spellID) then
+                    playerKnows = true
+                    break
+                end
+            end
+
+            if playerKnows then
+                -- Check if the player currently has this buff
+                local hasBuff = false
+                for _, spellID in ipairs(spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        hasBuff = true
+                        break
+                    end
+                end
+
+                if not hasBuff then
+                    local icon = C_Spell.GetSpellTexture(primaryID)
+                    missing[#missing + 1] = {
+                        key = "raidAlways_" .. buff.key,
+                        name = buff.name,
+                        spellIDs = spellIDs,
+                        icon = icon,
+                        category = "raidBuff",
+                    }
+                end
+            end
+        end
+    end
+
+    return (#missing > 0) and missing or nil
 end
 
 -- Clear the snapshot (called on scan reset or disable)

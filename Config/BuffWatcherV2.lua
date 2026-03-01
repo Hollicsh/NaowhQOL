@@ -1115,10 +1115,11 @@ function ns:InitBuffWatcherV2()
         })
 
         -- Row 4: Buff Drop Reminder (full width with description underneath)
+        local row4Y = rcG:Row(4)
         W:CreateCheckbox(rcContent, {
             label = L["BWV2_BUFF_DROP_REMINDER"] or "Buff Drop Reminder",
             db = db, key = "buffDropReminder",
-            x = rcG:Col(1), y = rcG:Row(4),
+            x = rcG:Col(1), y = row4Y,
             onChange = function()
                 if not db.buffDropReminder then
                     BWV2:ClearBuffSnapshot()
@@ -1130,12 +1131,34 @@ function ns:InitBuffWatcherV2()
         })
 
         local dropDesc = rcContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        dropDesc:SetPoint("TOPLEFT", rcG:Col(1) + 30, rcG:Row(4) - 20)
+        dropDesc:SetPoint("TOPLEFT", rcG:Col(1) + 30, row4Y - 22)
         dropDesc:SetWidth(420)
         dropDesc:SetJustifyH("LEFT")
         dropDesc:SetText(W.Colorize(L["BWV2_BUFF_DROP_REMINDER_DESC"], C.GRAY))
 
-        rcContent:SetHeight(rcG:Height(4) + 20)
+        -- Row 5: Always-on raid buff monitoring (offset extra for description above)
+        local row5Y = row4Y - 70
+        W:CreateCheckbox(rcContent, {
+            label = L["BWV2_RAID_BUFF_ALWAYS_CHECK"] or "Always Monitor My Raid Buffs",
+            db = db, key = "raidBuffAlwaysCheck",
+            x = rcG:Col(1), y = row5Y,
+            onChange = function()
+                if not db.raidBuffAlwaysCheck then
+                    -- Dismiss any active always-on alerts
+                    if ns.BWV2BuffDropAlert then
+                        ns.BWV2BuffDropAlert:DismissByPrefix("raidAlways_")
+                    end
+                end
+            end,
+        })
+
+        local alwaysDesc = rcContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        alwaysDesc:SetPoint("TOPLEFT", rcG:Col(1) + 30, row5Y - 22)
+        alwaysDesc:SetWidth(420)
+        alwaysDesc:SetJustifyH("LEFT")
+        alwaysDesc:SetText(W.Colorize(L["BWV2_RAID_BUFF_ALWAYS_CHECK_DESC"], C.GRAY))
+
+        rcContent:SetHeight(math.abs(row5Y) + 60)
         rcWrap:RecalcHeight()
 
         ---------------------------------------------------------------
