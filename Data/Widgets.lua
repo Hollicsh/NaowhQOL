@@ -1851,6 +1851,28 @@ function ns.Widgets.MakeDraggable(frame, opts)
         end
         if opts.onDragStop then opts.onDragStop() end
     end)
+
+    if opts.enableMouse ~= false then
+        frame:SetScript("OnMouseUp", function(self, button)
+            if button ~= "RightButton" or not db[unlockKey] then return end
+            if not NaowhQOL or not ns.MODULE_REGISTRY then return end
+            local moduleKey
+            for key, value in pairs(NaowhQOL) do
+                if value == db then moduleKey = key break end
+            end
+            if not moduleKey then return end
+            for _, entry in ipairs(ns.MODULE_REGISTRY) do
+                if entry.db == moduleKey and entry.tab then
+                    if ns.MainFrame and not ns.MainFrame:IsShown() then
+                        ns.MainFrame:Show()
+                        if ns.MainFrame.ResetContent then ns.MainFrame:ResetContent() end
+                    end
+                    if ns.OpenTab then ns:OpenTab(entry.tab) end
+                    break
+                end
+            end
+        end)
+    end
 end
 
 function ns.Widgets:CreateTextInput(parent, opts)

@@ -73,6 +73,7 @@ ns:RegisterLocale("zhCN", {
 
     COMMON_HINT_PARTIAL_MATCH = "模糊匹配，忽略大小写。",
     COMMON_DRAG_TO_MOVE = "拖动以移动",
+    COMMON_RIGHT_CLICK_SETTINGS = "右键点击打开设置",
 
     SIDEBAR_GROUP_COMBAT = "战斗",
     SIDEBAR_GROUP_HUD = "界面 (HUD)",

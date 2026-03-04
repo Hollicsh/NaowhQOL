@@ -73,6 +73,7 @@ ns:RegisterLocale("deDE", {
 
     COMMON_HINT_PARTIAL_MATCH = "Teilweise, Groß-/Kleinschreibung ignorierend.",
     COMMON_DRAG_TO_MOVE = "Zum Verschieben ziehen",
+    COMMON_RIGHT_CLICK_SETTINGS = "Rechtsklick für Einstellungen",
 
     SIDEBAR_GROUP_COMBAT = "KAMPF",
     SIDEBAR_GROUP_HUD = "HUD",

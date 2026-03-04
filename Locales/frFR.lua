@@ -73,6 +73,7 @@ ns:RegisterLocale("frFR", {
 
     COMMON_HINT_PARTIAL_MATCH = "Correspondance partielle, insensible à la casse.",
     COMMON_DRAG_TO_MOVE = "Glisser pour déplacer",
+    COMMON_RIGHT_CLICK_SETTINGS = "Clic droit pour les paramètres",
 
     SIDEBAR_GROUP_COMBAT = "COMBAT",
     SIDEBAR_GROUP_HUD = "HUD",

@@ -356,12 +356,15 @@ local function UpdateCachedCharges()
             end
         end
         if not entry.isChargeSpell then
-            local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
-            if cdInfo and cdInfo.duration then
-                local dur = tonumber(cdInfo.duration)
-                if dur and dur > 0 then
-                    entry.baseDuration = dur
+            local ok, dur = pcall(function()
+                local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
+                if cdInfo and cdInfo.duration then
+                    return tonumber(tostring(cdInfo.duration)) or 0
                 end
+                return 0
+            end)
+            if ok and dur and dur > 0 then
+                entry.baseDuration = dur
             end
         end
     end

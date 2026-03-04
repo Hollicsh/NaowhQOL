@@ -73,6 +73,7 @@ ns:RegisterLocale("ruRU", {
 
     COMMON_HINT_PARTIAL_MATCH = "Частичное совпадение, без учёта регистра.",
     COMMON_DRAG_TO_MOVE = "Перетащите для перемещения",
+    COMMON_RIGHT_CLICK_SETTINGS = "ПКМ - открыть настройки",
 
     SIDEBAR_GROUP_COMBAT = "БОЙ",
     SIDEBAR_GROUP_HUD = "ИНТЕРФЕЙС",
@@ -99,6 +100,30 @@ ns:RegisterLocale("ruRU", {
     SIDEBAR_TAB_MISC = "Разное",
     SIDEBAR_TAB_PROFILES = "Профили",
     SIDEBAR_TAB_SLASH_COMMANDS = "Слэш-команды",
+
+	SIDEBAR_GROUP_GENERAL = "ОБЩИЕ",
+    SIDEBAR_TAB_GENERAL = "Общие",
+    GENERAL_TITLE_WORD1 = "ОБЩИЕ",
+    GENERAL_TITLE_WORD2 = "НАСТРОЙКИ",
+    GENERAL_SUBTITLE = "Глобальные настройки, применяемые ко всем модулям",
+
+    GENERAL_SECTION_FONT = "ГЛОБАЛЬНЫЙ ШРИФТ",
+    GENERAL_GLOBAL_FONT_DESC = "Выберите шрифт и примените его ко всем модулям сразу. Индивидуальные настройки шрифтов будут перезаписаны.",
+    GENERAL_APPLY_GLOBAL_FONT = "Применить ко всем модулям",
+    GENERAL_GLOBAL_FONT_APPLIED = "Глобальный шрифт применён ко всем модулям.",
+
+    GENERAL_SECTION_LOCK = "ЗАБЛОКИРОВАТЬ / РАЗБЛОКИРОВАТЬ ВСЁ",
+    GENERAL_LOCK_DESC = "Быстро заблокируйте или разблокируйте все перемещаемые модули для совместного перемещения.",
+    GENERAL_LOCK_STATUS = "%d / %d модулей разблокировано",
+    GENERAL_UNLOCK_ALL = "Разблокировать всё",
+    GENERAL_LOCK_ALL = "Заблокировать всё",
+    GENERAL_ALL_UNLOCKED = "Все модули разблокированы.",
+    GENERAL_ALL_LOCKED = "Все модули заблокированы.",
+
+    GENERAL_SECTION_SEARCH = "ПОИСК МОДУЛЕЙ",
+    GENERAL_SEARCH_DESC = "Введите название модуля или настройки, чтобы быстро найти и перейти к нему.",
+    GENERAL_SEARCH_PLACEHOLDER = "Поиск модулей и настроек...",
+    GENERAL_SEARCH_NO_RESULTS = "Подходящие модули не найдены.",
 
     BUFFTRACKER_TITLE = "ОТСЛЕЖИВАНИЕ БАФФОВ",
     BUFFTRACKER_SUBTITLE = "Отслеживание баффов, аур и стоек",
@@ -725,6 +750,10 @@ ns:RegisterLocale("ruRU", {
     BWV2_SCAN_NOW = "Сканировать сейчас",
     BWV2_SCAN_HINT = "или используйте /nscan. /nsup, чтобы запретить сканирование до перезагрузки.",
     BWV2_SCAN_ON_LOGIN = "Сканировать при входе",
+	BWV2_BUFF_DROP_REMINDER = "Напоминание о спавших баффах",
+    BWV2_BUFF_DROP_REMINDER_DESC = "Оповещение при истечении срока действия баффа с момента последнего сканирования. Автоматически исчезает при повторном применении эффекта.",
+    BWV2_RAID_BUFF_ALWAYS_CHECK = "Всегда отслеживать мои рейдовые баффы",
+    BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "Показывать значок отсутствия, если известный Вам рейдовый бафф не активен на Вас.",
     BWV2_CHAT_REPORT = "Вывод в чат",
     BWV2_UNKNOWN = "Неизвестно",
     BWV2_ENCHANT_ID_LABEL = "ID чар",
@@ -792,10 +821,6 @@ ns:RegisterLocale("ruRU", {
     BWV2_NO_ID = "Нет ID",
     BWV2_NO_SPELL_ID_ADDED = "ID заклинания не добавлен",
     BWV2_CLASSIC_DISPLAY = "Классический вид",
-    BWV2_BUFF_DROP_REMINDER = "Напоминание о спавших баффах",
-    BWV2_BUFF_DROP_REMINDER_DESC = "Показывает значки-оповещения, когда баффы с последнего сканирования или проверки готовности истекают, даже в бою. Оповещения автоматически исчезают после повторного наложения баффа и окончания боя. Отслеживает только баффы, которые были активны при сканировании.",
-    BWV2_RAID_BUFF_ALWAYS_CHECK = "Всегда отслеживать мои рейдовые баффы",
-    BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "Показывать значок отсутствия, если известный вам рейдовый бафф не активен на вас.",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "Всегда отслеживать мои баффы класса",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "Непрерывно отслеживает баффы класса (напр. яды, зачарования оружия) и предупреждает при их отсутствии.",
 
@@ -968,28 +993,4 @@ ns:RegisterLocale("ruRU", {
     CROSSHAIR_HPAL_NOTE             = "HPal использует обнаружение объектов на расстоянии 4 ярдов (погрешность составляет ~0.5 ярда)",
 
     BWV2_FADE_TOOLTIP               = "Секунд до исчезновения при прохождении (0 = отключено)",
-
-    SIDEBAR_GROUP_GENERAL = "ОБЩИЕ",
-    SIDEBAR_TAB_GENERAL = "Общие",
-    GENERAL_TITLE_WORD1 = "ОБЩИЕ",
-    GENERAL_TITLE_WORD2 = "НАСТРОЙКИ",
-    GENERAL_SUBTITLE = "Глобальные настройки, применяемые ко всем модулям",
-
-    GENERAL_SECTION_FONT = "ГЛОБАЛЬНЫЙ ШРИФТ",
-    GENERAL_GLOBAL_FONT_DESC = "Выберите шрифт и примените его ко всем модулям сразу. Индивидуальные настройки шрифтов будут перезаписаны.",
-    GENERAL_APPLY_GLOBAL_FONT = "Применить ко всем модулям",
-    GENERAL_GLOBAL_FONT_APPLIED = "Глобальный шрифт применён ко всем модулям.",
-
-    GENERAL_SECTION_LOCK = "ЗАБЛОКИРОВАТЬ / РАЗБЛОКИРОВАТЬ ВСЁ",
-    GENERAL_LOCK_DESC = "Быстро заблокируйте или разблокируйте все перемещаемые модули для совместного перемещения.",
-    GENERAL_LOCK_STATUS = "%d / %d модулей разблокировано",
-    GENERAL_UNLOCK_ALL = "Разблокировать всё",
-    GENERAL_LOCK_ALL = "Заблокировать всё",
-    GENERAL_ALL_UNLOCKED = "Все модули разблокированы.",
-    GENERAL_ALL_LOCKED = "Все модули заблокированы.",
-
-    GENERAL_SECTION_SEARCH = "ПОИСК МОДУЛЕЙ",
-    GENERAL_SEARCH_DESC = "Введите название модуля или настройки, чтобы быстро найти и перейти к нему.",
-    GENERAL_SEARCH_PLACEHOLDER = "Поиск модулей и настроек...",
-    GENERAL_SEARCH_NO_RESULTS = "Подходящие модули не найдены.",
 })

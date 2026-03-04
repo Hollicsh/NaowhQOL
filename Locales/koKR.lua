@@ -73,6 +73,7 @@ ns:RegisterLocale("koKR", {
 
     COMMON_HINT_PARTIAL_MATCH = "대소문자를 구분하지 않는 부분 일치.",
     COMMON_DRAG_TO_MOVE = "드래그하여 이동",
+    COMMON_RIGHT_CLICK_SETTINGS = "우클릭으로 설정 열기",
 
     SIDEBAR_GROUP_COMBAT = "전투",
     SIDEBAR_GROUP_HUD = "HUD",

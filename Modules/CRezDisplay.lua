@@ -2,7 +2,7 @@ local addonName, ns = ...
 local L = ns.L
 local W = ns.Widgets
 local MakeSlot = ns.DisplayUtils.MakeSlot
-local REBIRTH_SPELL_ID = 20484
+local COMBAT_REZ_SPELL_IDS = { 20484, 61999, 20707, 391054 }
 
 local inMythicPlus = false
 local encounterActive = false
@@ -19,6 +19,16 @@ rezSlot.lbl:Hide()
 rezSlot.count = rezSlot:CreateFontString(nil, "OVERLAY")
 rezSlot.count:SetPoint("BOTTOMRIGHT", -2, 2)
 rezSlot.count:SetFont(ns.DefaultFontPath(), 11, "OUTLINE")
+
+local function GetCombatRezCharges()
+    for _, spellID in ipairs(COMBAT_REZ_SPELL_IDS) do
+        local charges = C_Spell.GetSpellCharges(spellID)
+        if charges then
+            return charges, spellID
+        end
+    end
+    return nil, nil
+end
 
 local rezUpdateElapsed = 0
 local REZ_UPDATE_INTERVAL = 0.1
@@ -42,15 +52,15 @@ local function UpdateRezDisplay()
     local ccR, ccG, ccB = W.GetEffectiveColor(db, "countColorR", "countColorG", "countColorB", "countColorUseClassColor")
     rezSlot.count:SetTextColor(ccR, ccG, ccB, db.countAlpha or 1)
 
-    local charges = C_Spell.GetSpellCharges(REBIRTH_SPELL_ID)
+    local charges, activeSpellID = GetCombatRezCharges()
     if not charges then
         rezSlot.tex:SetTexture("Interface\\Icons\\Spell_Nature_Reincarnation")
-        rezSlot.timer:SetText("--:--")
+        rezSlot.timer:SetText("")
         rezSlot.count:SetText("0")
         return
     end
 
-    local icon = C_Spell.GetSpellTexture(REBIRTH_SPELL_ID)
+    local icon = C_Spell.GetSpellTexture(activeSpellID)
     rezSlot.tex:SetTexture(icon or "Interface\\Icons\\Spell_Nature_Reincarnation")
     rezSlot.count:SetText(tostring(charges.currentCharges))
 

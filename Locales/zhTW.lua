@@ -73,6 +73,7 @@ ns:RegisterLocale("zhTW", {
 
     COMMON_HINT_PARTIAL_MATCH = "部分比對，不區分大小寫。",
     COMMON_DRAG_TO_MOVE = "拖曳以移動",
+    COMMON_RIGHT_CLICK_SETTINGS = "右鍵點擊開啟設定",
 
     SIDEBAR_GROUP_COMBAT = "戰鬥",
     SIDEBAR_GROUP_HUD = "HUD",

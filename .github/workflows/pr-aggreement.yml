@@ -19,7 +19,7 @@ jobs:
           import os, sys
 
           body = os.getenv("PR_BODY") or ""
-          lines = [line.strip().lower() for line in body.splitlines()]
+          lines = [line.strip().lower().rstrip(".!") for line in body.splitlines()]
 
           if "i agree" not in lines:
               print('Missing required agreement line. Please add a line that says exactly: I agree')

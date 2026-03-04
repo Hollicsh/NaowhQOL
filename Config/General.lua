@@ -28,6 +28,7 @@ local MODULE_REGISTRY = {
     { db = "misc",            unlockKeys = {},                               tab = "misc" },
     { db = "optimizations",   unlockKeys = {},                               tab = "optimizations" },
 }
+ns.MODULE_REGISTRY = MODULE_REGISTRY
 
 local FONT_MODULES = {
     { db = "combatTimer",     key = "font" },
@@ -69,6 +70,7 @@ local MODULE_DISPLAY_NAMES = {
     misc            = "QOL / Misc",
     optimizations   = "Optimizations",
 }
+ns.MODULE_DISPLAY_NAMES = MODULE_DISPLAY_NAMES
 
 local MODULE_KEYWORDS = {
     combatTimer     = { "Instance Only", "Chat Report", "Sticky Timer", "Hide Prefix", "Show Background", "Timer Color" },
@@ -117,6 +119,7 @@ local function RefreshAllModuleDisplays()
 
     if ns.RefreshBuffTracker then pcall(ns.RefreshBuffTracker, ns) end
 end
+ns.RefreshAllModuleDisplays = RefreshAllModuleDisplays
 
 local function RefreshReportCard(unlocking)
     if not ns.BWV2ReportCard then return end

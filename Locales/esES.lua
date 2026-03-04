@@ -73,6 +73,7 @@ ns:RegisterLocale("esES", {
 
     COMMON_HINT_PARTIAL_MATCH = "Coincidencia parcial, insensible a mayúsculas.",
     COMMON_DRAG_TO_MOVE = "Arrastra para mover",
+    COMMON_RIGHT_CLICK_SETTINGS = "Clic derecho para ajustes",
 
     SIDEBAR_GROUP_COMBAT = "COMBATE",
     SIDEBAR_GROUP_HUD = "HUD",

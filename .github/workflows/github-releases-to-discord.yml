@@ -1,20 +1,80 @@
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Package and release"]
+    types:
+      - completed
 
 jobs:
   github-releases-to-discord:
     runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.head_branch != 'main'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: GitHub Releases to Discord
-        uses: SethCohen/github-releases-to-discord@v1
+      - name: Get release and notify Discord
+        uses: actions/github-script@v7
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         with:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
-          color: "16754688"
-          username: "NaowhQOL"
-          footer_title: "Naowh QOL Changelog"
-          footer_timestamp: true
-          remove_github_reference_links: true
-          reduce_headings: true
+          script: |
+            const tag = context.payload.workflow_run.head_branch;
+            core.info(`Workflow ran for: ${tag}`);
+
+            // Try to find a release matching this tag
+            let release;
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag,
+              });
+              release = data;
+            } catch (e) {
+              core.info(`No release found for "${tag}", skipping.`);
+              return;
+            }
+
+            if (release.prerelease || release.draft) {
+              core.info('Release is prerelease or draft, skipping.');
+              return;
+            }
+
+            let body = release.body || 'No changelog available.';
+
+            // Remove GitHub reference links: [text](url) → text
+            body = body.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+            // Reduce headings for Discord: ## Header → **Header**
+            body = body.replace(/^#{1,6}\s+(.+)$/gm, '**$1**');
+
+            // Discord embed description limit is 4096
+            if (body.length > 4000) {
+              body = body.substring(0, 4000) + '\n...';
+            }
+
+            const embed = {
+              title: release.name || release.tag_name,
+              url: release.html_url,
+              description: body,
+              color: 16754688,
+              footer: {
+                text: "Naowh QOL Changelog"
+              },
+              timestamp: new Date().toISOString()
+            };
+
+            const response = await fetch(process.env.WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: "NaowhQOL",
+                embeds: [embed]
+              })
+            });
+
+            if (!response.ok) {
+              const text = await response.text();
+              throw new Error(`Discord webhook failed (${response.status}): ${text}`);
+            }
+
+            core.info(`Posted release "${release.name}" to Discord.`);

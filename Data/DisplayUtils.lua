@@ -188,7 +188,9 @@ function ns.DisplayUtils.SetFrameUnlocked(frame, unlocked, label)
             frame.unlockLabel:SetTextColor(1, 0.66, 0)
         end
         if frame.unlockLabel then
-            frame.unlockLabel:SetText(label or L["COMMON_DRAG_TO_MOVE"])
+            local text = label or L["COMMON_DRAG_TO_MOVE"]
+            text = text .. "\n" .. L["COMMON_RIGHT_CLICK_SETTINGS"]
+            frame.unlockLabel:SetText(text)
             frame.unlockLabel:Show()
         end
     else

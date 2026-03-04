@@ -73,6 +73,7 @@ ns:RegisterLocale("enUS", {
 
     COMMON_HINT_PARTIAL_MATCH = "Partial, case-insensitive matching.",
     COMMON_DRAG_TO_MOVE = "Drag to move",
+    COMMON_RIGHT_CLICK_SETTINGS = "Right-click for settings",
 
     SIDEBAR_GROUP_COMBAT = "COMBAT",
     SIDEBAR_GROUP_HUD = "HUD",
