@@ -41,9 +41,6 @@ jobs:
 
             let body = release.body || 'No changelog available.';
 
-            // Remove GitHub reference links: [text](url) → text
-            body = body.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
             // Reduce headings for Discord: ## Header → **Header**
             body = body.replace(/^#{1,6}\s+(.+)$/gm, '**$1**');
 
