@@ -1,0 +1,15 @@
+nul
+*.bak
+
+# External libs (added dynamically in release)
+Libs/LibStub/
+Libs/CallbackHandler-1.0/
+Libs/LibDataBroker-1.1/
+Libs/LibDBIcon-1.0/
+Libs/LibSharedMedia-3.0/
+Libs/LibRangeCheck-3.0/
+Libs/AceDB-3.0/
+
+
+# Commenting out due to LUA plugins generating vscode settings
+.vscode/settings.json

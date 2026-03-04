@@ -1,0 +1,776 @@
+local addonName, ns = ...
+local L = ns.L
+
+local cache = {}
+local W = ns.Widgets
+local C = ns.COLORS
+
+function ns:InitMovementAlert()
+    local p = ns.MainFrame.Content
+    local db = NaowhQOL.movementAlert
+    local movementDisplay = ns.MovementAlertDisplay
+    local timeSpiralDisplay = ns.TimeSpiralDisplay
+
+    W:CachedPanel(cache, "maFrame", p, function(f)
+        local sf, sc = W:CreateScrollFrame(f, 800)
+
+        W:CreatePageHeader(sc,
+            {{"MOVEMENT", C.BLUE}, {" ALERT", C.ORANGE}},
+            L["MOVEMENT_ALERT_SUBTITLE"])
+
+        local function refreshMovement() if movementDisplay then movementDisplay:UpdateDisplay() end end
+        local function refreshTimeSpiral() if timeSpiralDisplay then timeSpiralDisplay:UpdateDisplay() end end
+        local function refreshAll() refreshMovement(); refreshTimeSpiral() end
+
+        local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
+        killArea:SetSize(460, 90)
+        killArea:SetPoint("TOPLEFT", 10, -75)
+        killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
+        killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
+
+        local masterCB = W:CreateCheckbox(killArea, {
+            label = L["MOVEMENT_ALERT_ENABLE"],
+            db = db, key = "enabled",
+            x = 15, y = -8,
+            isMaster = true,
+        })
+
+        local unlockCB = W:CreateCheckbox(killArea, {
+            label = L["COMMON_UNLOCK"],
+            db = db, key = "unlock",
+            x = 15, y = -38,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshMovement
+        })
+        unlockCB:SetShown(db.enabled)
+
+        local combatOnlyCB = W:CreateCheckbox(killArea, {
+            label = L["GCD_COMBAT_ONLY"],
+            db = db, key = "combatOnly",
+            x = 15, y = -63,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshMovement
+        })
+        combatOnlyCB:SetShown(db.enabled)
+
+        if not db.disabledClasses then db.disabledClasses = {} end
+
+        local classFilterFrame = CreateFrame("Frame", nil, sc)
+        classFilterFrame:SetSize(460, 120)
+        classFilterFrame:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -6)
+
+        local classFilterLabel = classFilterFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        classFilterLabel:SetPoint("TOPLEFT", 15, -2)
+        classFilterLabel:SetText(L["MOVEMENT_ALERT_CLASS_FILTER"])
+        classFilterLabel:SetTextColor(0.8, 0.8, 0.8)
+
+        local CLASS_ORDER = {
+            "DEATHKNIGHT", "DEMONHUNTER", "DRUID", "EVOKER", "HUNTER",
+            "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE",
+            "SHAMAN", "WARLOCK", "WARRIOR",
+        }
+        local COLS = 3
+        local COL_W = 150
+        local ROW_H = 22
+        local classCheckboxes = {}
+
+        for i, classToken in ipairs(CLASS_ORDER) do
+            local col = ((i - 1) % COLS)
+            local row = math.floor((i - 1) / COLS)
+            local xOff = 15 + col * COL_W
+            local yOff = -18 - row * ROW_H
+
+            local isEnabled = not db.disabledClasses[classToken]
+            local classColor = C_ClassColor.GetClassColor(classToken)
+            local localizedName = LOCALIZED_CLASS_NAMES_MALE[classToken] or classToken
+            local coloredName = classColor and classColor:WrapTextInColorCode(localizedName) or localizedName
+
+            local cb = W:CreateCheckbox(classFilterFrame, {
+                label = coloredName,
+                x = xOff, y = yOff,
+                template = "ChatConfigCheckButtonTemplate",
+                onChange = function(checked)
+                    if checked then
+                        db.disabledClasses[classToken] = nil
+                    else
+                        db.disabledClasses[classToken] = true
+                    end
+                    refreshMovement()
+                end
+            })
+            cb:SetChecked(isEnabled)
+            cb:SetShown(db.enabled)
+            classCheckboxes[#classCheckboxes + 1] = cb
+        end
+
+        local totalRows = math.ceil(#CLASS_ORDER / COLS)
+        classFilterFrame:SetHeight(20 + totalRows * ROW_H + 6)
+        classFilterFrame:SetShown(db.enabled)
+
+        local movementSections = CreateFrame("Frame", nil, sc)
+        movementSections:SetPoint("TOPLEFT", classFilterFrame, "BOTTOMLEFT", 0, -4)
+        movementSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+        movementSections:SetHeight(300)
+
+        local RelayoutAll
+
+        local appWrap, appContent = W:CreateCollapsibleSection(movementSections, {
+            text = L["COMMON_SECTION_APPEARANCE"],
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local LA = ns.Layout:New(2)
+
+        local textFormatRow, barIconRow
+
+        local function updateConditionalRows()
+            if textFormatRow then textFormatRow:SetShown(db.displayMode == "text") end
+            if barIconRow then barIconRow:SetShown(db.displayMode == "bar") end
+        end
+
+        W:CreateFontPicker(appContent, LA:Col(1), LA:Row(1) + 12, db.font, function(name)
+            db.font = name
+            refreshAll()
+        end)
+
+        W:CreateColorPicker(appContent, {
+            label = L["COMMON_LABEL_TEXT_COLOR"], db = db,
+            rKey = "textColorR", gKey = "textColorG", bKey = "textColorB",
+            x = LA:Col(2), y = LA:Row(1) + 12,
+            onChange = refreshMovement
+        })
+
+        W:CreateDropdown(appContent, {
+            label = L["MOVEMENT_ALERT_DISPLAY_MODE"],
+            x = LA:Col(1), y = LA:Row(2),
+            db = db, key = "displayMode",
+            options = {
+                { text = L["MOVEMENT_ALERT_MODE_TEXT"], value = "text" },
+                { text = L["MOVEMENT_ALERT_MODE_ICON"], value = "icon" },
+                { text = L["MOVEMENT_ALERT_MODE_BAR"], value = "bar" },
+            },
+            onChange = function()
+                refreshMovement()
+                updateConditionalRows()
+            end
+        })
+
+        W:CreateSlider(appContent, {
+            label = L["MOVEMENT_ALERT_POLL_RATE"],
+            min = 50, max = 500, step = 50,
+            x = LA:Col(2), y = LA:Row(2),
+            db = db, key = "pollRate",
+            onChange = function(val) db.pollRate = val end
+        })
+
+        textFormatRow = CreateFrame("Frame", nil, appContent)
+        textFormatRow:SetPoint("TOPLEFT", LA:Col(1), LA:Row(3) - 15)
+        textFormatRow:SetSize(400, 60)
+
+        W:CreateTextInput(textFormatRow, {
+            label = L["MOVEMENT_ALERT_TEXT_FORMAT"], db = db, key = "textFormat",
+            default = "%ts\\nNo %a", x = 0, y = 0, width = 200,
+            onChange = refreshMovement
+        })
+
+        local textFormatHelp = textFormatRow:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        textFormatHelp:SetPoint("TOPLEFT", 0, -48)
+        textFormatHelp:SetText(L["MOVEMENT_ALERT_TEXT_FORMAT_HELP"])
+
+        barIconRow = CreateFrame("Frame", nil, appContent)
+        barIconRow:SetPoint("TOPLEFT", LA:Col(1), LA:Row(3) - 15)
+        barIconRow:SetSize(400, 50)
+
+        W:CreateCheckbox(barIconRow, {
+            label = L["MOVEMENT_ALERT_BAR_SHOW_ICON"],
+            db = db, key = "barShowIcon",
+            x = 0, y = 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshMovement
+        })
+
+        updateConditionalRows()
+
+        appContent:SetHeight(LA:Height(3))
+        appWrap:RecalcHeight()
+
+        if not db.spellOverrides then db.spellOverrides = {} end
+
+        local spellsWrap, spellsContent = W:CreateCollapsibleSection(movementSections, {
+            text = L["MOVEMENT_ALERT_TRACKED_SPELLS"],
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local spellRows = {}
+        local spellsAddBox
+
+        local function GetClassSpellList()
+            local playerClass = select(2, UnitClass("player"))
+            local classAbilities = ns.MOVEMENT_ABILITIES and ns.MOVEMENT_ABILITIES[playerClass]
+            local spells = {}
+            local seen = {}
+
+            if classAbilities then
+                for key, value in pairs(classAbilities) do
+                    if type(key) == "number" and type(value) == "table" then
+                        for _, spellId in ipairs(value) do
+                            if not seen[spellId] then
+                                seen[spellId] = true
+                                table.insert(spells, { spellId = spellId, isDefault = true })
+                            end
+                        end
+                    end
+                end
+            end
+
+            for spellId, override in pairs(db.spellOverrides) do
+                if not seen[spellId] and override.class == playerClass then
+                    seen[spellId] = true
+                    table.insert(spells, { spellId = spellId, isDefault = false })
+                end
+            end
+
+            return spells
+        end
+
+        local function RebuildSpellRows()
+            for _, row in ipairs(spellRows) do
+                row:Hide()
+                row:SetParent(nil)
+            end
+            wipe(spellRows)
+
+            local spells = GetClassSpellList()
+            local ROW_HEIGHT = 52
+            local yOffset = -4
+
+            if #spells == 0 then
+                local noSpells = CreateFrame("Frame", nil, spellsContent)
+                noSpells:SetSize(440, ROW_HEIGHT)
+                noSpells:SetPoint("TOPLEFT", 10, yOffset)
+                local txt = noSpells:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+                txt:SetPoint("LEFT", 0, 0)
+                txt:SetText(L["MOVEMENT_ALERT_NO_SPELLS"])
+                spellRows[#spellRows + 1] = noSpells
+                yOffset = yOffset - ROW_HEIGHT
+            else
+                for _, spellData in ipairs(spells) do
+                    local spellId = spellData.spellId
+                    local spellInfo = C_Spell and C_Spell.GetSpellInfo(spellId) or nil
+                    local spellName = spellInfo and spellInfo.name or ("Spell " .. spellId)
+                    local spellIcon = spellInfo and spellInfo.iconID or nil
+                    local override = db.spellOverrides[spellId]
+                    local isEnabled = not override or override.enabled ~= false
+                    local customText = override and override.customText or ""
+
+                    local row = CreateFrame("Frame", nil, spellsContent)
+                    row:SetSize(440, ROW_HEIGHT)
+                    row:SetPoint("TOPLEFT", 10, yOffset)
+
+                    if spellIcon then
+                        local icon = row:CreateTexture(nil, "ARTWORK")
+                        icon:SetSize(20, 20)
+                        icon:SetPoint("LEFT", 0, 0)
+                        icon:SetTexture(spellIcon)
+                        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                    end
+
+                    local cb = W:CreateCheckbox(row, {
+                        label = spellName .. "  |cff888888(" .. spellId .. ")|r",
+                        x = 24, y = -5,
+                        template = "ChatConfigCheckButtonTemplate",
+                        onChange = function(checked)
+                            if not db.spellOverrides[spellId] then
+                                db.spellOverrides[spellId] = {}
+                            end
+                            db.spellOverrides[spellId].enabled = checked
+                            if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                            if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                            refreshMovement()
+                        end
+                    })
+                    cb:SetChecked(isEnabled)
+
+                    local ctLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                    ctLabel:SetPoint("TOPLEFT", row, "TOPLEFT", 26, -28)
+                    ctLabel:SetText(W.Colorize(L["MOVEMENT_ALERT_CUSTOM_TEXT"], C.WHITE))
+
+                    local ctBox = CreateFrame("EditBox", nil, row, "BackdropTemplate")
+                    ctBox:SetSize(120, 22)
+                    ctBox:SetPoint("LEFT", ctLabel, "RIGHT", 6, 0)
+                    ctBox:SetBackdrop({
+                        bgFile = [[Interface\Buttons\WHITE8x8]],
+                        edgeFile = [[Interface\Buttons\WHITE8x8]],
+                        edgeSize = 1,
+                    })
+                    ctBox:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
+                    ctBox:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+                    ctBox:SetFont(ns.DefaultFontPath(), 11, "")
+                    ctBox:SetTextColor(1, 1, 1, 0.9)
+                    ctBox:SetTextInsets(6, 6, 0, 0)
+                    ctBox:SetAutoFocus(false)
+                    ctBox:SetMaxLetters(40)
+                    ctBox:SetText(customText)
+                    ctBox:SetScript("OnEnterPressed", function(self)
+                        if not db.spellOverrides[spellId] then
+                            db.spellOverrides[spellId] = {}
+                        end
+                        local txt = self:GetText()
+                        db.spellOverrides[spellId].customText = (txt ~= "") and txt or nil
+                        if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                        refreshMovement()
+                        self:ClearFocus()
+                    end)
+                    ctBox:SetScript("OnEscapePressed", function(self)
+                        self:SetText(customText)
+                        self:ClearFocus()
+                    end)
+                    ctBox:SetScript("OnEditFocusGained", function(self)
+                        self:SetBackdropBorderColor(1, 0.66, 0, 0.8)
+                    end)
+                    ctBox:SetScript("OnEditFocusLost", function(self)
+                        self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+                        if not db.spellOverrides[spellId] then
+                            db.spellOverrides[spellId] = {}
+                        end
+                        local txt = self:GetText()
+                        db.spellOverrides[spellId].customText = (txt ~= "") and txt or nil
+                        if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                        refreshMovement()
+                    end)
+
+                    if not spellData.isDefault then
+                        local removeBtn = CreateFrame("Button", nil, row, "BackdropTemplate")
+                        removeBtn:SetSize(16, 16)
+                        removeBtn:SetPoint("LEFT", ctBox, "RIGHT", 6, 0)
+                        removeBtn:SetBackdrop({
+                            bgFile = [[Interface\Buttons\WHITE8x8]],
+                            edgeFile = [[Interface\Buttons\WHITE8x8]],
+                            edgeSize = 1,
+                        })
+                        removeBtn:SetBackdropColor(0.6, 0.1, 0.1, 0.8)
+                        removeBtn:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
+                        local xTex = removeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                        xTex:SetPoint("CENTER", 0, 0)
+                        xTex:SetText("X")
+                        xTex:SetTextColor(1, 1, 1)
+                        removeBtn:SetScript("OnClick", function()
+                            db.spellOverrides[spellId] = nil
+                            if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                            if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                            refreshMovement()
+                            RebuildSpellRows()
+                        end)
+                    end
+
+                    spellRows[#spellRows + 1] = row
+                    yOffset = yOffset - ROW_HEIGHT
+                end
+            end
+
+            local addRow = CreateFrame("Frame", nil, spellsContent)
+            addRow:SetSize(440, ROW_HEIGHT + 4)
+            addRow:SetPoint("TOPLEFT", 10, yOffset - 4)
+
+            local addLabel = addRow:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            addLabel:SetPoint("LEFT", 0, 0)
+            addLabel:SetText(W.Colorize(L["MOVEMENT_ALERT_ADD_SPELL"], C.WHITE))
+
+            spellsAddBox = CreateFrame("EditBox", nil, addRow, "BackdropTemplate")
+            spellsAddBox:SetSize(80, 22)
+            spellsAddBox:SetPoint("LEFT", addLabel, "RIGHT", 6, 0)
+            spellsAddBox:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Buttons\WHITE8x8]],
+                edgeSize = 1,
+            })
+            spellsAddBox:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
+            spellsAddBox:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+            spellsAddBox:SetFont(ns.DefaultFontPath(), 11, "")
+            spellsAddBox:SetTextColor(1, 1, 1, 0.9)
+            spellsAddBox:SetTextInsets(6, 6, 0, 0)
+            spellsAddBox:SetAutoFocus(false)
+            spellsAddBox:SetMaxLetters(10)
+            spellsAddBox:SetNumeric(true)
+            spellsAddBox:SetScript("OnEditFocusGained", function(self)
+                self:SetBackdropBorderColor(1, 0.66, 0, 0.8)
+            end)
+            spellsAddBox:SetScript("OnEditFocusLost", function(self)
+                self:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
+            end)
+
+            local addBtn = CreateFrame("Button", nil, addRow, "BackdropTemplate")
+            addBtn:SetSize(40, 22)
+            addBtn:SetPoint("LEFT", spellsAddBox, "RIGHT", 6, 0)
+            addBtn:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Buttons\WHITE8x8]],
+                edgeSize = 1,
+            })
+            addBtn:SetBackdropColor(0.1, 0.4, 0.1, 0.8)
+            addBtn:SetBackdropBorderColor(0.2, 0.6, 0.2, 1)
+            local addBtnText = addBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            addBtnText:SetPoint("CENTER", 0, 0)
+            addBtnText:SetText(L["COMMON_ADD"])
+            addBtn:SetScript("OnClick", function()
+                local inputId = spellsAddBox:GetNumber()
+                if inputId and inputId > 0 then
+                    local playerClass = select(2, UnitClass("player"))
+                    if not db.spellOverrides[inputId] then
+                        db.spellOverrides[inputId] = { enabled = true, class = playerClass }
+                    end
+                    spellsAddBox:SetText("")
+                    spellsAddBox:ClearFocus()
+                    if ns.RebuildMobilitySpellLookup then ns.RebuildMobilitySpellLookup() end
+                    if ns.CacheMovementSpells then ns.CacheMovementSpells() end
+                    refreshMovement()
+                    RebuildSpellRows()
+                end
+            end)
+            spellsAddBox:SetScript("OnEnterPressed", function()
+                addBtn:GetScript("OnClick")(addBtn)
+            end)
+
+            spellRows[#spellRows + 1] = addRow
+            yOffset = yOffset - (ROW_HEIGHT + 8)
+
+            local helpFrame = CreateFrame("Frame", nil, spellsContent)
+            helpFrame:SetSize(440, 16)
+            helpFrame:SetPoint("TOPLEFT", 10, yOffset)
+            local helpText = helpFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            helpText:SetPoint("LEFT", 0, 0)
+            helpText:SetText(L["MOVEMENT_ALERT_TRACKED_SPELLS_DESC"])
+            spellRows[#spellRows + 1] = helpFrame
+
+            local totalHeight = math.abs(yOffset) + 20
+            spellsContent:SetHeight(totalHeight)
+            spellsWrap:RecalcHeight()
+
+            if RelayoutAll then RelayoutAll() end
+        end
+
+        RebuildSpellRows()
+
+        local tsKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
+        tsKillArea:SetSize(460, 62)
+        tsKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
+        tsKillArea:SetBackdropColor(0.53, 1, 0, 0.08)
+
+        local tsMasterCB = W:CreateCheckbox(tsKillArea, {
+            label = L["TIME_SPIRAL_ENABLE"],
+            db = db, key = "tsEnabled",
+            x = 15, y = -8,
+            isMaster = true,
+        })
+
+        local tsUnlockCB = W:CreateCheckbox(tsKillArea, {
+            label = L["COMMON_UNLOCK"],
+            db = db, key = "tsUnlock",
+            x = 15, y = -38,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshTimeSpiral
+        })
+        tsUnlockCB:SetShown(db.tsEnabled)
+
+        local tsSections = CreateFrame("Frame", nil, sc)
+        tsSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+        tsSections:SetHeight(200)
+
+        local tsColWrap, tsColContent = W:CreateCollapsibleSection(tsSections, {
+            text = L["TIME_SPIRAL_SETTINGS"],
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local LT = ns.Layout:New(2)
+
+        W:CreateTextInput(tsColContent, {
+            label = L["TIME_SPIRAL_TEXT_FORMAT"], db = db, key = "tsTextFormat",
+            default = L["TIME_SPIRAL_TEXT_FORMAT_DEFAULT"] or "FREE MOVEMENT\\n%ts", x = LT:Col(1), y = LT:Row(1), width = 150,
+            onChange = refreshTimeSpiral
+        })
+
+        W:CreateColorPicker(tsColContent, {
+            label = L["TIME_SPIRAL_COLOR"], db = db,
+            rKey = "tsColorR", gKey = "tsColorG", bKey = "tsColorB",
+            x = LT:Col(2), y = LT:Row(1) + 6,
+            onChange = refreshTimeSpiral
+        })
+
+        local tsFormatHelp = tsColContent:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        tsFormatHelp:SetPoint("TOPLEFT", LT:Col(1), LT:Row(1) - 32)
+        tsFormatHelp:SetText(L["TIME_SPIRAL_TEXT_FORMAT_HELP"])
+
+        W:CreateCheckbox(tsColContent, {
+            label = L["TIME_SPIRAL_SOUND_ON"],
+            db = db, key = "tsSoundEnabled",
+            x = LT:Col(1), y = LT:Row(3) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                if db.tsSoundEnabled then db.tsTtsEnabled = false end
+                refreshTimeSpiral()
+            end
+        })
+
+        W:CreateSoundPicker(tsColContent, LT:Col(2), LT:Row(3) + 11, db.tsSoundID or ns.Media.DEFAULT_SOUND,
+            function(sound) db.tsSoundID = sound end)
+
+        W:CreateCheckbox(tsColContent, {
+            label = L["TIME_SPIRAL_TTS_ON"],
+            db = db, key = "tsTtsEnabled",
+            x = LT:Col(1), y = LT:Row(4) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                if db.tsTtsEnabled then db.tsSoundEnabled = false end
+                refreshTimeSpiral()
+            end
+        })
+
+        W:CreateTTSVoicePicker(tsColContent, LT:Col(2), LT:Row(4) + 11, db.tsTtsVoiceID or 0, function(voiceID)
+            db.tsTtsVoiceID = voiceID
+        end)
+
+        W:CreateTextInput(tsColContent, {
+            label = L["TIME_SPIRAL_TTS_MESSAGE"], db = db, key = "tsTtsMessage",
+            default = "Free movement", x = LT:Col(1), y = LT:Row(5), width = 150,
+        })
+
+        W:CreateSlider(tsColContent, {
+            label = L["TIME_SPIRAL_TTS_VOLUME"],
+            min = 0, max = 100, step = 1,
+            x = LT:Col(2), y = LT:Row(5) + 9,
+            db = db, key = "tsTtsVolume",
+            onChange = function(val) db.tsTtsVolume = val end
+        })
+
+        tsColContent:SetHeight(LT:Height(6))
+        tsColWrap:RecalcHeight()
+
+        local gatewayDisplay = ns.GatewayShardDisplay
+        local function refreshGateway() if gatewayDisplay then gatewayDisplay:UpdateDisplay() end end
+
+        local gwKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
+        gwKillArea:SetSize(460, 90)
+        gwKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
+        gwKillArea:SetBackdropColor(0.5, 0, 0.8, 0.08)
+
+        local gwMasterCB = W:CreateCheckbox(gwKillArea, {
+            label = L["GATEWAY_SHARD_ENABLE"],
+            db = db, key = "gwEnabled",
+            x = 15, y = -8,
+            isMaster = true,
+        })
+
+        local gwUnlockCB = W:CreateCheckbox(gwKillArea, {
+            label = L["COMMON_UNLOCK"],
+            db = db, key = "gwUnlock",
+            x = 15, y = -38,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshGateway
+        })
+        gwUnlockCB:SetShown(db.gwEnabled)
+
+        local gwCombatOnlyCB = W:CreateCheckbox(gwKillArea, {
+            label = L["GCD_COMBAT_ONLY"],
+            db = db, key = "gwCombatOnly",
+            x = 15, y = -63,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshGateway
+        })
+        gwCombatOnlyCB:SetShown(db.gwEnabled)
+
+        local gwSections = CreateFrame("Frame", nil, sc)
+        gwSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+        gwSections:SetHeight(200)
+
+        local gwColWrap, gwColContent = W:CreateCollapsibleSection(gwSections, {
+            text = L["GATEWAY_SHARD_SETTINGS"],
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local LG = ns.Layout:New(2)
+
+        W:CreateTextInput(gwColContent, {
+            label = L["GATEWAY_SHARD_TEXT"], db = db, key = "gwText",
+            default = "GATEWAY READY", x = LG:Col(1), y = LG:Row(1), width = 150,
+            onChange = refreshGateway
+        })
+
+        W:CreateColorPicker(gwColContent, {
+            label = L["GATEWAY_SHARD_COLOR"], db = db,
+            rKey = "gwColorR", gKey = "gwColorG", bKey = "gwColorB",
+            x = LG:Col(2), y = LG:Row(1) + 6,
+            onChange = refreshGateway
+        })
+
+        W:CreateCheckbox(gwColContent, {
+            label = L["GATEWAY_SHARD_SOUND_ON"],
+            db = db, key = "gwSoundEnabled",
+            x = LG:Col(1), y = LG:Row(2) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshGateway
+        })
+
+        W:CreateSoundPicker(gwColContent, LG:Col(2), LG:Row(2) + 11, db.gwSoundID or ns.Media.DEFAULT_SOUND,
+            function(sound) db.gwSoundID = sound end)
+
+        W:CreateCheckbox(gwColContent, {
+            label = L["GATEWAY_SHARD_TTS_ON"],
+            db = db, key = "gwTtsEnabled",
+            x = LG:Col(1), y = LG:Row(3) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshGateway
+        })
+
+        W:CreateTTSVoicePicker(gwColContent, LG:Col(2), LG:Row(3) + 11, db.gwTtsVoiceID or 0, function(voiceID)
+            db.gwTtsVoiceID = voiceID
+        end)
+
+        W:CreateTextInput(gwColContent, {
+            label = L["GATEWAY_SHARD_TTS_MESSAGE"], db = db, key = "gwTtsMessage",
+            default = "Gateway ready", x = LG:Col(1), y = LG:Row(4), width = 150,
+        })
+
+        W:CreateSlider(gwColContent, {
+            label = L["GATEWAY_SHARD_TTS_VOLUME"],
+            min = 0, max = 100, step = 1,
+            x = LG:Col(2), y = LG:Row(4) + 9,
+            db = db, key = "gwTtsVolume",
+            onChange = function(val) db.gwTtsVolume = val end
+        })
+
+        gwColContent:SetHeight(LG:Height(5))
+        gwColWrap:RecalcHeight()
+
+        local movementSectionList = { spellsWrap, appWrap }
+        local tsSectionList = { tsColWrap }
+        local gwSectionList = { gwColWrap }
+
+        RelayoutAll = function()
+            for i, section in ipairs(movementSectionList) do
+                section:ClearAllPoints()
+                if i == 1 then
+                    section:SetPoint("TOPLEFT", movementSections, "TOPLEFT", 0, 0)
+                else
+                    section:SetPoint("TOPLEFT", movementSectionList[i - 1], "BOTTOMLEFT", 0, -12)
+                end
+                section:SetPoint("RIGHT", movementSections, "RIGHT", 0, 0)
+            end
+
+            local movementH = 0
+            if db.enabled then
+                for _, s in ipairs(movementSectionList) do
+                    movementH = movementH + s:GetHeight() + 12
+                end
+            end
+            movementSections:SetHeight(math.max(movementH, 1))
+
+            tsKillArea:ClearAllPoints()
+            tsKillArea:SetPoint("TOPLEFT", movementSections, "BOTTOMLEFT", 0, -20)
+
+            tsSections:ClearAllPoints()
+            tsSections:SetPoint("TOPLEFT", tsKillArea, "BOTTOMLEFT", 0, -10)
+            tsSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+
+            for i, section in ipairs(tsSectionList) do
+                section:ClearAllPoints()
+                if i == 1 then
+                    section:SetPoint("TOPLEFT", tsSections, "TOPLEFT", 0, 0)
+                else
+                    section:SetPoint("TOPLEFT", tsSectionList[i - 1], "BOTTOMLEFT", 0, -12)
+                end
+                section:SetPoint("RIGHT", tsSections, "RIGHT", 0, 0)
+            end
+
+            local tsH = 0
+            if db.tsEnabled then
+                for _, s in ipairs(tsSectionList) do
+                    tsH = tsH + s:GetHeight() + 12
+                end
+            end
+            tsSections:SetHeight(math.max(tsH, 1))
+
+            gwKillArea:ClearAllPoints()
+            gwKillArea:SetPoint("TOPLEFT", tsSections, "BOTTOMLEFT", 0, -20)
+
+            gwSections:ClearAllPoints()
+            gwSections:SetPoint("TOPLEFT", gwKillArea, "BOTTOMLEFT", 0, -10)
+            gwSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
+
+            for i, section in ipairs(gwSectionList) do
+                section:ClearAllPoints()
+                if i == 1 then
+                    section:SetPoint("TOPLEFT", gwSections, "TOPLEFT", 0, 0)
+                else
+                    section:SetPoint("TOPLEFT", gwSectionList[i - 1], "BOTTOMLEFT", 0, -12)
+                end
+                section:SetPoint("RIGHT", gwSections, "RIGHT", 0, 0)
+            end
+
+            local gwH = 0
+            if db.gwEnabled then
+                for _, s in ipairs(gwSectionList) do
+                    gwH = gwH + s:GetHeight() + 12
+                end
+            end
+            gwSections:SetHeight(math.max(gwH, 1))
+
+            local classFilterH = db.enabled and classFilterFrame:GetHeight() or 0
+            local totalH = 75 + 90 + classFilterH + 10 + movementH + 20 + 62 + 10 + tsH + 20 + 90 + 10 + gwH + 40
+            sc:SetHeight(math.max(totalH, 800))
+        end
+
+        masterCB:HookScript("OnClick", function(self)
+            db.enabled = self:GetChecked() and true or false
+            refreshMovement()
+            unlockCB:SetShown(db.enabled)
+            combatOnlyCB:SetShown(db.enabled)
+            classFilterFrame:SetShown(db.enabled)
+            for _, cb in ipairs(classCheckboxes) do cb:SetShown(db.enabled) end
+            movementSections:SetShown(db.enabled)
+            RelayoutAll()
+        end)
+        movementSections:SetShown(db.enabled)
+
+        tsMasterCB:HookScript("OnClick", function(self)
+            db.tsEnabled = self:GetChecked() and true or false
+            refreshTimeSpiral()
+            tsUnlockCB:SetShown(db.tsEnabled)
+            tsSections:SetShown(db.tsEnabled)
+            RelayoutAll()
+        end)
+        tsSections:SetShown(db.tsEnabled)
+
+        gwMasterCB:HookScript("OnClick", function(self)
+            db.gwEnabled = self:GetChecked() and true or false
+            refreshGateway()
+            gwUnlockCB:SetShown(db.gwEnabled)
+            gwCombatOnlyCB:SetShown(db.gwEnabled)
+            gwSections:SetShown(db.gwEnabled)
+            RelayoutAll()
+        end)
+        gwSections:SetShown(db.gwEnabled)
+
+        local restoreBtn = W:CreateRestoreDefaultsButton({
+            moduleName = "movementAlert",
+            parent = sc,
+            initFunc = function() ns:InitMovementAlert() end,
+            onRestore = function()
+                if cache.maFrame then
+                    cache.maFrame:Hide()
+                    cache.maFrame:SetParent(nil)
+                    cache.maFrame = nil
+                end
+                if movementDisplay then movementDisplay:UpdateDisplay() end
+                if timeSpiralDisplay then timeSpiralDisplay:UpdateDisplay() end
+                if gatewayDisplay then gatewayDisplay:UpdateDisplay() end
+            end
+        })
+        restoreBtn:SetPoint("BOTTOMLEFT", sc, "BOTTOMLEFT", 10, 20)
+
+        RelayoutAll()
+    end)
+end

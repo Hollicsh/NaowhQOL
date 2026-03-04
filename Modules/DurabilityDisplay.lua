@@ -1,0 +1,167 @@
+local addonName, ns = ...
+local L = ns.L
+
+local FIRST_SLOT = 1
+local LAST_SLOT  = 19
+
+local PINK_R, PINK_G, PINK_B = 1.0, 0.41, 0.71
+local RED_R, RED_G, RED_B = 1.0, 0.0, 0.0
+local FLOOR_PCT = 15
+
+local function GetWarningColor(pct, threshold)
+    if pct <= FLOOR_PCT then
+        return RED_R, RED_G, RED_B
+    elseif pct >= threshold then
+        return PINK_R, PINK_G, PINK_B
+    end
+    local t = (pct - FLOOR_PCT) / (threshold - FLOOR_PCT)
+    return RED_R + t * (PINK_R - RED_R),
+           RED_G + t * (PINK_G - RED_G),
+           RED_B + t * (PINK_B - RED_B)
+end
+
+local warnFrame = CreateFrame("Frame", "NaowhQOL_DurabilityWarning", UIParent)
+warnFrame:SetSize(400, 40)
+warnFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 250)
+warnFrame:Hide()
+
+local warnText = warnFrame:CreateFontString(nil, "OVERLAY")
+warnText:SetFont(ns.DefaultFontPath(), 22, "OUTLINE")
+warnText:SetPoint("CENTER")
+warnText:SetTextColor(PINK_R, PINK_G, PINK_B)
+
+local function ResolveDurabilityFont()
+    local db = NaowhQOL and NaowhQOL.misc
+    local fontName = db and db.durabilityFont
+    if fontName and ns.Media then
+        return ns.Media.ResolveFont(fontName)
+    end
+    return ns.DefaultFontPath()
+end
+
+local function ShowWarning(pct, threshold)
+    local r, g, b = GetWarningColor(pct, threshold)
+    warnText:SetFont(ResolveDurabilityFont(), 22, "OUTLINE")
+    warnText:SetTextColor(r, g, b)
+    warnText:SetText(string.format(L["DURABILITY_WARNING"], pct))
+    warnFrame:SetAlpha(1)
+    warnFrame:Show()
+end
+
+local function HideWarning()
+    warnFrame:Hide()
+end
+
+local function GetLowestDurability()
+    local lowest = nil
+
+    for slot = FIRST_SLOT, LAST_SLOT do
+        local current, maximum = GetInventoryItemDurability(slot)
+        if current and maximum and maximum > 0 then
+            local pct = (current / maximum) * 100
+            if not lowest or pct < lowest then
+                lowest = pct
+            end
+        end
+    end
+
+    return lowest
+end
+
+local POLL_INTERVAL = 3
+local pollTimer = nil
+
+local function StopPolling()
+    if pollTimer then
+        pollTimer:Cancel()
+        pollTimer = nil
+    end
+end
+
+local function StartPolling()
+    StopPolling()
+    pollTimer = C_Timer.NewTicker(POLL_INTERVAL, function()
+        local db = NaowhQOL.misc
+        if not db or not db.durabilityWarning then
+            HideWarning()
+            return
+        end
+        local lowest = GetLowestDurability()
+        local threshold = db.durabilityThreshold or 50
+        if not lowest or lowest >= threshold then
+            HideWarning()
+        else
+            ShowWarning(math.floor(lowest), threshold)
+        end
+    end)
+end
+
+local function HandleMerchantRepair()
+    local db = NaowhQOL.misc
+    if not db or not db.autoRepair then return end
+    if IsShiftKeyDown() then return end
+    if not CanMerchantRepair() then return end
+
+    local cost = GetRepairAllCost()
+    if not cost or cost <= 0 then return end
+
+    if db.guildRepair and IsInGuild() then
+        local hasPermission = CanGuildBankRepair and CanGuildBankRepair()
+        if hasPermission then
+            RepairAllItems(true)
+            C_Timer.After(0.5, function() RepairAllItems(false) end)
+            return
+        end
+    end
+
+    RepairAllItems(false)
+end
+
+local events = CreateFrame("Frame")
+events:RegisterEvent("PLAYER_LOGIN")
+
+events:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_LOGIN" then
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
+        self:RegisterEvent("PLAYER_REGEN_ENABLED")
+        self:RegisterEvent("MERCHANT_SHOW")
+        self:UnregisterEvent("PLAYER_LOGIN")
+
+        local db = NaowhQOL.misc
+        if db and db.durabilityWarning then
+            local threshold = db.durabilityThreshold or 50
+            local lowest = GetLowestDurability()
+            if lowest and lowest < threshold then
+                ShowWarning(math.floor(lowest), threshold)
+            end
+        end
+        StartPolling()
+        return
+    end
+
+    if event == "PLAYER_REGEN_DISABLED" then
+        HideWarning()
+        StopPolling()
+        return
+    end
+
+    if event == "PLAYER_REGEN_ENABLED" then
+        local db = NaowhQOL.misc
+        if db and db.durabilityWarning then
+            local threshold = db.durabilityThreshold or 50
+            local lowest = GetLowestDurability()
+            if lowest and lowest < threshold then
+                ShowWarning(math.floor(lowest), threshold)
+            end
+        end
+        StartPolling()
+        return
+    end
+
+    if event == "MERCHANT_SHOW" then
+        HandleMerchantRepair()
+        return
+    end
+end)
+
+ns.DurabilityDisplay = warnFrame

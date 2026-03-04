@@ -1,0 +1,233 @@
+local addonName, ns = ...
+
+local NaowhOrange = { r = 255/255, g = 169/255, b = 0/255 }
+local NaowhDarkBlue = { r = 0.00, g = 0.49, b = 0.79 }
+
+local MainWindow = CreateFrame("Frame", "NaowhQOL_MainFrame", UIParent, "BackdropTemplate")
+MainWindow:SetSize(950, 650)
+MainWindow:SetPoint("CENTER")
+MainWindow:SetFrameStrata("HIGH")
+MainWindow:SetMovable(true)
+MainWindow:SetResizable(true)
+MainWindow:SetResizeBounds(400, 300, 1400, 900)
+MainWindow:EnableMouse(true)
+MainWindow:RegisterForDrag("LeftButton")
+local function ClampFrameToScreen(frame)
+    local width, height = frame:GetSize()
+    local screenWidth, screenHeight = GetScreenWidth(), GetScreenHeight()
+    local minVisibleW = width * 0.10
+    local minVisibleH = height * 0.10
+
+    local left = frame:GetLeft()
+    local right = frame:GetRight()
+    local top = frame:GetTop()
+    local bottom = frame:GetBottom()
+
+    if not left or not right or not top or not bottom then return end
+
+    local needsClamp = false
+    local clampedLeft, clampedTop = left, top
+
+    if right < minVisibleW then
+        clampedLeft = minVisibleW - width
+        needsClamp = true
+    elseif left > screenWidth - minVisibleW then
+        clampedLeft = screenWidth - minVisibleW
+        needsClamp = true
+    end
+
+    if top < minVisibleH then
+        clampedTop = minVisibleH
+        needsClamp = true
+    elseif bottom > screenHeight - minVisibleH then
+        clampedTop = screenHeight - minVisibleH + height
+        needsClamp = true
+    end
+
+    if needsClamp then
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", clampedLeft, clampedTop)
+    end
+end
+
+MainWindow:SetScript("OnDragStart", MainWindow.StartMoving)
+MainWindow:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+    ClampFrameToScreen(self)
+end)
+MainWindow:SetScript("OnShow", function(self)
+    ClampFrameToScreen(self)
+end)
+MainWindow:Hide()
+
+MainWindow:SetBackdrop({
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Buttons\\WHITE8X8",
+    edgeSize = 1,
+    insets = { left = 1, right = 1, top = 1, bottom = 1 }
+})
+MainWindow:SetBackdropColor(0.02, 0.02, 0.02, 0.95)
+MainWindow:SetBackdropBorderColor(NaowhDarkBlue.r, NaowhDarkBlue.g, NaowhDarkBlue.b, 0.7)
+
+tinsert(UISpecialFrames, MainWindow:GetName())
+
+local TopAccent = MainWindow:CreateTexture(nil, "OVERLAY")
+TopAccent:SetHeight(3)
+TopAccent:SetPoint("TOPLEFT", 1, -1)
+TopAccent:SetPoint("TOPRIGHT", -1, -1)
+TopAccent:SetColorTexture(NaowhOrange.r, NaowhOrange.g, NaowhOrange.b, 1)
+
+local BottomAccent = MainWindow:CreateTexture(nil, "OVERLAY")
+BottomAccent:SetHeight(2)
+BottomAccent:SetPoint("BOTTOMLEFT", 1, 1)
+BottomAccent:SetPoint("BOTTOMRIGHT", -1, 1)
+BottomAccent:SetColorTexture(NaowhDarkBlue.r, NaowhDarkBlue.g, NaowhDarkBlue.b, 0.7)
+
+local CloseButton = CreateFrame("Button", nil, MainWindow, "UIPanelCloseButton")
+CloseButton:SetPoint("TOPRIGHT", -3, -3)
+CloseButton:SetSize(32, 32)
+
+local ResizeHandle = CreateFrame("Button", nil, MainWindow)
+ResizeHandle:SetSize(16, 16)
+ResizeHandle:SetPoint("BOTTOMRIGHT", -2, 2)
+ResizeHandle:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+ResizeHandle:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+ResizeHandle:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+ResizeHandle:SetScript("OnMouseDown", function() MainWindow:StartSizing("BOTTOMRIGHT") end)
+ResizeHandle:SetScript("OnMouseUp", function() MainWindow:StopMovingOrSizing() end)
+
+local ContentArea = CreateFrame("Frame", nil, MainWindow, "BackdropTemplate")
+ContentArea:SetPoint("TOPLEFT", 202, -5)
+ContentArea:SetPoint("BOTTOMRIGHT", -2, 2)
+ContentArea:SetBackdrop({
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Buttons\\WHITE8X8",
+    edgeSize = 1,
+    insets = { left = 2, right = 2, top = 2, bottom = 2 }
+})
+ContentArea:SetBackdropColor(0, 0, 0, 0.3)
+ContentArea:SetBackdropBorderColor(NaowhDarkBlue.r, NaowhDarkBlue.g, NaowhDarkBlue.b, 0.35)
+ContentArea:SetClipsChildren(false)
+
+MainWindow.Content = ContentArea
+
+function MainWindow:ResetContent()
+    if ContentArea then
+        local children = {ContentArea:GetChildren()}
+        for _, child in ipairs(children) do
+            if child then
+                child:Hide()
+            end
+        end
+
+        local regions = {ContentArea:GetRegions()}
+        for _, region in ipairs(regions) do
+            if region and region.Hide then
+                region:Hide()
+            end
+        end
+    end
+end
+
+ns.MainFrame = MainWindow
+
+SLASH_NAOWHQOL1 = "/nao"
+SLASH_NAOWHQOL2 = "/nqol"
+
+SlashCmdList["NAOWHQOL"] = function()
+    if MainWindow:IsShown() then
+        MainWindow:Hide()
+    else
+        MainWindow:Show()
+        if MainWindow.ResetContent then
+            MainWindow:ResetContent()
+        end
+        local lastTab = NaowhQOL and NaowhQOL.config and NaowhQOL.config.lastTab
+        if lastTab and ns.OpenTab then
+            ns:OpenTab(lastTab)
+        else
+            if ns.InitOptOptions then
+                ns:InitOptOptions()
+            end
+            if ns.ResetSidebarToOptimizations then
+                ns:ResetSidebarToOptimizations()
+            end
+        end
+    end
+end
+
+function NaowhQOL_OnAddonCompartmentClick(addonName, buttonName)
+    SlashCmdList["NAOWHQOL"]()
+end
+
+do
+    if Settings and Settings.RegisterCanvasLayoutCategory then
+        local panel = CreateFrame("Frame")
+        panel.name = "NaowhQOL"
+
+        local bg = panel:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(0.02, 0.02, 0.02, 0.6)
+
+        local icon = panel:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(64, 64)
+        icon:SetPoint("TOP", 0, -40)
+        icon:SetTexture("Interface\\AddOns\\NaowhQOL\\Assets\\LogoAddon.tga")
+
+        local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        title:SetPoint("TOP", icon, "BOTTOM", 0, -12)
+        title:SetText("|cff0091edNaowh|r|cffffa300QOL|r")
+
+        local sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        sub:SetPoint("TOP", title, "BOTTOM", 0, -6)
+        sub:SetText("Quality of Life improvements")
+
+        local btn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        btn:SetSize(180, 32)
+        btn:SetPoint("TOP", sub, "BOTTOM", 0, -20)
+        btn:SetText("Open NaowhQOL")
+        btn:SetScript("OnClick", function()
+            C_Timer.After(0, function()
+                SlashCmdList["NAOWHQOL"]()
+            end)
+        end)
+
+        local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        hint:SetPoint("TOP", btn, "BOTTOM", 0, -10)
+        hint:SetText("or type  /nao  in chat")
+
+        local category = Settings.RegisterCanvasLayoutCategory(panel, "NaowhQOL")
+        category.ID = "NaowhQOL"
+        Settings.RegisterAddOnCategory(category)
+    end
+end
+
+local WelcomeFrame = CreateFrame("Frame")
+WelcomeFrame:RegisterEvent("PLAYER_LOGIN")
+WelcomeFrame:SetScript("OnEvent", function()
+    ns:Log("Loaded. Type |cff00ff00/nao|r to open settings.")
+end)
+
+function ns:InitHomePage()
+    local p = ns.MainFrame.Content
+    local L = ns.L
+
+    local iconFrame = CreateFrame("Frame", nil, p)
+    iconFrame:SetSize(200, 200)
+    iconFrame:SetPoint("CENTER", 0, 40)
+
+    local icon = iconFrame:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetTexture("Interface\\AddOns\\NaowhQOL\\Assets\\welcomeicon.tga")
+    icon:SetAlpha(0.4)
+
+    local mask = iconFrame:CreateMaskTexture()
+    mask:SetAllPoints()
+    mask:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    icon:AddMaskTexture(mask)
+
+    local subtitle = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    subtitle:SetPoint("TOP", iconFrame, "BOTTOM", 0, -15)
+    subtitle:SetText(L["HOME_SUBTITLE"])
+    subtitle:SetTextColor(0.6, 0.6, 0.6, 1)
+end
