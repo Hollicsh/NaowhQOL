@@ -52,6 +52,9 @@ function ns.InitMouseOptions()
             db = db, key = "enabled",
             x = 15, y = -8,
             isMaster = true,
+            onChange = function(enabled)
+                W:SetSectionContainerEnabled(sectionContainer, enabled)
+            end,
         })
 
         local oocCB = W:CreateCheckbox(killArea, {
@@ -184,12 +187,15 @@ function ns.InitMouseOptions()
 
         local GG = ns.Layout:New(2)
 
+        local function gcdDisabled() return not db.gcdEnabled end
+
         W:CreateCheckbox(gcdContent, {
             label = L["MOUSE_GCD_ENABLE"],
             db = db, key = "gcdEnabled",
             x = GG:Col(1), y = GG:Row(1) + 5,
             template = "ChatConfigCheckButtonTemplate",
             onChange = function()
+                W:ApplyDisableStates(gcdContent)
                 if display then display:RefreshGCD() end
             end
         })
@@ -199,6 +205,7 @@ function ns.InitMouseOptions()
             db = db, key = "hideBackground",
             x = GG:Col(2), y = GG:Row(1) + 5,
             template = "ChatConfigCheckButtonTemplate",
+            disableif = gcdDisabled,
             onChange = function()
                 if display then display:RefreshVisibility() end
             end
@@ -209,6 +216,7 @@ function ns.InitMouseOptions()
             rKey = "gcdR", gKey = "gcdG", bKey = "gcdB",
             classColorKey = "gcdUseClassColor",
             x = GG:Col(1), y = GG:Row(2) - 10,
+            disableif = gcdDisabled,
             onChange = function()
                 if display then display:RefreshGCD() end
             end
@@ -219,6 +227,7 @@ function ns.InitMouseOptions()
             rKey = "gcdReadyR", gKey = "gcdReadyG", bKey = "gcdReadyB",
             classColorKey = "gcdReadyUseClassColor",
             x = GG:Col(2), y = GG:Row(2) - 10,
+            disableif = gcdDisabled,
             onChange = function()
                 if display then display:RefreshGCD() end
             end
@@ -229,6 +238,7 @@ function ns.InitMouseOptions()
             db = db, key = "gcdReadyMatchSwipe",
             x = GG:Col(2), y = GG:Row(3) + 5,
             template = "ChatConfigCheckButtonTemplate",
+            disableif = gcdDisabled,
             onChange = function(enabled)
                 readyBtn:SetShown(not enabled)
                 readyPreview:SetShown(not enabled)
@@ -246,6 +256,7 @@ function ns.InitMouseOptions()
             min = 0, max = 100, step = 10,
             x = GG:Col(1), y = GG:Row(3),
             isPercent = true,
+            disableif = gcdDisabled,
             value = (db.gcdAlpha or 1.0) * 100,
             onChange = function(val)
                 db.gcdAlpha = val / 100
@@ -259,6 +270,7 @@ function ns.InitMouseOptions()
             db = db, key = "castSwipeEnabled",
             x = GG:Col(1), y = GG:Row(4) + 5,
             template = "ChatConfigCheckButtonTemplate",
+            disableif = gcdDisabled,
             onChange = function() end
         })
 
@@ -267,6 +279,7 @@ function ns.InitMouseOptions()
             rKey = "castSwipeR", gKey = "castSwipeG", bKey = "castSwipeB",
             classColorKey = "castSwipeUseClassColor",
             x = GG:Col(1), y = GG:Row(5) - 10,
+            disableif = gcdDisabled,
             onChange = function() end
         })
 
@@ -274,6 +287,7 @@ function ns.InitMouseOptions()
             label = L["MOUSE_SWIPE_DELAY"],
             min = 0, max = 200, step = 5,
             x = GG:Col(2), y = GG:Row(5),
+            disableif = gcdDisabled,
             value = (db.swipeDelay or 0.08) * 1000,
             onChange = function(val)
                 db.swipeDelay = val / 1000
@@ -292,12 +306,15 @@ function ns.InitMouseOptions()
 
         local GT = ns.Layout:New(2)
 
+        local function trailDisabled() return not db.trailEnabled end
+
         W:CreateCheckbox(trailContent, {
             label = L["MOUSE_TRAIL_ENABLE"],
             db = db, key = "trailEnabled",
             x = GT:Col(1), y = GT:Row(1) + 5,
             template = "ChatConfigCheckButtonTemplate",
             onChange = function()
+                W:ApplyDisableStates(trailContent)
                 if display then display:RefreshVisibility() end
             end
         })
@@ -307,6 +324,7 @@ function ns.InitMouseOptions()
             rKey = "trailR", gKey = "trailG", bKey = "trailB",
             classColorKey = "trailUseClassColor",
             x = GT:Col(2), y = GT:Row(1) - 10,
+            disableif = trailDisabled,
             onChange = function() end
         })
 
@@ -314,6 +332,7 @@ function ns.InitMouseOptions()
             label = L["MOUSE_TRAIL_DURATION"],
             min = 10, max = 100, step = 5,
             x = GT:Col(1), y = GT:Row(2),
+            disableif = trailDisabled,
             value = ((db.trailDuration or 0.6) - 0.1) / 0.4 * 100,
             onChange = function(val)
                 db.trailDuration = 0.1 + (val / 100) * 0.4

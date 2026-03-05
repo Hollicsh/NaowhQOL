@@ -132,13 +132,19 @@ function ns:InitEquipmentReminder()
             tooltip = L["EQUIPMENTREMINDER_ENCHANT_ENABLE_DESC"],
             db = db, key = "ecEnabled",
             x = 0, y = -30,
+            onChange = function()
+                W:ApplyDisableStates(enchantContent)
+            end,
         })
+
+        local function ecDisabled() return not db.ecEnabled end
 
         local useAllSpecsCB = W:CreateCheckbox(enchantContent, {
             label = L["EQUIPMENTREMINDER_ALL_SPECS"],
             tooltip = L["EQUIPMENTREMINDER_ALL_SPECS_DESC"],
             db = db, key = "ecUseAllSpecs",
             x = 0, y = -55,
+            disableif = ecDisabled,
         })
 
         local BuildEnchantGrid
@@ -181,11 +187,17 @@ function ns:InitEquipmentReminder()
             end,
         })
         captureBtn:SetPoint("TOPLEFT", 0, -80)
+        W:RegisterDisable(enchantContent, ecDisabled, function(disabled)
+            if disabled then captureBtn:Disable() else captureBtn:Enable() end
+        end)
 
         local gridContainer = CreateFrame("Frame", nil, enchantContent)
         gridContainer:SetPoint("TOPLEFT", 0, -120)
         gridContainer:SetPoint("RIGHT", enchantContent, "RIGHT", 0, 0)
         gridContainer:SetHeight(400)
+        W:RegisterDisable(enchantContent, ecDisabled, function(disabled)
+            W:WalkSetEnabled(gridContainer, not disabled)
+        end)
 
         local gridElements = {}
         local SLOTS = ns.EquipmentReminder and ns.EquipmentReminder.ENCHANTABLE_SLOTS or {

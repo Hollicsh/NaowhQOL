@@ -290,6 +290,9 @@ function ns:InitFocusCastBar()
 
         local GA = ns.Layout:New(2)
 
+        local function soundDisabled() return not db.soundEnabled end
+        local function ttsDisabled() return not db.ttsEnabled end
+
         W:CreateCheckbox(audioContent, {
             label = L["FOCUS_SOUND_START"],
             db = db, key = "soundEnabled",
@@ -297,13 +300,14 @@ function ns:InitFocusCastBar()
             template = "ChatConfigCheckButtonTemplate",
             onChange = function()
                 if db.soundEnabled then db.ttsEnabled = false end
+                W:ApplyDisableStates(audioContent)
                 onUpdate()
             end
         })
 
         W:CreateSoundPicker(audioContent, GA:Col(1), GA:Row(2), db.sound, function(sound)
             db.sound = sound
-        end)
+        end, { disableif = soundDisabled })
 
         W:CreateCheckbox(audioContent, {
             label = L["FOCUS_USE_TTS"],
@@ -312,13 +316,14 @@ function ns:InitFocusCastBar()
             template = "ChatConfigCheckButtonTemplate",
             onChange = function()
                 if db.ttsEnabled then db.soundEnabled = false end
+                W:ApplyDisableStates(audioContent)
                 onUpdate()
             end
         })
 
         W:CreateTTSVoicePicker(audioContent, GA:Col(1), GA:Row(4), db.ttsVoiceID or 0, function(voiceID)
             db.ttsVoiceID = voiceID
-        end)
+        end, { disableif = ttsDisabled })
 
         local ttsLbl = audioContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         ttsLbl:SetPoint("TOPLEFT", audioContent, "TOPLEFT", GA:Col(1), GA:Row(5) + 5)
@@ -344,16 +349,20 @@ function ns:InitFocusCastBar()
             db.ttsMessage = val
         end)
 
+        W:RegisterDisable(audioContent, ttsDisabled, function(disabled)
+            if disabled then ttsBox:Disable() else ttsBox:Enable() end
+        end)
+
         local ttsVolSlider = W:CreateAdvancedSlider(audioContent,
             W.Colorize(L["COMMON_TTS_VOLUME"], C.ORANGE), 0, 100, -185, 5, true,
             function(val) db.ttsVolume = val end,
-            { db = db, key = "ttsVolume", moduleName = "focusCastBar" })
+            { db = db, key = "ttsVolume", moduleName = "focusCastBar", disableif = ttsDisabled })
         PlaceSlider(ttsVolSlider, audioContent, GA:Col(1), GA:Row(6))
 
         local ttsRateSlider = W:CreateAdvancedSlider(audioContent,
             W.Colorize(L["COMMON_TTS_SPEED"], C.ORANGE), -10, 10, -185, 1, false,
             function(val) db.ttsRate = val end,
-            { db = db, key = "ttsRate", moduleName = "focusCastBar" })
+            { db = db, key = "ttsRate", moduleName = "focusCastBar", disableif = ttsDisabled })
         PlaceSlider(ttsRateSlider, audioContent, GA:Col(2), GA:Row(6))
 
         audioContent:SetHeight(GA:Height(6))

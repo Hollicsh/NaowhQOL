@@ -116,6 +116,21 @@ local BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B = 0.01, 0.56, 0.91
 local BTN_ORANGE_R, BTN_ORANGE_G, BTN_ORANGE_B = 1.00, 0.66, 0.00
 local DARK_BG_R, DARK_BG_G, DARK_BG_B = 0.08, 0.08, 0.12
 
+local function WalkFrameSetEnabled(frame, enabled)
+    if frame.Enable and frame.Disable then
+        if enabled then frame:Enable() else frame:Disable() end
+    end
+    for _, child in ipairs({frame:GetChildren()}) do
+        WalkFrameSetEnabled(child, enabled)
+    end
+end
+
+local function RegisterDisableState(parent, disableifFn, applyFn)
+    parent.__disableRegistrations = parent.__disableRegistrations or {}
+    tinsert(parent.__disableRegistrations, { fn = disableifFn, apply = applyFn })
+    applyFn(disableifFn())
+end
+
 function ns.Widgets:CreateButton(parent, opts)
     opts = opts or {}
     local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
@@ -487,6 +502,8 @@ function ns.Widgets:CreateCollapsibleSection(parent, opts)
     end
 
     UpdateState()
+    wrapper.__isSectionWrapper = true
+    wrapper.__sectionContent = content
     return wrapper, content, enableCB
 end
 
@@ -707,6 +724,12 @@ function ns.Widgets:CreateCheckbox(parent, opts)
         end
     end)
 
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then cb:Disable() else cb:Enable() end
+        end)
+    end
+
     return cb
 end
 
@@ -788,6 +811,18 @@ function ns.Widgets:CreateColorPicker(parent, opts)
             end,
         })
     end)
+
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then
+                btn:Disable()
+                if thirdElement and thirdElement.Disable then thirdElement:Disable() end
+            else
+                btn:Enable()
+                if thirdElement and thirdElement.Enable then thirdElement:Enable() end
+            end
+        end)
+    end
 
     return btn, preview, thirdElement
 end
@@ -948,6 +983,22 @@ function ns.Widgets:CreateDropdown(parent, opts)
             end
         end
     end)
+
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then
+                btn:Disable()
+                btn:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.5)
+                btn:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
+                if f.title then f.title:SetTextColor(0.4, 0.4, 0.4, 1) end
+            else
+                btn:Enable()
+                btn:SetBackdropBorderColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 0.7)
+                btn:SetBackdropColor(DARK_BG_R, DARK_BG_G, DARK_BG_B, 0.95)
+                if f.title then f.title:SetTextColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 1) end
+            end
+        end)
+    end
 
     return f
 end
@@ -1172,6 +1223,20 @@ function ns.Widgets:CreateSlider(parent, opts)
     f.GetValue = function() return s:GetValue() end
     f.SetValue = function(_, val) s:SetValue(val) end
 
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then
+                s:Disable()
+                if f.editBox then f.editBox:Disable() end
+                if f.title then f.title:SetTextColor(0.4, 0.4, 0.4, 1) end
+            else
+                s:Enable()
+                if f.editBox then f.editBox:Enable() end
+                if f.title then f.title:SetTextColor(BTN_BLUE_R, BTN_BLUE_G, BTN_BLUE_B, 1) end
+            end
+        end)
+    end
+
     return f
 end
 
@@ -1188,13 +1253,15 @@ function ns.Widgets:CreateAdvancedSlider(parent, label, min, max, yOffset, step,
         key = opts.key,
         moduleName = opts.moduleName,
         value = opts.value,
+        disableif = opts.disableif,
     })
     wrapper:ClearAllPoints()
     wrapper:SetPoint("TOP", parent, "TOP", 0, yOffset)
     return wrapper.slider
 end
 
-function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
+function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect, opts)
+    opts = opts or {}
     local VISIBLE_ROWS = 12
     local ROW_H = 20
     local FILTER_H = 20
@@ -1477,6 +1544,12 @@ function ns.Widgets:CreateSoundPicker(parent, x, y, currentSound, onSelect)
 
     local initEntry = ns.SoundList.GetEntry(currentSound)
     selText:SetText(initEntry and initEntry.name or currentSound)
+
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then selBtn:Disable() else selBtn:Enable() end
+        end)
+    end
 
     return frame
 end
@@ -1971,7 +2044,8 @@ function ns.Widgets.CreateResizeHandle(parent, opts)
     return handle
 end
 
-function ns.Widgets:CreateTTSVoicePicker(parent, x, y, currentVoiceID, onSelect)
+function ns.Widgets:CreateTTSVoicePicker(parent, x, y, currentVoiceID, onSelect, opts)
+    opts = opts or {}
     local VISIBLE_ROWS = 6
     local ROW_H = 22
     local WIDTH = 280
@@ -2193,6 +2267,12 @@ function ns.Widgets:CreateTTSVoicePicker(parent, x, y, currentVoiceID, onSelect)
     GetVoices()
     selText:SetText(GetVoiceName(currentVoiceID or 0))
 
+    if opts.disableif then
+        RegisterDisableState(parent, opts.disableif, function(disabled)
+            if disabled then selBtn:Disable() else selBtn:Enable() end
+        end)
+    end
+
     return frame
 end
 
@@ -2255,4 +2335,30 @@ function ns.Widgets:CreateRestoreDefaultsButton(opts)
     end)
 
     return btn
+end
+
+function ns.Widgets:ApplyDisableStates(frame)
+    if not frame.__disableRegistrations then return end
+    for _, reg in ipairs(frame.__disableRegistrations) do
+        reg.apply(reg.fn())
+    end
+end
+
+function ns.Widgets:RegisterDisable(parent, disableifFn, applyFn)
+    RegisterDisableState(parent, disableifFn, applyFn)
+end
+
+function ns.Widgets:WalkSetEnabled(frame, enabled)
+    WalkFrameSetEnabled(frame, enabled)
+end
+
+function ns.Widgets:SetSectionContainerEnabled(container, enabled)
+    for _, child in ipairs({container:GetChildren()}) do
+        if child.__isSectionWrapper and child.__sectionContent then
+            WalkFrameSetEnabled(child.__sectionContent, enabled)
+            if enabled then
+                ns.Widgets:ApplyDisableStates(child.__sectionContent)
+            end
+        end
+    end
 end

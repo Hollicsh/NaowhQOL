@@ -288,16 +288,23 @@ function ns:InitStealthReminder()
             db = db, key = "stanceSoundEnabled",
             x = 10, y = -130,
             template = "ChatConfigCheckButtonTemplate",
-            onChange = refreshStance
+            onChange = function()
+                W:ApplyDisableStates(stColContent)
+                refreshStance()
+            end
         })
 
+        local function stanceSoundDisabled() return not db.stanceSoundEnabled end
+
         W:CreateSoundPicker(stColContent, 10, -160, db.stanceSound or ns.Media.DEFAULT_SOUND,
-            function(sound) db.stanceSound = sound end)
+            function(sound) db.stanceSound = sound end,
+            { disableif = stanceSoundDisabled })
 
         local intervalSlider = W:CreateSlider(stColContent, {
             label = L["STEALTH_REPEAT"],
             min = 0, max = 15, step = 1,
             x = 10, y = -205,
+            disableif = stanceSoundDisabled,
             db = db, key = "stanceSoundInterval",
             onChange = function(val) db.stanceSoundInterval = val end
         })

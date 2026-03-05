@@ -265,6 +265,7 @@ Categories.INVENTORY_GROUPS = {
         key = "gatewayControl",
         name = "Gateway Control Shard",
         itemIDs = {188152},
+        requireClass = "WARLOCK",
     },
     {
         key = "manaBun",

@@ -199,13 +199,18 @@ function ns:InitCrosshair()
             db = db, key = "outlineEnabled",
             x = 10, y = -100,
             template = "ChatConfigCheckButtonTemplate",
-            onChange = refresh
+            onChange = function()
+                W:ApplyDisableStates(appContent)
+                refresh()
+            end
         })
+
+        local function outlineDisabled() return not db.outlineEnabled end
 
         local outSlider = W:CreateAdvancedSlider(appContent,
             W.Colorize(L["CROSSHAIR_BORDER_THICKNESS"], C.ORANGE), 1, 6, -130, 1, false,
             function(val) db.outlineWeight = val; refresh() end,
-            { db = db, key = "outlineWeight", moduleName = "crosshair" })
+            { db = db, key = "outlineWeight", moduleName = "crosshair", disableif = outlineDisabled })
         PlaceSlider(outSlider, appContent, 0, -130)
 
         W:CreateColorPicker(appContent, {
@@ -213,6 +218,7 @@ function ns:InitCrosshair()
             rKey = "outlineR", gKey = "outlineG", bKey = "outlineB",
             classColorKey = "outlineUseClassColor",
             x = 240, y = -125,
+            disableif = outlineDisabled,
             onChange = refresh
         })
 
@@ -225,12 +231,17 @@ function ns:InitCrosshair()
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
+        local function circleDisabled() return not db.circleEnabled end
+
         local circToggle = W:CreateCheckbox(circContent, {
             label = L["CROSSHAIR_CIRCLE_ENABLE"],
             db = db, key = "circleEnabled",
             x = 10, y = -5,
             template = "ChatConfigCheckButtonTemplate",
-            onChange = refresh
+            onChange = function()
+                W:ApplyDisableStates(circContent)
+                refresh()
+            end
         })
 
         W:CreateColorPicker(circContent, {
@@ -238,13 +249,14 @@ function ns:InitCrosshair()
             rKey = "circleR", gKey = "circleG", bKey = "circleB",
             classColorKey = "circleUseClassColor",
             x = 10, y = -35,
+            disableif = circleDisabled,
             onChange = refresh
         })
 
         local circSlider = W:CreateAdvancedSlider(circContent,
             W.Colorize(L["CROSSHAIR_CIRCLE_SIZE"], C.ORANGE), 10, 120, -70, 1, false,
             function(val) db.circleSize = val; refresh() end,
-            { db = db, key = "circleSize", moduleName = "crosshair" })
+            { db = db, key = "circleSize", moduleName = "crosshair", disableif = circleDisabled })
         PlaceSlider(circSlider, circContent, 0, -70)
 
         circContent:SetHeight(120)

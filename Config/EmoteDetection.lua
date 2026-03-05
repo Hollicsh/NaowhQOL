@@ -128,11 +128,17 @@ function ns:InitEmoteDetection()
             db = db, key = "soundOn",
             x = 10, y = -5,
             template = "ChatConfigCheckButtonTemplate",
-            onChange = refreshDisplay,
+            onChange = function()
+                W:ApplyDisableStates(soundContent)
+                refreshDisplay()
+            end,
         })
 
+        local function soundOff() return not db.soundOn end
+
         W:CreateSoundPicker(soundContent, 10, -35, db.soundID or ns.Media.DEFAULT_SOUND,
-            function(sound) db.soundID = sound end)
+            function(sound) db.soundID = sound end,
+            { disableif = soundOff })
 
         soundContent:SetHeight(80)
         soundWrap:RecalcHeight()
@@ -154,13 +160,19 @@ function ns:InitEmoteDetection()
             db = db, key = "autoEmoteEnabled",
             x = 10, y = -30,
             template = "ChatConfigCheckButtonTemplate",
-            onChange = function() if ns.RebuildAutoEmoteLookup then ns.RebuildAutoEmoteLookup() end end,
+            onChange = function()
+                W:ApplyDisableStates(autoContent)
+                if ns.RebuildAutoEmoteLookup then ns.RebuildAutoEmoteLookup() end
+            end,
         })
+
+        local function autoDisabled() return not db.autoEmoteEnabled end
 
         W:CreateSlider(autoContent, {
             label = L["EMOTE_COOLDOWN"],
             min = 0, max = 10, step = 0.5,
             x = 10, y = -60,
+            disableif = autoDisabled,
             db = db, key = "autoEmoteCooldown",
             onChange = function(val) db.autoEmoteCooldown = val end
         })
@@ -383,6 +395,10 @@ function ns:InitEmoteDetection()
         end
 
         BuildAutoEmoteList()
+
+        W:RegisterDisable(autoContent, autoDisabled, function(disabled)
+            W:WalkSetEnabled(autoListContainer, not disabled)
+        end)
 
         autoContent:SetHeight(200)
         autoWrap:RecalcHeight()
