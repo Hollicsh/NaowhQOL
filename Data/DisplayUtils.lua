@@ -178,6 +178,9 @@ end
 
 function ns.DisplayUtils.SetFrameUnlocked(frame, unlocked, label)
     if unlocked then
+        if C_EditMode and C_EditMode.SetAccountSetting then
+            C_EditMode.SetAccountSetting(22, 0)
+        end
         frame:SetBackdrop(ns.DisplayUtils.FRAME_BACKDROP)
         frame:SetBackdropColor(0, 0, 0, 0.5)
         frame:SetBackdropBorderColor(1, 0.66, 0, 0.8)
