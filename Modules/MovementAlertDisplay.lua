@@ -235,7 +235,8 @@ local function SafeGetBaseDuration(spellId)
         local ok, dur = pcall(C_Spell.GetSpellCooldownDuration, spellId)
         if ok and dur then
             local ok2, total = pcall(dur.GetTotalDuration, dur)
-            if ok2 and total and total > 1.5 then
+            total = tonumber(tostring(total or 0)) or 0
+            if ok2 and total > 1.5 then
                 return total
             end
         end
@@ -713,10 +714,10 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
             cdRemaining = math.max(0, (castTime + baseDur) - GetTime())
             cdModRate  = 1
         else
-            cdRemaining = tonumber(cdInfo.timeUntilEndOfStartRecovery) or 0
-            cdStart     = tonumber(cdInfo.startTime) or 0
-            cdDuration  = tonumber(cdInfo.duration) or 0
-            cdModRate   = tonumber(cdInfo.modRate or 1) or 1
+            cdRemaining = tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0
+            cdStart     = tonumber(tostring(cdInfo.startTime)) or 0
+            cdDuration  = tonumber(tostring(cdInfo.duration)) or 0
+            cdModRate   = tonumber(tostring(cdInfo.modRate or 1)) or 1
         end
     end
 
@@ -1170,7 +1171,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         for spellId in pairs(spellWasCast) do
             local cdInfo = C_Spell.GetSpellCooldown(spellId)
             if not cdInfo or not cdInfo.timeUntilEndOfStartRecovery
-               or cdInfo.timeUntilEndOfStartRecovery <= 0 then
+               or (tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0) <= 0 then
                 spellWasCast[spellId] = nil
                 spellCastTime[spellId] = nil
             end

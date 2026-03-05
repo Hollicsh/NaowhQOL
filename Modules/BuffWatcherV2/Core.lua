@@ -346,8 +346,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             end
         end
     elseif event == "UNIT_AURA" then
-        local unit = ...
+        local unit, updateInfo = ...
         if unit == "player" then
+            BWV2:OnClassBuffAuraEvent(updateInfo)
             Core:OnPlayerAuraChanged()
         end
     elseif event == "UNIT_INVENTORY_CHANGED" then

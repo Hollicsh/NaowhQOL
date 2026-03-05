@@ -12,6 +12,8 @@ BWV2.lastScanTime = 0
 
 BWV2.buffSnapshot = {}
 BWV2.buffDropReminded = {}
+BWV2.classBuffSelfCache = {}
+BWV2.classBuffInstanceIDs = {}
 
 BWV2.scanResults = {
     raidBuffs = {},
@@ -662,6 +664,22 @@ function BWV2:CheckAlwaysOnClassBuffs()
                         break
                     end
                 end
+                -- Out of combat: cache state and auraInstanceID for combat tracking.
+                -- In combat: aura APIs return tainted/nil, so trust the cache
+                -- (cache is invalidated by OnClassBuffAuraEvent when removals are detected)
+                if not InCombatLockdown() then
+                    self.classBuffSelfCache[group.key] = hasBuff
+                    if hasBuff then
+                        for _, spellID in ipairs(spellIDs) do
+                            local auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                            if auraData and auraData.auraInstanceID then
+                                self.classBuffInstanceIDs[auraData.auraInstanceID] = group.key
+                            end
+                        end
+                    end
+                elseif not hasBuff and self.classBuffSelfCache[group.key] then
+                    hasBuff = true
+                end
                 if spellIDs[1] then
                     icon = C_Spell.GetSpellTexture(spellIDs[1])
                 end
@@ -697,6 +715,25 @@ function BWV2:CheckAlwaysOnClassBuffs()
     end
 
     return (#missing > 0) and missing or nil
+end
+
+function BWV2:OnClassBuffAuraEvent(updateInfo)
+    if not InCombatLockdown() or not updateInfo then return end
+
+    -- Track removals: if a tracked auraInstanceID was removed, invalidate cache
+    if updateInfo.removedAuraInstanceIDs then
+        for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
+            local ok, groupKey = pcall(function() return self.classBuffInstanceIDs[instanceID] end)
+            if ok and groupKey then
+                self.classBuffSelfCache[groupKey] = false
+                self.classBuffInstanceIDs[instanceID] = nil
+            end
+        end
+    end
+
+    -- Note: addedAuras fields are fully tainted in combat, so we cannot detect
+    -- re-application here. The cache will be corrected on PLAYER_REGEN_ENABLED
+    -- when aura APIs become readable again.
 end
 
 function BWV2:ClearBuffSnapshot()

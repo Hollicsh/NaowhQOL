@@ -399,6 +399,14 @@ function BuffDropAlert:CheckRebuffsForPrefix(prefix)
                         break
                     end
                 end
+                -- In combat, aura queries can return nil due to taint;
+                -- trust the out-of-combat cache if it says the buff is active
+                if not isBack and InCombatLockdown() then
+                    local baseKey = key:match("^classAlways_(.+)$")
+                    if baseKey and BWV2.classBuffSelfCache[baseKey] then
+                        isBack = true
+                    end
+                end
             end
 
             if isBack then
