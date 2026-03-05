@@ -127,7 +127,7 @@ local function UpdateRender()
     end
 
     if ring then
-        if db.hideBackground then
+        if db.gcdEnabled and db.hideBackground then
             ring:Hide()
         else
             local r, g, b = GetRingColor()
@@ -143,13 +143,13 @@ local function UpdateRender()
     if gcdCooldown then
         local swipeAlpha = alpha * (db.gcdAlpha or 1)
 
-        if db.castSwipeEnabled and state.isCasting and state.castStart > 0 and state.castSwipeAllowed then
+        if db.gcdEnabled and db.castSwipeEnabled and state.isCasting and state.castStart > 0 and state.castSwipeAllowed then
             local r, g, b = W.GetEffectiveColor(db, "castSwipeR", "castSwipeG", "castSwipeB", "castSwipeUseClassColor")
             gcdCooldown:SetSwipeColor(r, g, b, swipeAlpha)
             gcdCooldown:SetCooldown(state.castStart, state.castEnd - state.castStart)
             gcdCooldown:Show()
 
-        elseif db.castSwipeEnabled and state.isChanneling and state.channelStart > 0 and state.castSwipeAllowed then
+        elseif db.gcdEnabled and db.castSwipeEnabled and state.isChanneling and state.channelStart > 0 and state.castSwipeAllowed then
             local r, g, b = W.GetEffectiveColor(db, "castSwipeR", "castSwipeG", "castSwipeB", "castSwipeUseClassColor")
             gcdCooldown:SetSwipeColor(r, g, b, swipeAlpha)
             gcdCooldown:SetCooldown(state.channelStart, state.channelEnd - state.channelStart)
