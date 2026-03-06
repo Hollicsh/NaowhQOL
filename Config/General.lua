@@ -233,9 +233,7 @@ function ns:InitGeneral()
         })
         unlockAllBtn:SetPoint("TOPLEFT", lockContent, "TOPLEFT", 10, -60)
         unlockAllBtn:SetScript("OnClick", function()
-            if C_EditMode and C_EditMode.SetAccountSetting then
-                C_EditMode.SetAccountSetting(22, 0)
-            end
+            ns.DisplayUtils.DisableEditModeSnap()
             for _, entry in ipairs(MODULE_REGISTRY) do
                 local modDb = NaowhQOL[entry.db]
                 if modDb then

@@ -50,6 +50,9 @@ local function SetAllUnlocks(state)
     end
     if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
     if ns.RefreshAllModuleDisplays then ns.RefreshAllModuleDisplays() end
+    if state and ns.DisplayUtils then
+        ns.DisplayUtils.DisableEditModeSnap()
+    end
 end
 
 local function OnEnterEditMode()

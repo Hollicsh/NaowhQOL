@@ -176,11 +176,21 @@ function ns.DisplayUtils.SetSlot(slot, label, data, fallbackIcon)
     end
 end
 
+function ns.DisplayUtils.DisableEditModeSnap()
+    if C_EditMode and C_EditMode.SetAccountSetting then
+        C_EditMode.SetAccountSetting(22, 0)
+    end
+    if EditModeManagerFrame then
+        local snapCheck = EditModeManagerFrame.EnableSnapCheckButton
+        if snapCheck and snapCheck.Button and snapCheck.Button.SetChecked then
+            snapCheck.Button:SetChecked(false)
+        end
+    end
+end
+
 function ns.DisplayUtils.SetFrameUnlocked(frame, unlocked, label)
     if unlocked then
-        if C_EditMode and C_EditMode.SetAccountSetting then
-            C_EditMode.SetAccountSetting(22, 0)
-        end
+        ns.DisplayUtils.DisableEditModeSnap()
         frame:SetBackdrop(ns.DisplayUtils.FRAME_BACKDROP)
         frame:SetBackdropColor(0, 0, 0, 0.5)
         frame:SetBackdropBorderColor(1, 0.66, 0, 0.8)
