@@ -218,14 +218,24 @@ local gatewayResizeHandle
 local lastGatewayUsable = false
 local gatewayPollTicker = nil
 
+local knownChargeSpells = {}
+
 local function SafeGetChargeInfo(spellId)
     local ok, isCharge, maxCh, rechDur = pcall(function()
         local chargeInfo = C_Spell.GetSpellCharges(spellId)
         if not chargeInfo then return false, 1, 0 end
-        local m = tonumber(chargeInfo.maxCharges) or 1
-        local r = tonumber(chargeInfo.cooldownDuration) or 0
+        local m = tonumber(tostring(chargeInfo.maxCharges)) or 1
+        local r = tonumber(tostring(chargeInfo.cooldownDuration)) or 0
         return m > 1, m, r
     end)
+    if ok and isCharge then
+        knownChargeSpells[spellId] = { maxCh = maxCh, rechDur = rechDur }
+        return true, maxCh, rechDur
+    end
+    local cached = knownChargeSpells[spellId]
+    if cached then
+        return true, cached.maxCh, cached.rechDur
+    end
     if not ok then return false, 1, 0 end
     return isCharge, maxCh, rechDur
 end
@@ -243,17 +253,21 @@ local function SafeGetBaseDuration(spellId)
     end
     if C_Spell.GetSpellBaseCooldown then
         local ok, ms = pcall(C_Spell.GetSpellBaseCooldown, spellId)
-        if ok and ms and ms > 1500 then
-            return ms / 1000
+        if ok and ms then
+            ms = tonumber(tostring(ms)) or 0
+            if ms > 1500 then
+                return ms / 1000
+            end
         end
     end
     local ok, dur = pcall(function()
         local cdInfo = C_Spell.GetSpellCooldown(spellId)
         if cdInfo and cdInfo.duration then
-            return tonumber(cdInfo.duration) or 0
+            return tonumber(tostring(cdInfo.duration)) or 0
         end
         return 0
     end)
+    if ok and dur then dur = tonumber(tostring(dur)) or 0 end
     return (ok and dur and dur > 1.5) and dur or 0
 end
 
@@ -282,10 +296,27 @@ local function GetPlayerMovementSpells()
                 if ns.IsPlayerSpell(spellId) then
                     local displayId = spellId
                     if C_Spell.GetOverrideSpell then
-                        local oid = C_Spell.GetOverrideSpell(spellId)
-                        if oid and oid ~= spellId then displayId = oid end
+                        local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
+                        if oid > 0 and oid ~= spellId then displayId = oid end
                     end
                     if seen[displayId] then
+                        if not seen[spellId] and spellId ~= displayId then
+                            seen[spellId] = true
+                            local isCharge2, maxCh2, rechDur2 = SafeGetChargeInfo(spellId)
+                            if isCharge2 then
+                                for _, existing in ipairs(result) do
+                                    if existing.spellId == displayId and not existing.isChargeSpell then
+                                        existing.isChargeSpell = true
+                                        existing.maxCharges = maxCh2
+                                        existing.rechargeDuration = rechDur2
+                                        existing.baseDuration = rechDur2
+                                        existing.chargeSpellId = spellId
+                                        knownChargeSpells[displayId] = { maxCh = maxCh2, rechDur = rechDur2 }
+                                        break
+                                    end
+                                end
+                            end
+                        end
                     else
                         seen[spellId] = true
                         seen[displayId] = true
@@ -314,8 +345,8 @@ local function GetPlayerMovementSpells()
             if ns.IsPlayerSpell(spellId) then
                 local displayId = spellId
                 if C_Spell.GetOverrideSpell then
-                    local oid = C_Spell.GetOverrideSpell(spellId)
-                    if oid and oid ~= spellId then displayId = oid end
+                    local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
+                    if oid > 0 and oid ~= spellId then displayId = oid end
                 end
                 if not seen[displayId] then
                     seen[spellId] = true
@@ -346,8 +377,9 @@ local function UpdateCachedCharges()
     if inCombat then return end
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.isChargeSpell then
+            local chargeId = entry.chargeSpellId or entry.spellId
             local ok, charges = pcall(function()
-                local chargeInfo = C_Spell.GetSpellCharges(entry.spellId)
+                local chargeInfo = C_Spell.GetSpellCharges(chargeId)
                 if chargeInfo then
                     return tonumber(tostring(chargeInfo.currentCharges)) or 0
                 end
@@ -364,8 +396,11 @@ local function UpdateCachedCharges()
                 end
                 return 0
             end)
-            if ok and dur and dur > 0 then
-                entry.baseDuration = dur
+            if ok and dur then
+                dur = tonumber(tostring(dur)) or 0
+                if dur > 0 then
+                    entry.baseDuration = dur
+                end
             end
         end
     end
@@ -375,10 +410,6 @@ local function CacheMovementSpells(fullReset)
     local class = select(2, UnitClass("player"))
     local spec = GetSpecialization()
     local specId = spec and select(1, GetSpecializationInfo(spec)) or nil
-
-    if DEBUG_MODE then
-        print("[MovementAlert] CacheMovementSpells - Class:", class, "SpecID:", specId)
-    end
 
     if fullReset then
         wipe(spellWasCast)
@@ -391,8 +422,8 @@ local function CacheMovementSpells(fullReset)
     for _, entry in ipairs(cachedMovementSpells) do
         trackedSpellSet[entry.spellId] = entry.spellId
         if C_Spell.GetOverrideSpell then
-            local oid = C_Spell.GetOverrideSpell(entry.spellId)
-            if oid and oid ~= entry.spellId then
+            local oid = tonumber(tostring(C_Spell.GetOverrideSpell(entry.spellId) or 0)) or 0
+            if oid > 0 and oid ~= entry.spellId then
                 trackedSpellSet[oid] = entry.spellId
             end
         end
@@ -403,8 +434,8 @@ local function CacheMovementSpells(fullReset)
     if specAbilities and C_Spell.GetOverrideSpell then
         for _, spellId in ipairs(specAbilities) do
             if not trackedSpellSet[spellId] then
-                local oid = C_Spell.GetOverrideSpell(spellId)
-                if oid and oid ~= spellId and trackedSpellSet[oid] then
+                local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
+                if oid > 0 and oid ~= spellId and trackedSpellSet[oid] then
                     trackedSpellSet[spellId] = trackedSpellSet[oid]
                 end
             end
@@ -412,15 +443,6 @@ local function CacheMovementSpells(fullReset)
     end
 
     UpdateCachedCharges()
-
-    if DEBUG_MODE then
-        print("[MovementAlert] Cached", #cachedMovementSpells, "spells")
-        for _, entry in ipairs(cachedMovementSpells) do
-            print("  -", entry.spellId, entry.spellName,
-                entry.customText or "(default)",
-                entry.isChargeSpell and ("charges:" .. (cachedChargeCount[entry.spellId] or "?")) or "")
-        end
-    end
 end
 
 local function CancelAllRechargeTimers()
@@ -695,11 +717,15 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
         local okT, total = pcall(duration.GetTotalDuration, duration)
         local okS, start = pcall(duration.GetStartTime, duration)
         local okM, rate  = pcall(duration.GetModRate, duration)
-        if okR and rem then
+        rem   = tonumber(tostring(rem or 0)) or 0
+        total = tonumber(tostring(total or 0)) or 0
+        start = tonumber(tostring(start or 0)) or 0
+        rate  = tonumber(tostring(rate or 1)) or 1
+        if okR and total > 1.5 then
             cdRemaining = rem
-            cdDuration  = (okT and total) or 0
-            cdStart     = (okS and start) or 0
-            cdModRate   = (okM and rate)  or 1
+            cdDuration  = total
+            cdStart     = start
+            cdModRate   = rate
         end
     end
 
@@ -714,10 +740,10 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
             cdRemaining = math.max(0, (castTime + baseDur) - GetTime())
             cdModRate  = 1
         else
-            cdRemaining = tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0
-            cdStart     = tonumber(tostring(cdInfo.startTime)) or 0
-            cdDuration  = tonumber(tostring(cdInfo.duration)) or 0
+            cdStart     = tonumber(tostring(cdInfo.startTime or 0)) or 0
+            cdDuration  = tonumber(tostring(cdInfo.duration or 0)) or 0
             cdModRate   = tonumber(tostring(cdInfo.modRate or 1)) or 1
+            cdRemaining = math.max(0, (cdStart + cdDuration) - GetTime())
         end
     end
 
@@ -781,26 +807,22 @@ CheckMovementCooldown = function()
     if not db then return end
 
     if not db.enabled then
-        if DEBUG_MODE then print("[MovementAlert] Module disabled") end
         HideMovementDisplay()
         return
     end
 
     if db.combatOnly and not inCombat and not db.unlock then
-        if DEBUG_MODE then print("[MovementAlert] Combat-only mode, not in combat") end
         HideMovementDisplay()
         return
     end
 
     local playerClass = select(2, UnitClass("player"))
     if db.disabledClasses and db.disabledClasses[playerClass] then
-        if DEBUG_MODE then print("[MovementAlert] Class disabled:", playerClass) end
         HideMovementDisplay()
         return
     end
 
     if #cachedMovementSpells == 0 then
-        if DEBUG_MODE then print("[MovementAlert] No cached spells") end
         HideMovementDisplay()
         return
     end
@@ -808,55 +830,75 @@ CheckMovementCooldown = function()
     local count = 0
 
     for _, entry in ipairs(cachedMovementSpells) do
-        local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
+        local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, entry.spellId)
+        if not cdOk then cdInfo = nil end
 
-        if DEBUG_MODE then
-            print("[MovementAlert] Checking:", entry.spellId, entry.spellName,
-                  "cdInfo:", cdInfo and "exists" or "nil",
-                  "charge:", entry.isChargeSpell and "yes" or "no")
-        end
-
-        if cdInfo and cdInfo.timeUntilEndOfStartRecovery then
+        if cdInfo then
+            local remaining = 0
             local showThis = false
 
             if entry.isChargeSpell then
+                local chargeId = entry.chargeSpellId or entry.spellId
                 local currentCharges
+                local chargeRemaining = 0
+
                 if inCombat then
                     local raw = cachedChargeCount[entry.spellId]
                     currentCharges = (raw ~= nil) and (tonumber(tostring(raw)) or 0) or 0
+
+                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
+                    if chOk and chargeInfo then
+                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
+                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                        if chDur > 1.5 then
+                            chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
+                        end
+                    end
+                    if chargeRemaining <= 0 then
+                        local castTime = spellCastTime[entry.spellId]
+                        local rechDur = entry.rechargeDuration or 0
+                        if castTime and rechDur > 1.5 then
+                            chargeRemaining = math.max(0, (castTime + rechDur) - GetTime())
+                        end
+                    end
                 else
-                    local chargeInfo = C_Spell.GetSpellCharges(entry.spellId)
+                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
                     currentCharges = 0
-                    if chargeInfo and chargeInfo.currentCharges ~= nil then
-                        currentCharges = tonumber(tostring(chargeInfo.currentCharges)) or 0
+                    if chOk and chargeInfo then
+                        if chargeInfo.currentCharges ~= nil then
+                            currentCharges = tonumber(tostring(chargeInfo.currentCharges)) or 0
+                        end
+                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
+                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                        if chDur > 1.5 then
+                            chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
+                        end
                     end
                     cachedChargeCount[entry.spellId] = currentCharges
                 end
-                if currentCharges == 0 and spellWasCast[entry.spellId] then
-                    if inCombat then
-                        showThis = true
-                    else
-                        local remaining = tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0
-                        if remaining > 1.5 then
-                            showThis = true
-                        end
-                    end
-                end
-            elseif spellWasCast[entry.spellId] then
-                if inCombat then
+
+                remaining = chargeRemaining
+                if currentCharges == 0 and spellWasCast[entry.spellId] and chargeRemaining > 1.5 then
                     showThis = true
-                else
-                    local remaining = tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0
-                    if remaining > 1.5 then
-                        showThis = true
-                    end
                 end
+            else
+                local cdStartRaw = tonumber(tostring(cdInfo.startTime or 0)) or 0
+                local cdDurRaw = tonumber(tostring(cdInfo.duration or 0)) or 0
+                remaining = cdDurRaw > 0 and math.max(0, (cdStartRaw + cdDurRaw) - GetTime()) or 0
+                if spellWasCast[entry.spellId] and remaining > 1.5 then
+                    showThis = true
+                end
+            end
+
+            if remaining <= 0 and spellWasCast[entry.spellId] then
+                spellWasCast[entry.spellId] = nil
+                spellCastTime[entry.spellId] = nil
             end
 
             if showThis then
                 local duration
                 if entry.isChargeSpell and C_Spell.GetSpellChargeDuration then
-                    local ok, d = pcall(C_Spell.GetSpellChargeDuration, entry.spellId)
+                    local ok, d = pcall(C_Spell.GetSpellChargeDuration, entry.chargeSpellId or entry.spellId)
                     if ok then duration = d end
                 elseif not entry.isChargeSpell and C_Spell.GetSpellCooldownDuration then
                     local ok, d = pcall(C_Spell.GetSpellCooldownDuration, entry.spellId)
@@ -943,7 +985,7 @@ local function CheckGatewayUsable()
         return
     end
 
-    local itemCount = C_Item.GetItemCount(GATEWAY_SHARD_ITEM_ID)
+    local itemCount = tonumber(tostring(C_Item.GetItemCount(GATEWAY_SHARD_ITEM_ID) or 0)) or 0
     if itemCount == 0 then
         if not db.gwUnlock then
             gatewayFrame:Hide()
@@ -958,7 +1000,7 @@ local function CheckGatewayUsable()
         return
     end
 
-    local isUsable = C_Item.IsUsableItem(GATEWAY_SHARD_ITEM_ID)
+    local isUsable = not not C_Item.IsUsableItem(GATEWAY_SHARD_ITEM_ID)
 
     if isUsable and not lastGatewayUsable then
         PlayGatewayAlert(db)
@@ -1048,7 +1090,6 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     if not db then return end
 
     if event == "PLAYER_LOGIN" then
-        if DEBUG_MODE then print("[MovementAlert] PLAYER_LOGIN - initializing") end
         RebuildMobilitySpellLookup()
         CacheMovementSpells(true)
         inCombat = UnitAffectingCombat("player")
@@ -1169,9 +1210,14 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         inCombat = false
         CancelAllRechargeTimers()
         for spellId in pairs(spellWasCast) do
-            local cdInfo = C_Spell.GetSpellCooldown(spellId)
-            if not cdInfo or not cdInfo.timeUntilEndOfStartRecovery
-               or (tonumber(tostring(cdInfo.timeUntilEndOfStartRecovery)) or 0) <= 0 then
+            local rOk, cdInfo = pcall(C_Spell.GetSpellCooldown, spellId)
+            local cdRemain = 0
+            if rOk and cdInfo then
+                local s = tonumber(tostring(cdInfo.startTime or 0)) or 0
+                local d = tonumber(tostring(cdInfo.duration or 0)) or 0
+                cdRemain = d > 0 and math.max(0, (s + d) - GetTime()) or 0
+            end
+            if cdRemain <= 0 then
                 spellWasCast[spellId] = nil
                 spellCastTime[spellId] = nil
             end
@@ -1180,7 +1226,6 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CheckMovementCooldown()
         CheckGatewayUsable()
     elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" then
-        if DEBUG_MODE then print("[MovementAlert] Event:", event) end
         UpdateCachedCharges()
         CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
