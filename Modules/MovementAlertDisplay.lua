@@ -36,6 +36,45 @@ local MOVEMENT_ABILITIES = {
     WARRIOR = {[71] = {6544}, [72] = {6544}, [73] = {6544}},
 }
 
+local SPELL_ALIAS_GROUPS = {
+    {102401, 16979, 102417, 106898, 252216, 77761},
+}
+
+local SPELL_CATEGORY_DURATION = {
+    [102401] = 15, [16979] = 15, [102417] = 15, [106898] = 15, [252216] = 15, [77761] = 15,
+    [1850] = 18,
+}
+
+local SPELL_ALIAS_MAP = {}
+do
+    for _, group in ipairs(SPELL_ALIAS_GROUPS) do
+        for _, id in ipairs(group) do
+            SPELL_ALIAS_MAP[id] = group
+        end
+        for _, id in ipairs(group) do
+            if not SPELL_CATEGORY_DURATION[id] then
+                for _, other in ipairs(group) do
+                    if SPELL_CATEGORY_DURATION[other] then
+                        SPELL_CATEGORY_DURATION[id] = SPELL_CATEGORY_DURATION[other]
+                        break
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function GetKnownCategoryDuration(spellId)
+    if SPELL_CATEGORY_DURATION[spellId] then return SPELL_CATEGORY_DURATION[spellId] end
+    local group = SPELL_ALIAS_MAP[spellId]
+    if group then
+        for _, id in ipairs(group) do
+            if SPELL_CATEGORY_DURATION[id] then return SPELL_CATEGORY_DURATION[id] end
+        end
+    end
+    return 0
+end
+
 local allMobilitySpells = {}
 
 local function RebuildMobilitySpellLookup()
@@ -327,6 +366,11 @@ local function GetPlayerMovementSpells()
                             isCharge, maxCh, rechDur = SafeGetChargeInfo(baseId)
                         end
                         if spellInfo then
+                            local rawBaseDur = SafeGetBaseDuration(displayId)
+                            if rawBaseDur <= 0 and baseId then rawBaseDur = SafeGetBaseDuration(baseId) end
+                            if not isCharge and rawBaseDur <= 0 and rechDur > 0 then rawBaseDur = rechDur end
+                            if rawBaseDur <= 0 then rawBaseDur = GetKnownCategoryDuration(displayId) end
+                            if rawBaseDur <= 0 and baseId then rawBaseDur = GetKnownCategoryDuration(baseId) end
                             table.insert(result, {
                                 spellId = displayId,
                                 baseSpellId = baseId,
@@ -336,7 +380,7 @@ local function GetPlayerMovementSpells()
                                 isChargeSpell = isCharge,
                                 maxCharges = maxCh,
                                 rechargeDuration = rechDur,
-                                baseDuration = isCharge and rechDur or SafeGetBaseDuration(displayId),
+                                baseDuration = isCharge and rechDur or rawBaseDur,
                             })
                         end
                     end
@@ -363,6 +407,11 @@ local function GetPlayerMovementSpells()
                         isCharge, maxCh, rechDur = SafeGetChargeInfo(baseId)
                     end
                     if spellInfo then
+                        local rawBaseDur2 = SafeGetBaseDuration(displayId)
+                        if rawBaseDur2 <= 0 and baseId then rawBaseDur2 = SafeGetBaseDuration(baseId) end
+                        if not isCharge and rawBaseDur2 <= 0 and rechDur > 0 then rawBaseDur2 = rechDur end
+                        if rawBaseDur2 <= 0 then rawBaseDur2 = GetKnownCategoryDuration(displayId) end
+                        if rawBaseDur2 <= 0 and baseId then rawBaseDur2 = GetKnownCategoryDuration(baseId) end
                         table.insert(result, {
                             spellId = displayId,
                             baseSpellId = baseId,
@@ -372,7 +421,7 @@ local function GetPlayerMovementSpells()
                             isChargeSpell = isCharge,
                             maxCharges = maxCh,
                             rechargeDuration = rechDur,
-                            baseDuration = isCharge and rechDur or SafeGetBaseDuration(displayId),
+                            baseDuration = isCharge and rechDur or rawBaseDur2,
                         })
                     end
                 end
@@ -428,7 +477,40 @@ local function CacheMovementSpells(fullReset)
         cacheResetTime = GetTime()
     end
 
+    local prevSpells = cachedMovementSpells
     cachedMovementSpells = GetPlayerMovementSpells()
+
+    if not fullReset and prevSpells and #prevSpells > 0 then
+        for _, newEntry in ipairs(cachedMovementSpells) do
+            local newBase = newEntry.baseSpellId or newEntry.spellId
+            for _, oldEntry in ipairs(prevSpells) do
+                local oldBase = oldEntry.baseSpellId or oldEntry.spellId
+                if oldBase == newBase and oldEntry.spellId ~= newEntry.spellId then
+                    local oldId, newId = oldEntry.spellId, newEntry.spellId
+                    if spellWasCast[oldId] ~= nil then
+                        spellWasCast[newId] = spellWasCast[oldId]
+                        spellWasCast[oldId] = nil
+                    end
+                    if spellCastTime[oldId] ~= nil then
+                        spellCastTime[newId] = spellCastTime[oldId]
+                        spellCastTime[oldId] = nil
+                    end
+                    if cachedChargeCount[oldId] ~= nil then
+                        cachedChargeCount[newId] = cachedChargeCount[oldId]
+                        cachedChargeCount[oldId] = nil
+                    end
+                    if chargeRechargeStart[oldId] ~= nil then
+                        chargeRechargeStart[newId] = chargeRechargeStart[oldId]
+                        chargeRechargeStart[oldId] = nil
+                    end
+                    if rechargeTimers[oldId] ~= nil then
+                        rechargeTimers[newId] = rechargeTimers[oldId]
+                        rechargeTimers[oldId] = nil
+                    end
+                end
+            end
+        end
+    end
     wipe(trackedSpellSet)
     for _, entry in ipairs(cachedMovementSpells) do
         trackedSpellSet[entry.spellId] = entry.spellId
@@ -442,12 +524,33 @@ local function CacheMovementSpells(fullReset)
 
     local classAbilities = MOVEMENT_ABILITIES[class]
     local specAbilities = classAbilities and specId and classAbilities[specId]
-    if specAbilities and C_Spell.GetOverrideSpell then
+    if specAbilities then
         for _, spellId in ipairs(specAbilities) do
             if not trackedSpellSet[spellId] then
-                local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
-                if oid > 0 and oid ~= spellId and trackedSpellSet[oid] then
-                    trackedSpellSet[spellId] = trackedSpellSet[oid]
+                if C_Spell.GetOverrideSpell then
+                    local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
+                    if oid > 0 and oid ~= spellId and trackedSpellSet[oid] then
+                        trackedSpellSet[spellId] = trackedSpellSet[oid]
+                    end
+                end
+                local group = SPELL_ALIAS_MAP[spellId]
+                if group then
+                    for _, aliasId in ipairs(group) do
+                        if trackedSpellSet[aliasId] and not trackedSpellSet[spellId] then
+                            trackedSpellSet[spellId] = trackedSpellSet[aliasId]
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for _, entry in ipairs(cachedMovementSpells) do
+        local group = SPELL_ALIAS_MAP[entry.spellId]
+            or (entry.baseSpellId and SPELL_ALIAS_MAP[entry.baseSpellId])
+        if group then
+            for _, aliasId in ipairs(group) do
+                if not trackedSpellSet[aliasId] then
+                    trackedSpellSet[aliasId] = entry.spellId
                 end
             end
         end
@@ -494,6 +597,10 @@ local function OnTrackedSpellCast(spellId)
         for _, entry in ipairs(cachedMovementSpells) do
             if entry.spellId == baseId and not entry.isChargeSpell then
                 local dur = SafeGetBaseDuration(baseId)
+                if dur <= 0 and entry.baseSpellId then dur = SafeGetBaseDuration(entry.baseSpellId) end
+                if dur <= 0 and entry.rechargeDuration and entry.rechargeDuration > 0 then dur = entry.rechargeDuration end
+                if dur <= 0 then dur = GetKnownCategoryDuration(baseId) end
+                if dur <= 0 and entry.baseSpellId then dur = GetKnownCategoryDuration(entry.baseSpellId) end
                 if dur > 0 then entry.baseDuration = dur end
                 break
             end
@@ -869,6 +976,13 @@ CheckMovementCooldown = function()
     for _, entry in ipairs(cachedMovementSpells) do
         local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, entry.spellId)
         if not cdOk then cdInfo = nil end
+        if entry.baseSpellId then
+            local cdDurCheck = cdInfo and (tonumber(tostring(cdInfo.duration or 0)) or 0) or 0
+            if not cdInfo or cdDurCheck == 0 then
+                local bOk, bInfo = pcall(C_Spell.GetSpellCooldown, entry.baseSpellId)
+                if bOk and bInfo then cdInfo = bInfo end
+            end
+        end
 
         if cdInfo then
             local remaining = 0
@@ -924,6 +1038,29 @@ CheckMovementCooldown = function()
                 local cdStartRaw = tonumber(tostring(cdInfo.startTime or 0)) or 0
                 local cdDurRaw = tonumber(tostring(cdInfo.duration or 0)) or 0
                 remaining = cdDurRaw > 0 and math.max(0, (cdStartRaw + cdDurRaw) - GetTime()) or 0
+                if remaining <= 0 and spellWasCast[entry.spellId] then
+                    local chargeId = entry.baseSpellId or entry.spellId
+                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
+                    if not (chOk and chargeInfo) then
+                        chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, entry.spellId)
+                    end
+                    if chOk and chargeInfo then
+                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
+                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                        if chDur > 0.5 and chStart > 0 then
+                            remaining = math.max(0, (chStart + chDur) - GetTime())
+                        end
+                    end
+                    if remaining <= 0 then
+                        local castT = spellCastTime[entry.spellId]
+                        local baseDur = entry.baseDuration or 0
+                        if baseDur <= 0 then baseDur = GetKnownCategoryDuration(entry.spellId) end
+                        if baseDur <= 0 and entry.baseSpellId then baseDur = GetKnownCategoryDuration(entry.baseSpellId) end
+                        if castT and baseDur > 0.5 then
+                            remaining = math.max(0, (castT + baseDur) - GetTime())
+                        end
+                    end
+                end
                 if spellWasCast[entry.spellId] and remaining > 0.05 then
                     showThis = true
                 end
@@ -1075,6 +1212,7 @@ loader:RegisterEvent("TRAIT_CONFIG_UPDATED")
 loader:RegisterEvent("PLAYER_REGEN_DISABLED")
 loader:RegisterEvent("PLAYER_REGEN_ENABLED")
 loader:RegisterEvent("PLAYER_LOGOUT")
+loader:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 
 local movementEventsRegistered = false
 local timeSpiralEventsRegistered = false
@@ -1230,6 +1368,9 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
             CheckMovementCooldown()
             RefreshCastFilters()
         end
+    elseif event == "UPDATE_SHAPESHIFT_FORM" then
+        CacheMovementSpells()
+        CheckMovementCooldown()
     elseif event == "LOADING_SCREEN_DISABLED" then
         RefreshCastFilters()
     elseif event == "PLAYER_REGEN_DISABLED" then
@@ -1280,6 +1421,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local _, _, spellId = ...
         OnTrackedSpellCast(spellId)
+        CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SENT" then
         local _, _, _, spellId = ...
         OnSpellCast(spellId)
