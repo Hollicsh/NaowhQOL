@@ -707,6 +707,48 @@ function BWV2:CheckAlwaysOnClassBuffs()
                 if spellIDs[1] then
                     icon = C_Spell.GetSpellTexture(spellIDs[1])
                 end
+            elseif group.checkType == "targeted" then
+                local spellIDs = group.spellIDs or {}
+                local threshold = self:GetThreshold()
+                if InCombatLockdown() then
+                    hasBuff = true -- aura data is tainted in combat; skip check
+                elseif #spellIDs > 0 then
+                    local inRaid = IsInRaid()
+                    local groupSize = GetNumGroupMembers()
+                    if groupSize == 0 then groupSize = 1 end
+                    for i = 1, groupSize do
+                        local unit
+                        if inRaid then
+                            unit = "raid" .. i
+                        else
+                            unit = (i == 1) and "player" or ("party" .. (i - 1))
+                        end
+                        if UnitExists(unit) then
+                            local idx = 1
+                            local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            while auraData do
+                                for _, spellID in ipairs(spellIDs) do
+                                    if auraData.spellId == spellID
+                                       and auraData.sourceUnit
+                                       and UnitIsUnit(auraData.sourceUnit, "player") then
+                                        local remaining = (auraData.expirationTime or 0) - GetTime()
+                                        if auraData.expirationTime == 0 or remaining > threshold then
+                                            hasBuff = true
+                                        end
+                                        break
+                                    end
+                                end
+                                if hasBuff then break end
+                                idx = idx + 1
+                                auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            end
+                        end
+                        if hasBuff then break end
+                    end
+                end
+                if spellIDs[1] then
+                    icon = C_Spell.GetSpellTexture(spellIDs[1])
+                end
             elseif group.checkType == "weaponEnchant" then
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
