@@ -27,6 +27,58 @@ end
 local WEAPON_ENCHANT_POLL_INTERVAL = 1.0
 local weaponEnchantTicker = nil
 
+local ALWAYS_ON_POLL_INTERVAL = 60
+local alwaysOnTicker = nil
+
+local function StopAlwaysOnWatcher()
+    if alwaysOnTicker then
+        alwaysOnTicker:Cancel()
+        alwaysOnTicker = nil
+    end
+end
+
+local function StartAlwaysOnWatcher()
+    StopAlwaysOnWatcher()
+    local db = BWV2:GetDB()
+    if not db or not (db.raidBuffAlwaysCheck or db.classBuffAlwaysCheck) then return end
+
+    alwaysOnTicker = C_Timer.NewTicker(ALWAYS_ON_POLL_INTERVAL, function()
+        local cdb = BWV2:GetDB()
+        if not cdb or not cdb.enabled then
+            StopAlwaysOnWatcher()
+            return
+        end
+        if suppressed then
+            StopAlwaysOnWatcher()
+            return
+        end
+
+        if cdb.raidBuffAlwaysCheck and BuffDropAlert then
+            if BuffDropAlert:HasAlerts() then
+                BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
+            end
+            local missing = BWV2:CheckAlwaysOnRaidBuffs()
+            if missing then
+                BuffDropAlert:AddAlerts(missing)
+            else
+                BuffDropAlert:DismissByPrefix("raidAlways_")
+            end
+        end
+
+        if cdb.classBuffAlwaysCheck and BuffDropAlert then
+            if BuffDropAlert:HasAlerts() then
+                BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
+            end
+            local missing = BWV2:CheckAlwaysOnClassBuffs()
+            if missing then
+                BuffDropAlert:AddAlerts(missing)
+            else
+                BuffDropAlert:DismissByPrefix("classAlways_")
+            end
+        end
+    end)
+end
+
 local function StopWeaponEnchantPoller()
     if weaponEnchantTicker then
         weaponEnchantTicker:Cancel()
@@ -371,6 +423,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         StopTicker()
         StopWeaponEnchantPoller()
         StopClassBuffEnchantPoller()
+        StopAlwaysOnWatcher()
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
@@ -405,6 +458,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 if missing then
                     BuffDropAlert:AddAlerts(missing)
                 end
+                StartAlwaysOnWatcher()
             end)
         end
 
@@ -415,6 +469,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                     BuffDropAlert:AddAlerts(missing)
                 end
                 StartClassBuffEnchantPoller()
+                StartAlwaysOnWatcher()
             end)
         end
 
@@ -427,6 +482,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 if missing then
                     BuffDropAlert:AddAlerts(missing)
                 end
+                StartAlwaysOnWatcher()
             end)
         end
         if db and db.enabled and db.classBuffAlwaysCheck and BuffDropAlert then
@@ -437,6 +493,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                     BuffDropAlert:AddAlerts(missing)
                 end
                 StartClassBuffEnchantPoller()
+                StartAlwaysOnWatcher()
             end)
         end
     end
@@ -464,6 +521,7 @@ SlashCmdList["NSUP"] = function(msg)
         StopTicker()
         StopWeaponEnchantPoller()
         StopClassBuffEnchantPoller()
+        StopAlwaysOnWatcher()
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
@@ -550,4 +608,30 @@ end
 
 function Core:GetMissingBuffs()
     return BWV2.missingByCategory
+end
+
+SLASH_NBWDEBUG1 = "/nbwdebug"
+SlashCmdList["NBWDEBUG"] = function()
+    local db = BWV2:GetDB()
+    local contentType = BWV2:GetCurrentContentType()
+    local threshold = BWV2:GetThreshold()
+    print("|cff00ccff[BWDebug]|r contentType=" .. contentType .. " threshold=" .. threshold .. "s (" .. math.floor(threshold/60) .. "min)")
+    print("|cff00ccff[BWDebug]|r buffDropReminder=" .. tostring(db.buffDropReminder) .. " raidAlways=" .. tostring(db.raidBuffAlwaysCheck) .. " classAlways=" .. tostring(db.classBuffAlwaysCheck))
+    print("|cff00ccff[BWDebug]|r lastScanTime=" .. BWV2.lastScanTime .. " alwaysOnTicker=" .. tostring(alwaysOnTicker ~= nil))
+    print("|cff00ccff[BWDebug]|r buffSnapshot entries: " .. (function() local n=0 for _ in pairs(BWV2.buffSnapshot) do n=n+1 end return n end)())
+    for k, v in pairs(BWV2.buffSnapshot) do
+        local ids = v.spellIDs and table.concat(v.spellIDs, ",") or "none"
+        print("|cff00ccff[BWDebug]|r   snap[" .. k .. "] spellIDs=" .. ids .. " cat=" .. (v.category or "?"))
+    end
+    print("|cff00ccff[BWDebug]|r --- CheckAlwaysOnRaidBuffs ---")
+    local Categories = ns.BWV2Categories
+    for _, buff in ipairs(Categories and Categories.RAID or {}) do
+        local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
+        if primaryID and ns.IsPlayerSpell(primaryID) then
+            local aura = C_UnitAuras.GetPlayerAuraBySpellID(primaryID)
+            local remaining = aura and ((aura.expirationTime or 0) - GetTime()) or nil
+            local passes = aura and (aura.expirationTime == 0 or (remaining and remaining > threshold))
+            print("|cff00ccff[BWDebug]|r   buff=" .. (buff.name or tostring(primaryID)) .. " aura=" .. tostring(aura ~= nil) .. " remaining=" .. (remaining and string.format("%.0fs", remaining) or "n/a") .. " passes=" .. tostring(passes))
+        end
+    end
 end

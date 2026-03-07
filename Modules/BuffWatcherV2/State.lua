@@ -396,6 +396,7 @@ function BWV2:BuildBuffSnapshot()
                                 spellIDs = group.spellIDs,
                                 icon = entry.icon,
                                 category = "classBuff",
+                                thresholds = group.thresholds,
                             }
                         elseif entry.checkType == "weaponEnchant" and group.enchantIDs then
                             self.buffSnapshot[entry.key] = {
@@ -427,21 +428,35 @@ function BWV2:CheckBuffDrops()
             local stillPresent = false
 
             if data.spellIDs and #data.spellIDs > 0 then
+                local contentType = self:GetCurrentContentType()
+                local threshold
+                if data.category == "classBuff" and data.thresholds then
+                    threshold = data.thresholds[contentType] or 0
+                else
+                    threshold = self:GetThreshold()
+                end
                 for _, spellID in ipairs(data.spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
-                        stillPresent = true
-                        break
+                        local remaining = (aura.expirationTime or 0) - GetTime()
+                        if aura.expirationTime == 0 or remaining > threshold then
+                            stillPresent = true
+                            break
+                        end
                     end
                 end
             end
 
             if not stillPresent and data.iconCheck then
+                local threshold = self:GetThreshold()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
                     if tonumber(auraData.icon) == data.iconCheck then
-                        stillPresent = true
+                        local remaining = (auraData.expirationTime or 0) - GetTime()
+                        if auraData.expirationTime == 0 or remaining > threshold then
+                            stillPresent = true
+                        end
                         break
                     end
                     idx = idx + 1
@@ -550,6 +565,7 @@ function BWV2:AddToBuffSnapshot(item, categoryKey)
                             spellIDs = group.spellIDs,
                             icon = item.icon,
                             category = "classBuff",
+                            thresholds = group.thresholds,
                         }
                     elseif item.checkType == "weaponEnchant" and group.enchantIDs then
                         self.buffSnapshot[item.key] = {
@@ -592,11 +608,15 @@ function BWV2:CheckAlwaysOnRaidBuffs()
 
             if playerKnows then
                 local hasBuff = false
+                local threshold = self:GetThreshold()
                 for _, spellID in ipairs(spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
-                        hasBuff = true
-                        break
+                        local remaining = (aura.expirationTime or 0) - GetTime()
+                        if aura.expirationTime == 0 or remaining > threshold then
+                            hasBuff = true
+                            break
+                        end
                     end
                 end
 
@@ -657,11 +677,15 @@ function BWV2:CheckAlwaysOnClassBuffs()
 
             if group.checkType == "self" then
                 local spellIDs = group.spellIDs or {}
+                local threshold = self:GetThreshold()
                 for _, spellID in ipairs(spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
-                        hasBuff = true
-                        break
+                        local remaining = (aura.expirationTime or 0) - GetTime()
+                        if aura.expirationTime == 0 or remaining > threshold then
+                            hasBuff = true
+                            break
+                        end
                     end
                 end
                 -- Out of combat: cache state and auraInstanceID for combat tracking.

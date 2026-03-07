@@ -673,7 +673,7 @@ ns:RegisterLocale("ptBR", {
     PETTRACKER_PASSIVE_DEFAULT = "Familiar passivo",
     PETTRACKER_WRONGPET_LABEL = "Texto de familiar errado:",
     PETTRACKER_WRONGPET_DEFAULT = "Familiar errado",
-    PETTRACKER_FELGUARD_LABEL = "Guarda-vil (substituição):",
+    PETTRACKER_FELGUARD_LABEL = "Vil Guard (substituição):",
     PETTRACKER_CLASS_NOTE = "Suportado: Caçador, Bruxo, Cavaleiro da Morte (Desonra), Mago (Gelo)",
 
     SIDEBAR_TAB_MOVEMENT_ALERT = "Alerta de Movimento",
