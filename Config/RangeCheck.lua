@@ -109,8 +109,8 @@ function ns:InitRangeCheck()
         local brackets = {0, 5, 10, 15, 20, 25, 30, 35, 40}
         local yOffset = -80
         for i, bracket in ipairs(brackets) do
-            local nextBracket = brackets[i + 1] or (bracket + 5)
-            local label = bracket .. "-" .. (nextBracket - 1) .. " yd"
+            local nextBracket = brackets[i + 1]
+            local label = nextBracket and (bracket .. "-" .. (nextBracket - 1) .. " yd") or (bracket .. "+ yd")
             if not db.rangeColors[bracket] then
                 db.rangeColors[bracket] = {r = 0.01, g = 0.56, b = 0.91}
             end

@@ -26,12 +26,14 @@ local function HasValidTarget()
     return true
 end
 
+local MAX_RANGE_BRACKET = 40
+
 local function GetColorForRange(minRange)
     local db = NaowhQOL.rangeCheck
     if not db or not db.rangeColors then
         return db and db.rangeColorR or 0.01, db and db.rangeColorG or 0.56, db and db.rangeColorB or 0.91
     end
-    local bracket = math.floor((minRange or 0) / 5) * 5
+    local bracket = math.min(MAX_RANGE_BRACKET, math.floor((minRange or 0) / 5) * 5)
     local color = db.rangeColors[bracket] or db.rangeColors[0]
     if color then
         return color.r, color.g, color.b
