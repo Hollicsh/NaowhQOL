@@ -91,6 +91,7 @@ function BWV2:GetPlayerSpecID()
 end
 
 function BWV2:PlayerHasTalent(spellID)
+    if not spellID then return false end
     return ns.IsPlayerSpell(spellID)
 end
 
@@ -678,16 +679,18 @@ function BWV2:CheckAlwaysOnClassBuffs()
             if group.checkType == "self" then
                 local spellIDs = group.spellIDs or {}
                 local threshold = self:GetThreshold()
+                local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
+                local count = 0
                 for _, spellID in ipairs(spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
                         local remaining = (aura.expirationTime or 0) - GetTime()
                         if aura.expirationTime == 0 or remaining > threshold then
-                            hasBuff = true
-                            break
+                            count = count + 1
                         end
                     end
                 end
+                hasBuff = count >= needed
                 -- Out of combat: cache state and auraInstanceID for combat tracking.
                 -- In combat: aura APIs return tainted/nil, so trust the cache
                 -- (cache is invalidated by OnClassBuffAuraEvent when removals are detected)
