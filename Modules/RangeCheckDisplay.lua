@@ -23,6 +23,7 @@ end
 local function HasValidTarget()
     if not UnitExists("target") then return false end
     if UnitIsDeadOrGhost("target") then return false end
+    if not UnitCanAttack("player", "target") and not UnitCanAssist("player", "target") then return false end
     return true
 end
 

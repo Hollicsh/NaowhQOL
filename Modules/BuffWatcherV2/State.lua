@@ -453,7 +453,7 @@ function BWV2:CheckBuffDrops()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if tonumber(auraData.icon) == data.iconCheck then
+                    if tostring(auraData.icon) == tostring(data.iconCheck) then
                         local remaining = (auraData.expirationTime or 0) - GetTime()
                         if auraData.expirationTime == 0 or remaining > threshold then
                             stillPresent = true

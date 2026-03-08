@@ -41,6 +41,8 @@ function ns.InitMouseOptions()
             if display then display:UpdateDisplay() end
         end
 
+        local sectionContainer = CreateFrame("Frame", nil, sc)
+
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
         killArea:SetSize(460, 87)
         killArea:SetPoint("TOPLEFT", 10, -75)
@@ -79,7 +81,6 @@ function ns.InitMouseOptions()
         })
         hideOnClickCB:SetShown(db.enabled)
 
-        local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
         sectionContainer:SetHeight(900)

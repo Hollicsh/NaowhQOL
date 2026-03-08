@@ -845,7 +845,7 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
         total = tonumber(tostring(total or 0)) or 0
         start = tonumber(tostring(start or 0)) or 0
         rate  = tonumber(tostring(rate or 1)) or 1
-        if okR and total > 1.5 then
+        if okR and total > 1.5 and rem > 0 then
             cdRemaining = rem
             cdDuration  = total
             cdStart     = start
@@ -889,6 +889,10 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
             cdModRate   = tonumber(tostring(cdInfo.modRate or 1)) or 1
             cdRemaining = math.max(0, (cdStart + cdDuration) - GetTime())
         end
+    end
+
+    if not cdRemaining or cdRemaining <= 0 then
+        return false
     end
 
     local slot = GetDisplaySlot(index)
@@ -944,6 +948,7 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
     end
 
     slot:Show()
+    return true
 end
 
 CheckMovementCooldown = function()
@@ -1080,8 +1085,9 @@ CheckMovementCooldown = function()
                     local ok, d = pcall(C_Spell.GetSpellCooldownDuration, entry.spellId)
                     if ok then duration = d end
                 end
-                count = count + 1
-                ShowMovementSlot(count, cdInfo, entry, duration)
+                if ShowMovementSlot(count + 1, cdInfo, entry, duration) then
+                    count = count + 1
+                end
             end
         else
             spellWasCast[entry.spellId] = nil
