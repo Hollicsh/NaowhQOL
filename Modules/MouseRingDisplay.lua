@@ -49,8 +49,62 @@ local function HasAttackableTarget()
     return true
 end
 
-local container, ring, borderRing, gcdCooldown, readyRing
+local container, ring, borderRing, readyRing
+local gcdSweep = {}
 local trailContainer, trailPoints = nil, {}
+
+local TWO_PI = math.pi * 2
+local PI     = math.pi
+
+local UpdateRender
+
+local gcdSweepState = {
+    active    = false,
+    startTime = 0,
+    duration  = 1,
+    modRate   = 1,
+    r = 1, g = 1, b = 1, a = 1,
+}
+
+local function UpdateGCDSweep()
+    if not gcdSweep.frame then return end
+    local s = gcdSweepState
+    if not s.active then return end
+
+    local elapsed = GetTime() - s.startTime
+    local total   = s.duration / (s.modRate or 1)
+    local frac    = math.min(elapsed / total, 1)
+
+    if frac >= 1 then
+        s.active = false
+        gcdSweep.rightRing:Show()
+        gcdSweep.rightRing:SetVertexColor(s.r, s.g, s.b, s.a)
+        gcdSweep.rightProg:SetRotation(0)
+        gcdSweep.leftRing:Show()
+        gcdSweep.leftRing:SetVertexColor(s.r, s.g, s.b, s.a)
+        gcdSweep.leftProg:SetRotation(-PI)
+        return
+    end
+
+    local angle = frac * TWO_PI
+    local r, g, b, a = s.r, s.g, s.b, s.a
+
+    if angle > 0 then
+        gcdSweep.rightRing:Show()
+        gcdSweep.rightRing:SetVertexColor(r, g, b, a)
+        gcdSweep.rightProg:SetRotation(PI - math.min(angle, PI))
+    else
+        gcdSweep.rightRing:Hide()
+    end
+
+    if angle > PI then
+        gcdSweep.leftRing:Show()
+        gcdSweep.leftRing:SetVertexColor(r, g, b, a)
+        gcdSweep.leftProg:SetRotation(-(angle - PI))
+    else
+        gcdSweep.leftRing:Hide()
+    end
+end
 
 local UpdateMouseWatcher
 
@@ -84,8 +138,7 @@ local function SetupTexture(tex, shape)
     end
 end
 
-local function UpdateRender()
-    if not container then return end
+UpdateRender = function()
     local db = GetDB()
     local alpha = GetOpacity()
 
@@ -140,29 +193,42 @@ local function UpdateRender()
         end
     end
 
-    if gcdCooldown then
+    if gcdSweep.frame then
         local swipeAlpha = alpha * (db.gcdAlpha or 1)
+        local wantSweep  = false
 
         if db.gcdEnabled and db.castSwipeEnabled and state.isCasting and state.castStart > 0 and state.castSwipeAllowed then
             local r, g, b = W.GetEffectiveColor(db, "castSwipeR", "castSwipeG", "castSwipeB", "castSwipeUseClassColor")
-            gcdCooldown:SetSwipeColor(r, g, b, swipeAlpha)
-            gcdCooldown:SetCooldown(state.castStart, state.castEnd - state.castStart)
-            gcdCooldown:Show()
-
+            gcdSweepState.startTime = state.castStart
+            gcdSweepState.duration  = state.castEnd - state.castStart
+            gcdSweepState.modRate   = 1
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.active = true
+            wantSweep = true
         elseif db.gcdEnabled and db.castSwipeEnabled and state.isChanneling and state.channelStart > 0 and state.castSwipeAllowed then
             local r, g, b = W.GetEffectiveColor(db, "castSwipeR", "castSwipeG", "castSwipeB", "castSwipeUseClassColor")
-            gcdCooldown:SetSwipeColor(r, g, b, swipeAlpha)
-            gcdCooldown:SetCooldown(state.channelStart, state.channelEnd - state.channelStart)
-            gcdCooldown:Show()
-
+            gcdSweepState.startTime = state.channelStart
+            gcdSweepState.duration  = state.channelEnd - state.channelStart
+            gcdSweepState.modRate   = 1
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.active = true
+            wantSweep = true
         elseif db.gcdEnabled and not state.gcdReady and state.gcdInfo and state.gcdSwipeAllowed then
             local r, g, b = W.GetEffectiveColor(db, "gcdR", "gcdG", "gcdB", "gcdUseClassColor")
-            gcdCooldown:SetSwipeColor(r, g, b, swipeAlpha)
-            gcdCooldown:SetCooldown(state.gcdInfo.startTime, state.gcdInfo.duration, state.gcdInfo.modRate)
-            gcdCooldown:Show()
+            gcdSweepState.startTime = state.gcdInfo.startTime
+            gcdSweepState.duration  = state.gcdInfo.duration
+            gcdSweepState.modRate   = state.gcdInfo.modRate or 1
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.active = true
+            wantSweep = true
+        end
 
+        if wantSweep then
+            gcdSweep.frame:Show()
+            UpdateGCDSweep()
         else
-            gcdCooldown:Hide()
+            gcdSweepState.active = false
+            gcdSweep.frame:Hide()
         end
     end
 
@@ -368,24 +434,51 @@ local function CreateRing()
     SetupTexture(readyRing, shape)
     readyRing:Hide()
 
-    gcdCooldown = CreateFrame("Cooldown", nil, container, "CooldownFrameTemplate")
-    gcdCooldown:SetAllPoints()
-    gcdCooldown:SetDrawSwipe(true)
-    gcdCooldown:SetDrawEdge(false)
-    gcdCooldown:SetHideCountdownNumbers(true)
-    gcdCooldown:SetReverse(true)
-    local swipeTex = gcdCooldown:CreateTexture(nil, "ARTWORK")
-    SetupTexture(swipeTex, shape)
-    gcdCooldown:SetSwipeTexture(swipeTex)
-    if gcdCooldown.SetDrawBling then gcdCooldown:SetDrawBling(false) end
-    if gcdCooldown.SetUseCircularEdge then gcdCooldown:SetUseCircularEdge(true) end
-    gcdCooldown:SetFrameLevel(container:GetFrameLevel() + 5)
-    gcdCooldown:Hide()
+    local maskPath = ASSET_PATH .. "half_disk.tga"
+    local clipPath = ASSET_PATH .. "half_disk_clip.tga"
 
-    gcdCooldown:SetScript("OnCooldownDone", function()
-        state.gcdReady = true
-        state.gcdInfo = nil
-        UpdateRender()
+    local sweepFrame = CreateFrame("Frame", nil, container)
+    sweepFrame:SetAllPoints()
+    sweepFrame:SetFrameLevel(container:GetFrameLevel() + 5)
+    sweepFrame:Hide()
+    gcdSweep.frame = sweepFrame
+
+    local rightRing = sweepFrame:CreateTexture(nil, "ARTWORK")
+    SetupTexture(rightRing, shape)
+    rightRing:SetAllPoints()
+    rightRing:Hide()
+    local rightClip = sweepFrame:CreateMaskTexture()
+    rightClip:SetTexture(clipPath, "CLAMP", "CLAMP", "TRILINEAR")
+    rightClip:SetAllPoints()
+    rightClip:SetRotation(0)
+    rightRing:AddMaskTexture(rightClip)
+    local rightProg = sweepFrame:CreateMaskTexture()
+    rightProg:SetTexture(maskPath, "CLAMP", "CLAMP", "TRILINEAR")
+    rightProg:SetAllPoints()
+    rightProg:SetRotation(PI)
+    rightRing:AddMaskTexture(rightProg)
+    gcdSweep.rightRing = rightRing
+    gcdSweep.rightProg = rightProg
+
+    local leftRing = sweepFrame:CreateTexture(nil, "ARTWORK")
+    SetupTexture(leftRing, shape)
+    leftRing:SetAllPoints()
+    leftRing:Hide()
+    local leftClip = sweepFrame:CreateMaskTexture()
+    leftClip:SetTexture(clipPath, "CLAMP", "CLAMP", "TRILINEAR")
+    leftClip:SetAllPoints()
+    leftClip:SetRotation(PI)
+    leftRing:AddMaskTexture(leftClip)
+    local leftProg = sweepFrame:CreateMaskTexture()
+    leftProg:SetTexture(maskPath, "CLAMP", "CLAMP", "TRILINEAR")
+    leftProg:SetAllPoints()
+    leftProg:SetRotation(0)
+    leftRing:AddMaskTexture(leftProg)
+    gcdSweep.leftRing = leftRing
+    gcdSweep.leftProg = leftProg
+
+    sweepFrame:SetScript("OnUpdate", function()
+        if gcdSweepState.active then UpdateGCDSweep() end
     end)
 
     local lastX, lastY = 0, 0

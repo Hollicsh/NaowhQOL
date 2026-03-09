@@ -967,7 +967,9 @@ function ns.Widgets:CreateDropdown(parent, opts)
     end)
 
     menu:SetScript("OnShow", function()
-        menu:SetPropagateKeyboardInput(true)
+        if not InCombatLockdown() then
+            menu:SetPropagateKeyboardInput(true)
+        end
     end)
 
     btn:RegisterForClicks("AnyUp")
