@@ -662,11 +662,21 @@ local function ShowClassBuffModal(initialClassName, groupData, onSave, onDelete,
 
             if editState.checkType == "weaponEnchant" then
                 local displayName
-                if editState.talentCondition and editState.talentCondition.talentID then
+                local map = Categories and Categories.ENCHANT_ICON_MAP
+                local spellID = map and map[id]
+                if spellID then
+                    local info = C_Spell.GetSpellInfo(spellID)
+                    displayName = info and info.name
+                end
+                if not displayName and editState.talentCondition and editState.talentCondition.talentID then
                     local talentInfo = C_Spell.GetSpellInfo(editState.talentCondition.talentID)
                     if talentInfo then
                         displayName = talentInfo.name
                     end
+                end
+                if not displayName then
+                    local info = C_Spell.GetSpellInfo(id)
+                    displayName = info and info.name
                 end
                 idText:SetText(id .. " - " .. (displayName or (L["BWV2_ENCHANT_ID_LABEL"] or "Enchant ID")))
             else

@@ -56,6 +56,37 @@ local function GetCachedItemIcon(itemID)
     return textureCache[key]
 end
 
+local function GetSpellIcon(spellID)
+    local icon = C_Spell.GetSpellTexture(spellID)
+    if not icon then
+        local info = C_Spell.GetSpellInfo(spellID)
+        icon = info and (info.iconID or info.originalIconID)
+    end
+    return icon
+end
+
+local function GetCachedEnchantIcon(enchantID)
+    if not enchantID then return 463543 end
+    local key = "enchant_" .. enchantID
+    if textureCache[key] ~= nil then
+        return textureCache[key]
+    end
+    local icon = 463543
+    local map = Categories and Categories.ENCHANT_ICON_MAP
+    local spellID = map and map[enchantID]
+    if spellID then
+        icon = GetSpellIcon(spellID) or 463543
+    else
+        icon = GetSpellIcon(enchantID) or 463543
+    end
+    textureCache[key] = icon
+    return icon
+end
+
+function Scanner:GetEnchantIcon(enchantID)
+    return GetCachedEnchantIcon(enchantID)
+end
+
 local function FindFirstAvailableItem(itemIDString)
     if not itemIDString then return nil end
     for id in tostring(itemIDString):gmatch("%d+") do
@@ -358,20 +389,15 @@ function Scanner:ScanClassBuffs()
                 if #enchantIDs > 0 then
                     hasBuff = self:CheckWeaponEnchantIDs(enchantIDs, group.minRequired or 1)
                     local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                    foundIcon = nil
                     for _, eid in ipairs(enchantIDs) do
                         if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                            foundIcon = GetCachedSpellTexture(eid)
-                            if foundIcon then break end
+                            foundIcon = GetCachedEnchantIcon(eid)
+                            break
                         end
                     end
                     if not foundIcon then
-                        for _, eid in ipairs(enchantIDs) do
-                            foundIcon = GetCachedSpellTexture(eid)
-                            if foundIcon then break end
-                        end
+                        foundIcon = GetCachedEnchantIcon(enchantIDs[1])
                     end
-                    foundIcon = foundIcon or 463543
                 end
             end
 

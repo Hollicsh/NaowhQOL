@@ -283,6 +283,14 @@ Categories.EXCLUSIVE_GROUPS = {
 Categories.ROGUE_LETHAL_POISONS = {315584, 8679, 2823, 381664}
 Categories.ROGUE_NONLETHAL_POISONS = {5761, 381637, 3408}
 
+Categories.ENCHANT_ICON_MAP = {
+    [5400] = 318038,
+    [5401] = 33757,
+    [6498] = 382021,
+    [7143] = 433568,
+    [7144] = 433583,
+}
+
 function Categories:ApplyTalentMods(categoryKey, baseRequirements)
     local db = BWV2:GetDB()
     local mods = db.talentMods and db.talentMods[categoryKey]

@@ -794,6 +794,10 @@ ns:RegisterLocale("esES", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "Muestra un icono de ausencia siempre que un bono de banda que conoces no esté activo en ti.",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "Siempre monitorear mis bonos de clase",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "Monitorea continuamente tus bonos de clase (ej. venenos, imbuiciones de arma) y alerta cuando faltan.",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "Marco del Co-tanque",
     COTANK_TITLE = "MARCO DEL CO-TANQUE",

@@ -178,6 +178,8 @@ function BWV2:InitSavedVars()
             buffDropGlowUseClassColor = false,
             raidBuffAlwaysCheck = false,
             classBuffAlwaysCheck = false,
+            consumableAlwaysCheck = false,
+            inventoryAlwaysCheck = false,
         }
     end
 
@@ -246,6 +248,12 @@ function BWV2:InitSavedVars()
     end
     if NaowhQOL.buffWatcherV2.classBuffAlwaysCheck == nil then
         NaowhQOL.buffWatcherV2.classBuffAlwaysCheck = false
+    end
+    if NaowhQOL.buffWatcherV2.consumableAlwaysCheck == nil then
+        NaowhQOL.buffWatcherV2.consumableAlwaysCheck = false
+    end
+    if NaowhQOL.buffWatcherV2.inventoryAlwaysCheck == nil then
+        NaowhQOL.buffWatcherV2.inventoryAlwaysCheck = false
     end
     if NaowhQOL.buffWatcherV2.buffDropIconSize == nil then
         NaowhQOL.buffWatcherV2.buffDropIconSize = 32
@@ -713,7 +721,9 @@ function BWV2:CheckAlwaysOnClassBuffs()
             elseif group.checkType == "targeted" then
                 local spellIDs = group.spellIDs or {}
                 local threshold = self:GetThreshold()
-                if InCombatLockdown() then
+                if GetNumGroupMembers() == 0 then
+                    hasBuff = true -- solo: no one to buff, suppress alert
+                elseif InCombatLockdown() then
                     hasBuff = true -- aura data is tainted in combat; skip check
                 elseif #spellIDs > 0 then
                     local inRaid = IsInRaid()
@@ -765,7 +775,8 @@ function BWV2:CheckAlwaysOnClassBuffs()
                     local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
                     hasBuff = count >= needed
                 end
-                icon = 463543
+                local scanner = ns.BWV2Scanner
+                icon = (scanner and #(group.enchantIDs or {}) > 0 and scanner:GetEnchantIcon(group.enchantIDs[1])) or 463543
             end
 
             if not hasBuff then
@@ -778,6 +789,141 @@ function BWV2:CheckAlwaysOnClassBuffs()
                     spellIDs = group.spellIDs,
                     enchantIDs = group.enchantIDs,
                     minRequired = group.minRequired,
+                }
+            end
+        end
+    end
+
+    return (#missing > 0) and missing or nil
+end
+
+function BWV2:CheckAlwaysOnConsumables()
+    local db = self:GetDB()
+    if not db or not db.consumableAlwaysCheck then return nil end
+    if InCombatLockdown() then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
+
+    local missing = {}
+    local threshold = self:GetThreshold()
+
+    for _, buff in ipairs(Categories.CONSUMABLE_GROUPS) do
+        if not Categories:IsConsumableGroupEnabled(buff.key) then
+        elseif not Categories:IsCategoryEnabled(buff.key) then
+        else
+            local skip = false
+            if buff.excludeIfSpellKnown then
+                for _, spellID in ipairs(buff.excludeIfSpellKnown) do
+                    if ns.IsPlayerSpell(spellID) then
+                        skip = true
+                        break
+                    end
+                end
+            end
+
+            if not skip then
+                local spellIDs = {}
+                for _, id in ipairs(buff.spellIDs or {}) do
+                    spellIDs[#spellIDs + 1] = id
+                end
+                local userEntries = db.userEntries and db.userEntries["consumable_" .. buff.key]
+                if userEntries and userEntries.spellIDs then
+                    for _, id in ipairs(userEntries.spellIDs) do
+                        spellIDs[#spellIDs + 1] = id
+                    end
+                end
+
+                local hasBuff = false
+                local icon = buff.fallbackIcon
+
+                if buff.checkType == "icon" and buff.buffIconID then
+                    local idx = 1
+                    local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                    while auraData do
+                        if tonumber(auraData.icon) == buff.buffIconID then
+                            local remaining = (auraData.expirationTime or 0) - GetTime()
+                            if auraData.expirationTime == 0 or remaining > threshold then
+                                hasBuff = true
+                                icon = auraData.icon
+                                break
+                            end
+                        end
+                        idx = idx + 1
+                        auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                    end
+                elseif buff.checkType == "weaponEnchant" then
+                    local success = Categories:CheckWeaponBuffStatus()
+                    hasBuff = success
+                    icon = buff.fallbackIcon or 463543
+                elseif buff.itemIDs and #buff.itemIDs > 0 then
+                    hasBuff = Categories:HasInventoryItem(buff.itemIDs)
+                elseif #spellIDs > 0 then
+                    for _, spellID in ipairs(spellIDs) do
+                        local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                        if aura then
+                            local remaining = (aura.expirationTime or 0) - GetTime()
+                            if aura.expirationTime == 0 or remaining > threshold then
+                                hasBuff = true
+                                icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
+                                break
+                            end
+                        end
+                    end
+                    if not icon and spellIDs[1] then
+                        icon = C_Spell.GetSpellTexture(spellIDs[1]) or buff.fallbackIcon
+                    end
+                end
+
+                if not hasBuff then
+                    missing[#missing + 1] = {
+                        key = "consumableAlways_" .. buff.key,
+                        name = buff.name,
+                        icon = icon or buff.fallbackIcon,
+                        category = "consumable",
+                    }
+                end
+            end
+        end
+    end
+
+    return (#missing > 0) and missing or nil
+end
+
+function BWV2:CheckAlwaysOnInventory()
+    local db = self:GetDB()
+    if not db or not db.inventoryAlwaysCheck then return nil end
+    if InCombatLockdown() then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
+
+    local missing = {}
+
+    for _, group in ipairs(Categories.INVENTORY_GROUPS) do
+        if not Categories:IsInventoryGroupEnabled(group.key) then
+        elseif group.requireClass and not BWV2:HasClassInGroup(group.requireClass) then
+        else
+            local itemIDs = {}
+            local disabledDefaults = db.disabledDefaults and db.disabledDefaults["inventory_" .. group.key] or {}
+            for _, itemID in ipairs(group.itemIDs or {}) do
+                if not disabledDefaults[itemID] then
+                    itemIDs[#itemIDs + 1] = itemID
+                end
+            end
+            local userEntries = db.userEntries and db.userEntries["inventory_" .. group.key]
+            if userEntries and userEntries.itemIDs then
+                for _, itemID in ipairs(userEntries.itemIDs) do
+                    itemIDs[#itemIDs + 1] = itemID
+                end
+            end
+            if #itemIDs > 0 and Categories:GetInventoryItemCount(itemIDs) == 0 then
+                local _, _, _, _, _, _, _, _, _, icon = C_Item.GetItemInfo(itemIDs[1])
+                missing[#missing + 1] = {
+                    key = "inventoryAlways_" .. group.key,
+                    name = group.name,
+                    icon = icon or 134400,
+                    category = "inventory",
                 }
             end
         end

@@ -1103,13 +1103,52 @@ function ns:InitBuffWatcherV2()
             end,
         })
 
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_CONSUMABLE_ALWAYS_CHECK"] or "Always Monitor My Consumables",
+            db = db, key = "consumableAlwaysCheck",
+            x = bdaG:Col(2), y = bdaRow1bY,
+            onChange = function()
+                if not db.consumableAlwaysCheck then
+                    if ns.BWV2BuffDropAlert then
+                        ns.BWV2BuffDropAlert:DismissByPrefix("consumableAlways_")
+                    end
+                end
+            end,
+        })
+
         local classAlwaysDesc = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         classAlwaysDesc:SetPoint("TOPLEFT", bdaG:Col(1) + 30, bdaRow1bY - 22)
-        classAlwaysDesc:SetWidth(420)
+        classAlwaysDesc:SetWidth(200)
         classAlwaysDesc:SetJustifyH("LEFT")
         classAlwaysDesc:SetText(W.Colorize(L["BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC"] or "Continuously monitors your class-specific buffs (e.g. poisons, weapon imbues) and alerts when missing.", C.GRAY))
 
-        local bdaRow2Y = bdaRow1bY - 50
+        local consumableAlwaysDesc = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        consumableAlwaysDesc:SetPoint("TOPLEFT", bdaG:Col(2) + 30, bdaRow1bY - 22)
+        consumableAlwaysDesc:SetWidth(200)
+        consumableAlwaysDesc:SetJustifyH("LEFT")
+        consumableAlwaysDesc:SetText(W.Colorize(L["BWV2_CONSUMABLE_ALWAYS_CHECK_DESC"] or "Show a missing icon whenever a tracked consumable buff isn't active on you.", C.GRAY))
+
+        local bdaRow1cY = bdaRow1bY - 65
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_INVENTORY_ALWAYS_CHECK"] or "Always Monitor My Inventory",
+            db = db, key = "inventoryAlwaysCheck",
+            x = bdaG:Col(1), y = bdaRow1cY,
+            onChange = function()
+                if not db.inventoryAlwaysCheck then
+                    if ns.BWV2BuffDropAlert then
+                        ns.BWV2BuffDropAlert:DismissByPrefix("inventoryAlways_")
+                    end
+                end
+            end,
+        })
+
+        local inventoryAlwaysDesc = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        inventoryAlwaysDesc:SetPoint("TOPLEFT", bdaG:Col(1) + 30, bdaRow1cY - 22)
+        inventoryAlwaysDesc:SetWidth(200)
+        inventoryAlwaysDesc:SetJustifyH("LEFT")
+        inventoryAlwaysDesc:SetText(W.Colorize(L["BWV2_INVENTORY_ALWAYS_CHECK_DESC"] or "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).", C.GRAY))
+
+        local bdaRow2Y = bdaRow1cY - 65
         W:CreateCheckbox(bdaContent, {
             label = L["COMMON_UNLOCK"],
             db = db, key = "buffDropUnlock",

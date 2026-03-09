@@ -823,6 +823,10 @@ ns:RegisterLocale("ruRU", {
     BWV2_CLASSIC_DISPLAY = "Классический вид",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "Всегда отслеживать мои баффы класса",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "Непрерывно отслеживает баффы класса (напр. яды, зачарования оружия) и предупреждает при их отсутствии.",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "Фрейм совместного танка",
     COTANK_TITLE = "СОВМЕСТНЫЙ ТАНК",

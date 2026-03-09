@@ -800,6 +800,10 @@ ns:RegisterLocale("zhCN", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "当你知道的团队增益未在你身上激活时，显示缺少图标。",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "始终监控我的职业增益",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "持续监控你的职业特定增益（如毒药、武器附魔）并在缺失时提醒。",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     COTANK_TITLE = "副坦框架",
     COTANK_SUBTITLE = "在团队中显示另一名坦克的血量",

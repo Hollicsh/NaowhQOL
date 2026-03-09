@@ -794,6 +794,10 @@ ns:RegisterLocale("zhTW", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "當您知道的團隊增益未在您身上啟用時，顯示缺少圖示。",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "始終監控我的職業增益",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "持續監控您的職業特定增益（如毒藥、武器附魔）並在缺失時提醒。",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "副坦框架",
     COTANK_TITLE = "副坦框架",

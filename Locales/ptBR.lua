@@ -794,6 +794,10 @@ ns:RegisterLocale("ptBR", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "Mostra um ícone de ausência sempre que um buff de reide que você conhece não estiver ativo em você.",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "Sempre monitorar meus buffs de classe",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "Monitora continuamente seus buffs de classe (ex. venenos, encantamentos de arma) e alerta quando ausentes.",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "Frame Co-Tanque",
     COTANK_TITLE = "Frame Co-Tanque",

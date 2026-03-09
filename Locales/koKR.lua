@@ -794,6 +794,10 @@ ns:RegisterLocale("koKR", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "알고 있는 공격대 버프가 활성화되지 않은 경우 누락 아이콘을 표시합니다.",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "내 직업 버프 항상 모니터링",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "직업별 버프(예: 독, 무기 부여)를 지속적으로 모니터링하고 누락 시 알림을 표시합니다.",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "공탱크 프레임",
     COTANK_TITLE = "공탱크 프레임",

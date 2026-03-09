@@ -794,6 +794,10 @@ ns:RegisterLocale("deDE", {
     BWV2_RAID_BUFF_ALWAYS_CHECK_DESC = "Zeigt ein fehlendes Symbol an, wenn ein dir bekannter Schlachtzugsbuff nicht auf dir aktiv ist.",
     BWV2_CLASS_BUFF_ALWAYS_CHECK = "Meine Klassenbuffs immer überwachen",
     BWV2_CLASS_BUFF_ALWAYS_CHECK_DESC = "Überwacht kontinuierlich deine klassenspezifischen Buffs (z.B. Gifte, Waffenverzauberungen) und warnt bei Fehlen.",
+    BWV2_CONSUMABLE_ALWAYS_CHECK = "Always Monitor My Consumables",
+    BWV2_CONSUMABLE_ALWAYS_CHECK_DESC = "Alerts when a tracked consumable buff isn't active.",
+    BWV2_INVENTORY_ALWAYS_CHECK = "Always Monitor My Inventory",
+    BWV2_INVENTORY_ALWAYS_CHECK_DESC = "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).",
 
     SIDEBAR_TAB_COTANK = "Ko-Tank-Rahmen",
     COTANK_TITLE = "KO-TANK-RAHMEN",
