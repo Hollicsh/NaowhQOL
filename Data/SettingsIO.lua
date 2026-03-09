@@ -904,3 +904,96 @@ NaowhQOL_API = {
         return C_AddOns.GetAddOnMetadata("NaowhQOL", "Version") or "unknown"
     end,
 }
+
+-- WagoUI Pack Integration API
+-- https://forum.wago.io/t/ui-pack-implementation-guide
+-- IMPORTANT: These functions use C_EncodingUtil (CBOR + Deflate + Base64) which is a
+-- SEPARATE encoding from the existing NaowhQOL_API.Import / Export format.
+-- Existing user import strings remain fully compatible and are unaffected.
+
+---@param profileKey string
+---@return string|nil
+function NaowhQOL_API:ExportProfile(profileKey)
+    if not ns.db or not ns.db.sv then return nil end
+    local profileData = ns.db.sv.profiles and ns.db.sv.profiles[profileKey]
+    if not profileData then return nil end
+    local serialized = C_EncodingUtil.SerializeCBOR(profileData)
+    local compressed = C_EncodingUtil.CompressString(serialized, Enum.CompressionMethod.Deflate,
+        Enum.CompressionLevel.OptimizeForSize)
+    return C_EncodingUtil.EncodeBase64(compressed)
+end
+
+---@param profileString string
+---@param profileKey string
+function NaowhQOL_API:ImportProfile(profileString, profileKey)
+    if not ns.db or not ns.db.sv then return end
+    local decoded = C_EncodingUtil.DecodeBase64(profileString)
+    if not decoded then return end
+    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
+    if not decompressed then return end
+    local deserialized = C_EncodingUtil.DeserializeCBOR(decompressed)
+    if type(deserialized) ~= "table" then return end
+
+    ns.db.sv.profiles = ns.db.sv.profiles or {}
+    ns.db.sv.profiles[profileKey] = deserialized
+
+    if ns.db.global then
+        ns.db.global.savedProfiles = ns.db.global.savedProfiles or {}
+        ns.db.global.savedProfiles[profileKey] = true
+    end
+
+    -- Switch to the imported profile. Per WagoUI spec, do NOT call ReloadUI here.
+    ns.db:SetProfile(profileKey)
+    NaowhQOL = ns.db.profile
+    if ns.SettingsIO then ns.SettingsIO:TriggerRefreshAll() end
+end
+
+---@param profileString string
+---@return table|nil
+function NaowhQOL_API:DecodeProfileString(profileString)
+    local decoded = C_EncodingUtil.DecodeBase64(profileString)
+    if not decoded then return nil end
+    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
+    if not decompressed then return nil end
+    return C_EncodingUtil.DeserializeCBOR(decompressed)
+end
+
+---@param profileKey string
+function NaowhQOL_API:SetProfile(profileKey)
+    if not ns.db then return end
+    ns.db:SetProfile(profileKey)
+    NaowhQOL = ns.db.profile
+    if ns.SettingsIO then ns.SettingsIO:TriggerRefreshAll() end
+end
+
+---@return table<string, boolean>
+function NaowhQOL_API:GetProfileKeys()
+    local result = {}
+    if not ns.db then
+        result["Default"] = true
+        return result
+    end
+    for _, name in ipairs(ns.SettingsIO:GetProfileList()) do
+        result[name] = true
+    end
+    return result
+end
+
+---@return string
+function NaowhQOL_API:GetCurrentProfileKey()
+    if not ns.db then return "Default" end
+    return ns.db:GetCurrentProfile()
+end
+
+function NaowhQOL_API:OpenConfig()
+    local mainFrame = ns.MainFrame or _G["NaowhQOL_MainFrame"]
+    if mainFrame and not mainFrame:IsShown() then
+        mainFrame:Show()
+        if mainFrame.ResetContent then mainFrame:ResetContent() end
+    end
+end
+
+function NaowhQOL_API:CloseConfig()
+    local mainFrame = ns.MainFrame or _G["NaowhQOL_MainFrame"]
+    if mainFrame then mainFrame:Hide() end
+end
