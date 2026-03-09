@@ -374,7 +374,9 @@ local function CreateRing()
     gcdCooldown:SetDrawEdge(false)
     gcdCooldown:SetHideCountdownNumbers(true)
     gcdCooldown:SetReverse(true)
-    gcdCooldown:SetSwipeTexture(ASSET_PATH .. shape)
+    local swipeTex = gcdCooldown:CreateTexture(nil, "ARTWORK")
+    SetupTexture(swipeTex, shape)
+    gcdCooldown:SetSwipeTexture(swipeTex)
     if gcdCooldown.SetDrawBling then gcdCooldown:SetDrawBling(false) end
     if gcdCooldown.SetUseCircularEdge then gcdCooldown:SetUseCircularEdge(true) end
     gcdCooldown:SetFrameLevel(container:GetFrameLevel() + 5)
@@ -387,13 +389,7 @@ local function CreateRing()
     end)
 
     local lastX, lastY = 0, 0
-    local cursorAcc = 0
-    local CURSOR_THROTTLE = 0.0167
     container:SetScript("OnUpdate", function(self, elapsed)
-        cursorAcc = cursorAcc + elapsed
-        if cursorAcc < CURSOR_THROTTLE then return end
-        cursorAcc = 0
-
         if not ShouldBeVisible() then return end
 
         local x, y = GetCursorPosition()

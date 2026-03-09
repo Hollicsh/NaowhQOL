@@ -357,7 +357,21 @@ function Scanner:ScanClassBuffs()
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
                     hasBuff = self:CheckWeaponEnchantIDs(enchantIDs, group.minRequired or 1)
-                    foundIcon = 463543
+                    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
+                    foundIcon = nil
+                    for _, eid in ipairs(enchantIDs) do
+                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                            foundIcon = GetCachedSpellTexture(eid)
+                            if foundIcon then break end
+                        end
+                    end
+                    if not foundIcon then
+                        for _, eid in ipairs(enchantIDs) do
+                            foundIcon = GetCachedSpellTexture(eid)
+                            if foundIcon then break end
+                        end
+                    end
+                    foundIcon = foundIcon or 463543
                 end
             end
 
