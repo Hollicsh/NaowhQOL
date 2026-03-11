@@ -51,13 +51,6 @@ Categories.CLASS_ORDER = {
 Categories.DEFAULT_CLASS_BUFFS = {
     PALADIN = {
         {
-            key = "devotionAura",
-            name = "Devotion Aura",
-            checkType = "self",
-            spellIDs = {465},
-            specFilter = {},
-        },
-        {
             key = "riteOfAdjuration",
             name = "Rite of Adjuration",
             checkType = "weaponEnchant",
