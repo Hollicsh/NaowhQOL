@@ -800,6 +800,7 @@ end
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGOUT")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:SetScript("OnEvent", function(self, event, name)
     if event == "ADDON_LOADED" and name == addonName then
         InitializeDB()
@@ -807,6 +808,13 @@ eventFrame:SetScript("OnEvent", function(self, event, name)
     elseif event == "PLAYER_LOGOUT" then
         NaowhQOL = {}
         NaowhQOL_Profiles = nil
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        C_Timer.After(0.5, function()
+            if ns.SettingsIO then
+                ns.SettingsIO:TriggerRefreshAll()
+            end
+        end)
     end
 end)
 

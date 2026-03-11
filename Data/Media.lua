@@ -48,9 +48,12 @@ function ns.Media.ResolveFont(nameOrPath)
 
     if not LSM then LSM = LibStub and LibStub("LibSharedMedia-3.0", true) end
 
-    if LSM and not nameOrPath:find("\\") and not nameOrPath:find("/") then
-        local path = LSM:Fetch("font", nameOrPath)
-        if path then return path end
+    if not nameOrPath:find("\\") and not nameOrPath:find("/") then
+        if LSM then
+            local path = LSM:Fetch("font", nameOrPath)
+            if path then return path end
+        end
+        return FALLBACK_FONT_PATH
     end
 
     return nameOrPath
