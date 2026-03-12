@@ -227,12 +227,6 @@ local function ConfigureClickAction(cell, data, cellType)
                 cell:SetAttribute("spell", data.spellID)
                 cell:SetAttribute("unit", "player")
             end
-        elseif cellType == "presence" and data.spellID then
-            if ns.IsPlayerSpell(data.spellID) then
-                cell:SetAttribute("type", "spell")
-                cell:SetAttribute("spell", data.spellID)
-                cell:SetAttribute("unit", "player")
-            end
         end
     end)
 end
@@ -460,13 +454,6 @@ local function ConfigureCell(cell, data, cellType)
             text:SetText(L["COMMON_MISSING"])
             text:SetTextColor(unpack(FAIL_TEXT_COLOR))
         end
-    elseif cellType == "presence" then
-        if data.pass then
-            text:SetText("")
-        else
-            text:SetText(L["COMMON_MISSING"])
-            text:SetTextColor(unpack(FAIL_TEXT_COLOR))
-        end
     end
 
     cell:SetScript("OnEnter", function(self)
@@ -590,7 +577,6 @@ function ReportCard:Update()
         end
 
         AddFailing(results.raidBuffs, "raid")
-        AddFailing(results.presenceBuffs, "presence")
         AddFailing(results.consumables, "consumable")
         AddFailing(results.inventory, "inventory")
         AddFailing(results.classBuffs, "classBuff")
@@ -646,15 +632,6 @@ function ReportCard:Update()
             yOffset = yOffset - HEADER_HEIGHT
 
             local row, rowWidth = CreateIconRow(content, results.raidBuffs, "raid", yOffset, self.activeCells, self.activeRows)
-            maxWidth = math.max(maxWidth, rowWidth)
-            yOffset = yOffset - rowHeight - SECTION_SPACING
-        end
-
-        if results.presenceBuffs and #results.presenceBuffs > 0 then
-            CreateSectionHeader(content, L["BWV2_SECTION_PRESENCE"], yOffset, self.activeHeaders)
-            yOffset = yOffset - HEADER_HEIGHT
-
-            local row, rowWidth = CreateIconRow(content, results.presenceBuffs, "presence", yOffset, self.activeCells, self.activeRows)
             maxWidth = math.max(maxWidth, rowWidth)
             yOffset = yOffset - rowHeight - SECTION_SPACING
         end
@@ -765,7 +742,6 @@ function ReportCard:ShowPreview()
             { key = "_preview_intellect", name = "Arcane Intellect", icon = 135932, pass = true, covered = 5, total = 5 },
             { key = "_preview_stamina", name = "Power Word: Fortitude", icon = 135987, pass = false, covered = 3, total = 5 },
         },
-        presenceBuffs = {},
         consumables = {
             { key = "_preview_flask", name = "Flask", icon = 134830, pass = true },
             { key = "_preview_food", name = "Food", icon = 133565, pass = false, remaining = 0 },

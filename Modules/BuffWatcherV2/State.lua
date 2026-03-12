@@ -17,7 +17,6 @@ BWV2.classBuffInstanceIDs = {}
 
 BWV2.scanResults = {
     raidBuffs = {},
-    presenceBuffs = {},
     consumables = {},
     inventory = {},
     classBuffs = {},
@@ -31,12 +30,10 @@ function BWV2:ResetState()
         self.scanResults = {}
     end
     self.scanResults.raidBuffs = self.scanResults.raidBuffs or {}
-    self.scanResults.presenceBuffs = self.scanResults.presenceBuffs or {}
     self.scanResults.consumables = self.scanResults.consumables or {}
     self.scanResults.inventory = self.scanResults.inventory or {}
     self.scanResults.classBuffs = self.scanResults.classBuffs or {}
     wipe(self.scanResults.raidBuffs)
-    wipe(self.scanResults.presenceBuffs)
     wipe(self.scanResults.consumables)
     wipe(self.scanResults.inventory)
     wipe(self.scanResults.classBuffs)

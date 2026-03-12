@@ -207,58 +207,6 @@ function Scanner:ScanRaidBuffs()
     return missing
 end
 
-function Scanner:ScanPresenceBuffs()
-    local missing = {}
-
-    wipe(BWV2.scanResults.presenceBuffs)
-
-    for _, buff in ipairs(Categories.PRESENCE or {}) do
-        local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
-
-        if not Categories:IsCategoryEnabled(buff.key) then
-        elseif primaryID and Categories:IsDefaultDisabled("presenceBuffs", primaryID) then
-        elseif not BWV2:HasClassInGroup(buff.class) then
-        else
-            local found = false
-            local spellIDs = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
-            local foundIcon = nil
-
-            for unit, data in pairs(BWV2.raidResults) do
-                for _, spellID in ipairs(spellIDs) do
-                    if data.buffs[spellID] then
-                        found = true
-                        foundIcon = data.buffs[spellID].icon or GetCachedSpellTexture(spellID)
-                        break
-                    end
-                end
-                if found then break end
-            end
-
-            if not foundIcon then
-                foundIcon = GetCachedSpellTexture(primaryID)
-            end
-
-            BWV2.scanResults.presenceBuffs[#BWV2.scanResults.presenceBuffs + 1] = {
-                key = buff.key,
-                name = buff.name,
-                spellID = primaryID,
-                icon = foundIcon,
-                pass = found,
-                class = buff.class,
-            }
-
-            if not found then
-                missing[buff.key] = {
-                    name = buff.name,
-                    class = buff.class,
-                }
-            end
-        end
-    end
-
-    return missing
-end
-
 function Scanner:CheckSelfBuffSpells(spellIDs, minRequired)
     local playerBuffs = self:GetPlayerBuffs()
 
@@ -643,11 +591,6 @@ function Scanner:RunCategoryScans()
 
     local raidMissing = self:ScanRaidBuffs()
     for key, data in pairs(raidMissing) do
-        allMissing[key] = data
-    end
-
-    local presenceMissing = self:ScanPresenceBuffs()
-    for key, data in pairs(presenceMissing) do
         allMissing[key] = data
     end
 

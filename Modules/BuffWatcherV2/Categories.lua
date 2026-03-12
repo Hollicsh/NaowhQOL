@@ -158,27 +158,6 @@ Categories.DEFAULT_CLASS_BUFFS = {
     },
 }
 
-Categories.PRESENCE = {
-    {
-        spellID = {381637, 5761},
-        key = "atrophicNumbingPoison",
-        name = "Atrophic/Numbing Poison",
-        class = "ROGUE",
-    },
-    {
-        spellID = 465,
-        key = "devotionAura",
-        name = "Devotion Aura",
-        class = "PALADIN",
-    },
-    {
-        spellID = 20707,
-        key = "soulstone",
-        name = "Soulstone",
-        class = "WARLOCK",
-    },
-}
-
 Categories.CONSUMABLE_GROUPS = {
     {
         key = "flask",
@@ -339,7 +318,7 @@ function Categories:GetSpellIDs(categoryKey)
     local userEntries = db.userEntries and db.userEntries[categoryKey]
     local userSpellIDs = userEntries and userEntries.spellIDs or {}
 
-    local allCategories = {self.RAID, self.PRESENCE, self.TARGETED, self.SELF, self.CONSUMABLE_GROUPS}
+    local allCategories = {self.RAID, self.TARGETED, self.SELF, self.CONSUMABLE_GROUPS}
     for _, catList in ipairs(allCategories) do
         if catList then
             for _, buff in ipairs(catList) do
