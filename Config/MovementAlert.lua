@@ -218,6 +218,10 @@ function ns:InitMovementAlert()
                         for _, spellId in ipairs(value) do
                             if not seen[spellId] then
                                 seen[spellId] = true
+                                local defaultText = ns.BUFF_ACTIVE_SPELLS and ns.BUFF_ACTIVE_SPELLS[spellId]
+                                if defaultText and not db.spellOverrides[spellId] then
+                                    db.spellOverrides[spellId] = { customText = defaultText }
+                                end
                                 table.insert(spells, { spellId = spellId, isDefault = true })
                             end
                         end

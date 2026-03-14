@@ -30,20 +30,34 @@ local MOVEMENT_ABILITIES = {
     ROGUE = {[259] = {36554, 2983}, [260] = {195457, 2983}, [261] = {36554, 2983}},
     SHAMAN = {[262] = {79206, 90328, 192063, 58875}, [263] = {90328, 192063, 58875}, [264] = {79206, 90328, 192063, 58875}},
     WARLOCK = {
-        [265] = {48020}, [266] = {48020}, [267] = {48020},
+        [265] = {48020, 111400}, [266] = {48020, 111400}, [267] = {48020, 111400},
         filter = {[385899] = {385899}},
     },
     WARRIOR = {[71] = {6544}, [72] = {6544}, [73] = {6544}},
 }
 
+local BUFF_ACTIVE_SPELLS = {
+    [111400] = "Burning Rush Active!",
+}
+
 local SPELL_ALIAS_GROUPS = {
-    {102401, 16979, 102417, 106898, 252216, 77761},
+    {102401, 16979, 102417, 252216},
+    {106898, 77761},
 }
 
 local SPELL_CATEGORY_DURATION = {
-    [102401] = 15, [16979] = 15, [102417] = 15, [106898] = 15, [252216] = 15, [77761] = 15,
+    [102401] = 15, [16979] = 15, [102417] = 15, [252216] = 15,
     [1850] = 18,
+    [106898] = 120, [77761] = 120,
 }
+
+local TALENT_CD_REDUCTIONS = {
+    { talent = 451041, trigger = 5217, spell = 109132, reduce = 4.5 },
+}
+
+local function GetEffectiveChargeDuration(spellId, fallback)
+    return fallback
+end
 
 local SPELL_ALIAS_MAP = {}
 do
@@ -365,7 +379,20 @@ local function GetPlayerMovementSpells()
                         if not isCharge and baseId then
                             isCharge, maxCh, rechDur = SafeGetChargeInfo(baseId)
                         end
+                        if isCharge then
+                            rechDur = GetEffectiveChargeDuration(displayId, rechDur)
+                        end
                         if spellInfo then
+                            local defaultCustom = BUFF_ACTIVE_SPELLS[displayId]
+                            if defaultCustom then
+                                table.insert(result, {
+                                    spellId = displayId,
+                                    spellName = spellInfo.name,
+                                    spellIcon = spellInfo.iconID,
+                                    customText = override and override.customText ~= "" and override.customText or defaultCustom,
+                                    checkType = "buffActive",
+                                })
+                            else
                             local rawBaseDur = SafeGetBaseDuration(displayId)
                             if rawBaseDur <= 0 and baseId then rawBaseDur = SafeGetBaseDuration(baseId) end
                             if not isCharge and rawBaseDur <= 0 and rechDur > 0 then rawBaseDur = rechDur end
@@ -382,6 +409,7 @@ local function GetPlayerMovementSpells()
                                 rechargeDuration = rechDur,
                                 baseDuration = isCharge and rechDur or rawBaseDur,
                             })
+                            end
                         end
                     end
                 end
@@ -522,11 +550,16 @@ local function CacheMovementSpells(fullReset)
         end
     end
 
+    local db = NaowhQOL and NaowhQOL.movementAlert
+    local overrides = db and db.spellOverrides or {}
+
     local classAbilities = MOVEMENT_ABILITIES[class]
     local specAbilities = classAbilities and specId and classAbilities[specId]
     if specAbilities then
         for _, spellId in ipairs(specAbilities) do
-            if not trackedSpellSet[spellId] then
+            local spellOverride = overrides[spellId]
+            if spellOverride and spellOverride.enabled == false then
+            elseif not trackedSpellSet[spellId] then
                 if C_Spell.GetOverrideSpell then
                     local oid = tonumber(tostring(C_Spell.GetOverrideSpell(spellId) or 0)) or 0
                     if oid > 0 and oid ~= spellId and trackedSpellSet[oid] then
@@ -549,7 +582,8 @@ local function CacheMovementSpells(fullReset)
             or (entry.baseSpellId and SPELL_ALIAS_MAP[entry.baseSpellId])
         if group then
             for _, aliasId in ipairs(group) do
-                if not trackedSpellSet[aliasId] then
+                local aliasOverride = overrides[aliasId]
+                if not trackedSpellSet[aliasId] and not (aliasOverride and aliasOverride.enabled == false) then
                     trackedSpellSet[aliasId] = entry.spellId
                 end
             end
@@ -861,7 +895,7 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
                 local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
                 if chOk and chargeInfo then
                     local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                    local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                    local chDur = GetEffectiveChargeDuration(spellEntry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
                     if chDur > 1.5 then
                         cdStart     = chStart
                         cdDuration  = chDur
@@ -951,6 +985,47 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
     return true
 end
 
+local function ShowBuffActiveSlot(index, spellEntry)
+    local db = NaowhQOL.movementAlert
+    if not db then return false end
+
+    local slot = GetDisplaySlot(index)
+    StyleSlot(slot, db)
+    local displayMode = db.displayMode or "text"
+    local spellName = spellEntry.customText or spellEntry.spellName or "Active!"
+    local spellIcon = spellEntry.spellIcon
+
+    slot.text:Hide()
+    slot.icon:Hide()
+    slot.bar:Hide()
+
+    if displayMode == "icon" and spellIcon then
+        slot.icon.tex:SetTexture(spellIcon)
+        slot.icon.cooldown:Clear()
+        slot.icon.cooldown:SetHideCountdownNumbers(true)
+        slot.icon:Show()
+    elseif displayMode == "bar" then
+        slot.bar:SetMinMaxValues(0, 1)
+        slot.bar:SetValue(1)
+        local barR, barG, barB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
+        slot.bar:SetStatusBarColor(barR, barG, barB)
+        slot.bar.text:SetText(spellName)
+        if db.barShowIcon ~= false and spellIcon then
+            slot.bar.icon:SetTexture(spellIcon)
+            slot.bar.icon:Show()
+        else
+            slot.bar.icon:Hide()
+        end
+        slot.bar:Show()
+    else
+        slot.text:SetText(spellName)
+        slot.text:Show()
+    end
+
+    slot:Show()
+    return true
+end
+
 CheckMovementCooldown = function()
     local db = NaowhQOL.movementAlert
     if not db then return end
@@ -979,6 +1054,14 @@ CheckMovementCooldown = function()
     local count = 0
 
     for _, entry in ipairs(cachedMovementSpells) do
+        if entry.checkType == "buffActive" then
+            local aura = C_UnitAuras.GetPlayerAuraBySpellID(entry.spellId)
+            if aura then
+                if ShowBuffActiveSlot(count + 1, entry) then
+                    count = count + 1
+                end
+            end
+        else
         local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, entry.spellId)
         if not cdOk then cdInfo = nil end
         if entry.baseSpellId then
@@ -1005,7 +1088,7 @@ CheckMovementCooldown = function()
                     local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
                     if chOk and chargeInfo then
                         local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                        local chDur = GetEffectiveChargeDuration(entry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
                         if chDur > 1.5 then
                             chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
                         end
@@ -1027,7 +1110,7 @@ CheckMovementCooldown = function()
                             currentCharges = tonumber(tostring(chargeInfo.currentCharges)) or 0
                         end
                         local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
+                        local chDur = GetEffectiveChargeDuration(entry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
                         if chDur > 1.5 then
                             chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
                         end
@@ -1092,6 +1175,7 @@ CheckMovementCooldown = function()
         else
             spellWasCast[entry.spellId] = nil
             spellCastTime[entry.spellId] = nil
+        end
         end
     end
 
@@ -1426,6 +1510,16 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         local _, _, spellId = ...
+        for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
+            if spellId == mod.trigger and ns.IsPlayerSpell(mod.talent) then
+                if chargeRechargeStart[mod.spell] then
+                    chargeRechargeStart[mod.spell] = chargeRechargeStart[mod.spell] - mod.reduce
+                end
+                if spellCastTime[mod.spell] then
+                    spellCastTime[mod.spell] = spellCastTime[mod.spell] - mod.reduce
+                end
+            end
+        end
         OnTrackedSpellCast(spellId)
         CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SENT" then
@@ -1457,5 +1551,6 @@ ns.MovementAlertDisplay = movementFrame
 ns.TimeSpiralDisplay = timeSpiralFrame
 ns.GatewayShardDisplay = gatewayFrame
 ns.MOVEMENT_ABILITIES = MOVEMENT_ABILITIES
+ns.BUFF_ACTIVE_SPELLS = BUFF_ACTIVE_SPELLS
 ns.RebuildMobilitySpellLookup = RebuildMobilitySpellLookup
 ns.CacheMovementSpells = CacheMovementSpells

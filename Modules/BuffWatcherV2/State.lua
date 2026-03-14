@@ -453,7 +453,7 @@ function BWV2:CheckBuffDrops()
                 end
             end
 
-            if not stillPresent and data.iconCheck then
+            if not stillPresent and data.iconCheck and not InCombatLockdown() then
                 local threshold = self:GetThreshold()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")

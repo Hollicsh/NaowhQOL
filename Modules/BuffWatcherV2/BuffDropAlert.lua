@@ -328,7 +328,7 @@ function BuffDropAlert:CheckRebuffs()
                 end
             end
 
-            if not isBack and snap.iconCheck then
+            if not isBack and snap.iconCheck and not InCombatLockdown() then
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
