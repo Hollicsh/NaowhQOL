@@ -1,5 +1,6 @@
-changelog: CHANGELOG.md
-changelog-type: markdown
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
 
 externals:
   Libs/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
@@ -10,3 +11,6 @@ externals:
   Libs/LibRangeCheck-3.0: https://github.com/WeakAuras/LibRangeCheck-3.0/LibRangeCheck-3.0
   Libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
   Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
+
+embedded-libraries:
+  - libeditmodedrawer
