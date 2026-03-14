@@ -97,7 +97,9 @@ local function RebuildMobilitySpellLookup()
         for key, value in pairs(classData) do
             if type(key) == "number" and type(value) == "table" then
                 for _, spellId in ipairs(value) do
-                    allMobilitySpells[spellId] = true
+                    if not BUFF_ACTIVE_SPELLS[spellId] then
+                        allMobilitySpells[spellId] = true
+                    end
                 end
             end
         end
@@ -105,7 +107,7 @@ local function RebuildMobilitySpellLookup()
     local db = NaowhQOL and NaowhQOL.movementAlert
     if db and db.spellOverrides then
         for spellId, override in pairs(db.spellOverrides) do
-            if override.enabled ~= false then
+            if override.enabled ~= false and not BUFF_ACTIVE_SPELLS[spellId] then
                 allMobilitySpells[spellId] = true
             end
         end
@@ -1316,12 +1318,14 @@ UpdateEventRegistration = function()
         loader:RegisterEvent("SPELL_UPDATE_COOLDOWN")
         loader:RegisterEvent("SPELL_UPDATE_CHARGES")
         loader:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+        loader:RegisterUnitEvent("UNIT_AURA", "player")
         movementEventsRegistered = true
     elseif not db.enabled and movementEventsRegistered then
         loader:UnregisterEvent("SPELL_UPDATE_USABLE")
         loader:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
         loader:UnregisterEvent("SPELL_UPDATE_CHARGES")
         loader:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+        loader:UnregisterEvent("UNIT_AURA")
         movementEventsRegistered = false
         CancelMovementCountdown()
     end
@@ -1505,7 +1509,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CacheMovementSpells()
         CheckMovementCooldown()
         CheckGatewayUsable()
-    elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" then
+    elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" or event == "UNIT_AURA" then
         UpdateCachedCharges()
         CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then

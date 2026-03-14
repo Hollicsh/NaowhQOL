@@ -116,6 +116,7 @@ local STEALTH_REMINDER_DEFAULTS = {
     stancePoint = "CENTER", stanceX = 0, stanceY = 100, stanceWidth = 200, stanceHeight = 40,
     stanceCombatOnly = false, stanceDisableWhenRested = false, stanceInstanceOnly = false,
     stanceSoundEnabled = false, stanceSound = "Raid Warning", stanceSoundInterval = 3,
+    groupOnly = false,
 }
 
 local MOVEMENT_ALERT_DEFAULTS = {
@@ -227,6 +228,7 @@ local MOUSE_RING_DEFAULTS = {
     meleeRecolor = false,
     meleeRecolorBorder = true, meleeRecolorRing = false,
     meleeSoundEnabled = false, meleeSoundID = "Raid Warning", meleeSoundInterval = 3,
+    hideWhenUnfocused = false,
 }
 
 local CREZ_DEFAULTS = {
@@ -295,6 +297,7 @@ local aceDBDefaults = {
 
         general = {
             globalFont = NAOWH_FONT,
+            disableLoginMessage = false,
         },
 
         combatTimer = COMBAT_TIMER_DEFAULTS,

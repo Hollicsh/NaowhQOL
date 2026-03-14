@@ -87,6 +87,11 @@ function stealthFrame:UpdateDisplay()
         return
     end
 
+    if db.groupOnly and GetNumGroupMembers() == 0 and not db.unlock then
+        stealthFrame:Hide()
+        return
+    end
+
     if inCombat and not db.unlock then
         stealthFrame:Hide()
         return
@@ -306,6 +311,7 @@ loader:RegisterEvent("PLAYER_REGEN_DISABLED")
 loader:RegisterEvent("PLAYER_REGEN_ENABLED")
 loader:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
 loader:RegisterEvent("PLAYER_UPDATE_RESTING")
+loader:RegisterEvent("GROUP_ROSTER_UPDATE")
 loader:RegisterEvent("PLAYER_LOGOUT")
 
 loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Stealth/Stance", function(self, event)

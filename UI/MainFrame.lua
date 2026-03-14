@@ -205,6 +205,7 @@ end
 local WelcomeFrame = CreateFrame("Frame")
 WelcomeFrame:RegisterEvent("PLAYER_LOGIN")
 WelcomeFrame:SetScript("OnEvent", function()
+    if NaowhQOL and NaowhQOL.general and NaowhQOL.general.disableLoginMessage then return end
     ns:Log("Loaded. Type |cff00ff00/nao|r to open settings.")
 end)
 

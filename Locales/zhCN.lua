@@ -518,6 +518,7 @@ ns:RegisterLocale("zhCN", {
     STEALTH_ENABLE_SOUND = "启用声音警报",
     STEALTH_REPEAT = "重复间隔 (秒)",
     STEALTH_STANCE_INSTANCE_ONLY = "仅在副本 / 团队副本",
+    STEALTH_GROUP_ONLY = "仅组队显示（单人时隐藏）",
 
     CREZ_SUBTITLE = "战斗复活计时与死亡警报",
     CREZ_ENABLE_TIMER = "启用战复计时器",
@@ -573,6 +574,7 @@ ns:RegisterLocale("zhCN", {
     MOUSE_ENABLE = "启用鼠标环",
     MOUSE_VISIBLE_OOC = "脱战可见",
     MOUSE_HIDE_ON_CLICK = "右键点击时隐藏",
+    MOUSE_HIDE_UNFOCUSED = "AFK时隐藏",
     MOUSE_SECTION_APPEARANCE = "外观",
     MOUSE_SHAPE = "环形状",
     MOUSE_SHAPE_CIRCLE = "圆环",
@@ -997,4 +999,6 @@ ns:RegisterLocale("zhCN", {
     GENERAL_SEARCH_DESC = "输入模块名称或设置项以快速查找并导航。",
     GENERAL_SEARCH_PLACEHOLDER = "搜索模块和设置...",
     GENERAL_SEARCH_NO_RESULTS = "未找到匹配的模块。",
+    GENERAL_SECTION_OPTIONS = "选项",
+    GENERAL_DISABLE_LOGIN_MSG = "禁用登录消息",
 })

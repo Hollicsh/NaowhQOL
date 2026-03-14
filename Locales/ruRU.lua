@@ -124,6 +124,8 @@ ns:RegisterLocale("ruRU", {
     GENERAL_SEARCH_DESC = "Введите название модуля или настройки, чтобы быстро найти и перейти к нему.",
     GENERAL_SEARCH_PLACEHOLDER = "Поиск модулей и настроек...",
     GENERAL_SEARCH_NO_RESULTS = "Подходящие модули не найдены.",
+    GENERAL_SECTION_OPTIONS = "ПАРАМЕТРЫ",
+    GENERAL_DISABLE_LOGIN_MSG = "Отключить сообщение при входе",
 
     BUFFTRACKER_TITLE = "ОТСЛЕЖИВАНИЕ БАФФОВ",
     BUFFTRACKER_SUBTITLE = "Отслеживание баффов, аур и стоек",
@@ -539,6 +541,7 @@ ns:RegisterLocale("ruRU", {
     STEALTH_ENABLE_SOUND = "Включить звуковое оповещение",
     STEALTH_REPEAT = "Интервал повторения (сек.)",
     STEALTH_STANCE_INSTANCE_ONLY = "Только в подземельях / рейдах",
+    STEALTH_GROUP_ONLY = "Только в группе (скрыть соло)",
 
     CREZ_SUBTITLE = "Таймер боевого воскрешения и оповещения о смертях",
     CREZ_ENABLE_TIMER = "Включить таймер боевого воскрешения",
@@ -594,6 +597,7 @@ ns:RegisterLocale("ruRU", {
     MOUSE_ENABLE = "Включить кольцо курсора",
     MOUSE_VISIBLE_OOC = "Видимо вне боя",
     MOUSE_HIDE_ON_CLICK = "Скрывать на ПКМ",
+    MOUSE_HIDE_UNFOCUSED = "Скрывать в режиме AFK",
     MOUSE_SECTION_APPEARANCE = "ВНЕШНИЙ ВИД",
     MOUSE_SHAPE = "Форма кольца",
     MOUSE_SHAPE_CIRCLE = "Круг",

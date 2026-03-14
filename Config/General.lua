@@ -429,7 +429,23 @@ function ns:InitGeneral()
         searchContent:SetHeight(60 + RESULT_HEIGHT * 4)
         searchWrap:RecalcHeight()
 
-        local sectionList = { fontWrap, lockWrap, searchWrap }
+        local optionsWrap, optionsContent = W:CreateCollapsibleSection(sections, {
+            text = L["GENERAL_SECTION_OPTIONS"],
+            startOpen = true,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        W:CreateCheckbox(optionsContent, {
+            label = L["GENERAL_DISABLE_LOGIN_MSG"],
+            db = db, key = "disableLoginMessage",
+            x = 10, y = -5,
+            template = "ChatConfigCheckButtonTemplate",
+        })
+
+        optionsContent:SetHeight(40)
+        optionsWrap:RecalcHeight()
+
+        local sectionList = { fontWrap, lockWrap, searchWrap, optionsWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(sectionList) do

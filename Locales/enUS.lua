@@ -124,6 +124,8 @@ ns:RegisterLocale("enUS", {
     GENERAL_SEARCH_DESC = "Type a module name or setting to quickly find and navigate to it.",
     GENERAL_SEARCH_PLACEHOLDER = "Search modules & settings...",
     GENERAL_SEARCH_NO_RESULTS = "No matching modules found.",
+    GENERAL_SECTION_OPTIONS = "OPTIONS",
+    GENERAL_DISABLE_LOGIN_MSG = "Disable Login Message",
 
     BUFFTRACKER_TITLE = "BUFF TRACKER",
     BUFFTRACKER_SUBTITLE = "Track buffs, auras, stances",
@@ -539,6 +541,7 @@ ns:RegisterLocale("enUS", {
     STEALTH_ENABLE_SOUND = "Enable Sound Alert",
     STEALTH_REPEAT = "Repeat Interval (sec)",
     STEALTH_STANCE_INSTANCE_ONLY = "Dungeons / Raids Only",
+    STEALTH_GROUP_ONLY = "Group Only (Hide When Solo)",
 
     CREZ_SUBTITLE = "Combat resurrection timer and death alerts",
     CREZ_ENABLE_TIMER = "Enable Combat Rez Timer",
@@ -594,6 +597,7 @@ ns:RegisterLocale("enUS", {
     MOUSE_ENABLE = "Enable Mouse Ring",
     MOUSE_VISIBLE_OOC = "Visible Outside Combat",
     MOUSE_HIDE_ON_CLICK = "Hide on RMB",
+    MOUSE_HIDE_UNFOCUSED = "Hide When AFK",
     MOUSE_SECTION_APPEARANCE = "APPEARANCE",
     MOUSE_SHAPE = "Ring Shape",
     MOUSE_SHAPE_CIRCLE = "Circle",

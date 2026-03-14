@@ -44,7 +44,7 @@ function ns.InitMouseOptions()
         local sectionContainer = CreateFrame("Frame", nil, sc)
 
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        killArea:SetSize(460, 87)
+        killArea:SetSize(460, 111)
         killArea:SetPoint("TOPLEFT", 10, -75)
         killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -80,6 +80,17 @@ function ns.InitMouseOptions()
             end
         })
         hideOnClickCB:SetShown(db.enabled)
+
+        local hideUnfocusedCB = W:CreateCheckbox(killArea, {
+            label = L["MOUSE_HIDE_UNFOCUSED"],
+            db = db, key = "hideWhenUnfocused",
+            x = 15, y = -87,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                if display then display:RefreshVisibility() end
+            end
+        })
+        hideUnfocusedCB:SetShown(db.enabled)
 
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)

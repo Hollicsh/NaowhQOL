@@ -27,7 +27,7 @@ function ns:InitStealthReminder()
         local function refreshAll() refreshStealth(); refreshStance() end
 
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        killArea:SetSize(460, 88)
+        killArea:SetSize(460, 112)
         killArea:SetPoint("TOPLEFT", 10, -75)
         killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -56,6 +56,15 @@ function ns:InitStealthReminder()
             onChange = refreshStealth
         })
         restedCB:SetShown(db.enabled)
+
+        local groupOnlyCB = W:CreateCheckbox(killArea, {
+            label = L["STEALTH_GROUP_ONLY"],
+            db = db, key = "groupOnly",
+            x = 15, y = -86,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refreshStealth
+        })
+        groupOnlyCB:SetShown(db.enabled)
 
         local stealthSections = CreateFrame("Frame", nil, sc)
         stealthSections:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)

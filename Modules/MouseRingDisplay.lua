@@ -20,6 +20,7 @@ local state = {
     inCombat = false,
     inInstance = false,
     isRightMouseDown = false,
+    isAfk = false,
     isCasting = false,
     isChanneling = false,
     castStart = 0,
@@ -111,6 +112,7 @@ local UpdateMouseWatcher
 local function ShouldBeVisible()
     local db = GetDB()
     if not db.enabled then return false end
+    if db.hideWhenUnfocused and state.isAfk then return false end
     if db.hideOnMouseClick and state.isRightMouseDown then return false end
     if state.inCombat then return true end
     return db.showOutOfCombat ~= false
@@ -637,9 +639,11 @@ events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "player")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("PLAYER_LEAVING_WORLD")
+events:RegisterUnitEvent("PLAYER_FLAGS_CHANGED", "player")
 
 events:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
+        state.isAfk = UnitIsAFK("player") or false
         RefreshCombatState()
         state.isCasting = UnitCastingInfo("player") ~= nil
         state.isChanneling = UnitChannelInfo("player") ~= nil
@@ -662,6 +666,11 @@ events:SetScript("OnEvent", function(self, event, unit)
             UpdateRender()
             EvaluateMeleeTick()
         end)
+
+    elseif event == "PLAYER_FLAGS_CHANGED" then
+        local wasAfk = state.isAfk
+        state.isAfk = UnitIsAFK("player") or false
+        if wasAfk ~= state.isAfk then UpdateRender() end
 
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         RefreshCombatState()
