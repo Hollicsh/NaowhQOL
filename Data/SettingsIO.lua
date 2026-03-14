@@ -144,7 +144,8 @@ local TYPE_SCHEMAS = {
     },
     petTracker = {
         enabled = "boolean", unlock = "boolean",
-        showIcon = "boolean", onlyInInstance = "boolean",
+        showIcon = "boolean", onlyInInstance = "boolean", showPassive = "boolean",
+        lowHealthEnabled = "boolean", lowHealthThreshold = "number", lowHealthText = "string",
         point = "string", x = "number", y = "number",
         width = "number", height = "number",
         textSize = "number", iconSize = "number", font = "string",

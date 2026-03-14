@@ -13,6 +13,7 @@ local WARNING_NONE = 0
 local WARNING_MISSING = 1
 local WARNING_PASSIVE = 2
 local WARNING_WRONG_PET = 3
+local WARNING_LOW_HEALTH = 4
 
 local UNLOCK_BACKDROP = {
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -67,6 +68,14 @@ local function ShouldHavePet()
     end
 
     return false
+end
+
+local function IsPetLowHealth()
+    local maxHP = UnitHealthMax("pet")
+    if not maxHP or maxHP == 0 then return false end
+    local db = NaowhQOL.petTracker
+    local threshold = db and db.lowHealthThreshold or 25
+    return (UnitHealth("pet") / maxHP * 100) <= threshold
 end
 
 local function IsPetPassive()
@@ -156,7 +165,12 @@ local function EvaluateWarning()
         return WARNING_WRONG_PET
     end
 
+    if db.lowHealthEnabled and IsPetLowHealth() then
+        return WARNING_LOW_HEALTH
+    end
+
     if IsPetPassive() then
+        if not db.showPassive then return WARNING_NONE end
         return WARNING_PASSIVE
     end
 
@@ -241,6 +255,9 @@ function petFrame:UpdateDisplay()
     elseif warning == WARNING_PASSIVE then
         warningLabel:SetText(db.passiveText or L["PETTRACKER_PASSIVE_DEFAULT"])
         warningLabel:SetTextColor(r, g, b)
+    elseif warning == WARNING_LOW_HEALTH then
+        warningLabel:SetText(db.lowHealthText or L["PETTRACKER_LOW_HEALTH_DEFAULT"])
+        warningLabel:SetTextColor(r, g, b)
     elseif warning == WARNING_WRONG_PET then
         warningLabel:SetText(db.wrongPetText or L["PETTRACKER_WRONGPET_DEFAULT"])
         warningLabel:SetTextColor(r, g, b)
@@ -270,6 +287,7 @@ loader:RegisterEvent("PLAYER_UNGHOST")
 loader:RegisterEvent("SPELLS_CHANGED")
 loader:RegisterEvent("PLAYER_REGEN_DISABLED")
 loader:RegisterEvent("PLAYER_REGEN_ENABLED")
+loader:RegisterEvent("UNIT_HEALTH")
 
 loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("PetTracker", function(self, event, unit)
     local db = NaowhQOL.petTracker
@@ -335,6 +353,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("PetTracker", function(self, eve
         isInCombat = false
     elseif event == "UNIT_PET" then
         CancelDismountTimer()
+    elseif event == "UNIT_HEALTH" then
+        if unit ~= "pet" then return end
     end
 
     petFrame:UpdateDisplay()

@@ -420,7 +420,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "UNIT_INVENTORY_CHANGED" then
         local unit = ...
         if unit == "player" then
-            Core:OnPlayerAuraChanged()
+            C_Timer.After(0, function() Core:OnPlayerAuraChanged() end)
         end
 
     elseif event == "BAG_UPDATE_DELAYED" then

@@ -6,9 +6,28 @@ local W = ns.Widgets
 local C = ns.COLORS
 
 local ringShapes = {
-    { text = L["MOUSE_SHAPE_CIRCLE"], value = "ring.tga" },
-    { text = L["MOUSE_SHAPE_THIN"],   value = "thin_ring.tga" },
-    { text = L["MOUSE_SHAPE_THICK"],  value = "thick_ring.tga" },
+    { text = L["MOUSE_SHAPE_CIRCLE"],       value = "ring.tga" },
+    { text = L["MOUSE_SHAPE_THIN"],         value = "thin_ring.tga" },
+    { text = L["MOUSE_SHAPE_THICK"],        value = "thick_ring.tga" },
+    { text = L["MOUSE_SHAPE_CIRCLE2"],      value = "nq_circle.tga" },
+    { text = L["MOUSE_SHAPE_CIRCLE3"],      value = "nq_circle_hard.tga" },
+    { text = L["MOUSE_SHAPE_RING1"],        value = "nq_ring1.tga" },
+    { text = L["MOUSE_SHAPE_RING2"],        value = "nq_ring2.tga" },
+    { text = L["MOUSE_SHAPE_RING3"],        value = "nq_ring3.tga" },
+    { text = L["MOUSE_SHAPE_RING4"],        value = "nq_ring4.tga" },
+    { text = L["MOUSE_SHAPE_RING_SOFT1"],   value = "nq_ring_soft1.tga" },
+    { text = L["MOUSE_SHAPE_RING_SOFT2"],   value = "nq_ring_soft2.tga" },
+    { text = L["MOUSE_SHAPE_RING_SOFT3"],   value = "nq_ring_soft3.tga" },
+    { text = L["MOUSE_SHAPE_RING_SOFT4"],   value = "nq_ring_soft4.tga" },
+    { text = L["MOUSE_SHAPE_GLOW"],         value = "nq_glow.tga" },
+    { text = L["MOUSE_SHAPE_GLOW2"],        value = "nq_glow_large.tga" },
+    { text = L["MOUSE_SHAPE_GLOW_REVERSED"],value = "nq_glow_reversed.tga" },
+    { text = L["MOUSE_SHAPE_CROSS1"],       value = "nq_cross1.tga" },
+    { text = L["MOUSE_SHAPE_CROSS2"],       value = "nq_cross2.tga" },
+    { text = L["MOUSE_SHAPE_CROSS3"],       value = "nq_cross3.tga" },
+    { text = L["MOUSE_SHAPE_STAR"],         value = "nq_star.tga" },
+    { text = L["MOUSE_SHAPE_SWIRL"],        value = "nq_swirl.tga" },
+    { text = L["MOUSE_SHAPE_SPHERE"],       value = "nq_sphere.tga" },
 }
 
 local function GetDB()
@@ -94,7 +113,7 @@ function ns.InitMouseOptions()
 
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sectionContainer:SetHeight(900)
+        sectionContainer:SetHeight(1100)
 
         local RelayoutSections
 
@@ -310,6 +329,14 @@ function ns.InitMouseOptions()
         gcdContent:SetHeight(GG:Height(5))
         gcdWrap:RecalcHeight()
 
+    local trailShapes = {
+            { text = L["MOUSE_TRAIL_SHAPE_GLOW"],    value = "glow" },
+            { text = L["MOUSE_TRAIL_SHAPE_CIRCLE"],  value = "circle" },
+            { text = L["MOUSE_TRAIL_SHAPE_RING"],    value = "ring" },
+            { text = L["MOUSE_TRAIL_SHAPE_STAR"],    value = "star" },
+            { text = L["MOUSE_TRAIL_SHAPE_SPARKLE"], value = "sparkle" },
+        }
+
         local trailWrap, trailContent = W:CreateCollapsibleSection(sectionContainer, {
             text = L["MOUSE_SECTION_TRAIL"],
             startOpen = false,
@@ -340,19 +367,76 @@ function ns.InitMouseOptions()
             onChange = function() end
         })
 
-        W:CreateSlider(trailContent, {
-            label = L["MOUSE_TRAIL_DURATION"],
-            min = 10, max = 100, step = 5,
+        W:CreateDropdown(trailContent, {
+            label = L["MOUSE_TRAIL_SHAPE"],
+            db = db, key = "trailShape",
+            options = trailShapes,
             x = GT:Col(1), y = GT:Row(2),
+            width = 120,
             disableif = trailDisabled,
-            value = ((db.trailDuration or 0.6) - 0.1) / 0.4 * 100,
+            onChange = function()
+                if display then display:RefreshTrailTextures() end
+            end
+        })
+
+        W:CreateSlider(trailContent, {
+            label = L["MOUSE_TRAIL_SIZE"],
+            min = 8, max = 64, step = 2,
+            x = GT:Col(2), y = GT:Row(2),
+            disableif = trailDisabled,
+            value = db.trailSize or 24,
             onChange = function(val)
-                db.trailDuration = 0.1 + (val / 100) * 0.4
+                db.trailSize = val
                 DebouncedSave()
             end
         })
 
-        trailContent:SetHeight(GT:Height(2))
+        W:CreateSlider(trailContent, {
+            label = L["MOUSE_TRAIL_DURATION"],
+            min = 5, max = 100, step = 5,
+            x = GT:Col(1), y = GT:Row(3),
+            disableif = trailDisabled,
+            value = (db.trailDuration or 2.0) * 10,
+            onChange = function(val)
+                db.trailDuration = val * 0.1
+                DebouncedSave()
+            end
+        })
+
+        W:CreateSlider(trailContent, {
+            label = L["MOUSE_TRAIL_LENGTH"],
+            min = 5, max = 60, step = 1,
+            x = GT:Col(2), y = GT:Row(3),
+            disableif = trailDisabled,
+            value = db.trailLength or 20,
+            onChange = function(val)
+                db.trailLength = val
+                DebouncedSave()
+            end
+        })
+
+        W:CreateSlider(trailContent, {
+            label = L["MOUSE_TRAIL_BRIGHTNESS"],
+            min = 10, max = 100, step = 5,
+            x = GT:Col(1), y = GT:Row(4),
+            disableif = trailDisabled,
+            value = (db.trailBrightness or 0.8) * 100,
+            onChange = function(val)
+                db.trailBrightness = val / 100
+                DebouncedSave()
+            end
+        })
+
+        W:CreateCheckbox(trailContent, {
+            label = L["MOUSE_TRAIL_SPARKLE"],
+            db = db, key = "trailSparkle",
+            x = GT:Col(2), y = GT:Row(4) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            disableif = trailDisabled,
+            onChange = function() end
+        })
+
+        trailContent:SetHeight(GT:Height(4))
         trailWrap:RecalcHeight()
 
         local mlWrap, mlContent = W:CreateCollapsibleSection(sectionContainer, {
@@ -541,7 +625,99 @@ function ns.InitMouseOptions()
         mlContent:SetHeight(db.meleeRecolor and 330 or 35)
         mlWrap:RecalcHeight()
 
-        local allSections = { appWrap, gcdWrap, trailWrap, mlWrap }
+        local dotWrap, dotContent = W:CreateCollapsibleSection(sectionContainer, {
+            text = L["MOUSE_SECTION_DOT"],
+            startOpen = false,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        local GD = ns.Layout:New(2)
+        local function dotDisabled() return not db.dotEnabled end
+
+        W:CreateCheckbox(dotContent, {
+            label = L["MOUSE_DOT_ENABLE"],
+            db = db, key = "dotEnabled",
+            x = GD:Col(1), y = GD:Row(1) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                W:ApplyDisableStates(dotContent)
+                refresh()
+            end
+        })
+
+        W:CreateColorPicker(dotContent, {
+            label = L["MOUSE_DOT_COLOR"], db = db,
+            rKey = "dotR", gKey = "dotG", bKey = "dotB",
+            classColorKey = "dotUseClassColor",
+            x = GD:Col(2), y = GD:Row(1) - 10,
+            disableif = dotDisabled,
+            onChange = refresh,
+        })
+
+        W:CreateSlider(dotContent, {
+            label = L["MOUSE_DOT_SIZE"],
+            min = 2, max = 24, step = 1,
+            x = GD:Col(1), y = GD:Row(2),
+            disableif = dotDisabled,
+            value = db.dotSize or 6,
+            onChange = function(val)
+                db.dotSize = val
+                refresh()
+            end
+        })
+
+        dotContent:SetHeight(GD:Height(2))
+        dotWrap:RecalcHeight()
+
+        local fadeWrap, fadeContent = W:CreateCollapsibleSection(sectionContainer, {
+            text = L["MOUSE_SECTION_FADE"],
+            startOpen = false,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        local GF = ns.Layout:New(2)
+        local function fadeDisabled() return not db.fadeOnIdle end
+
+        W:CreateCheckbox(fadeContent, {
+            label = L["MOUSE_FADE_ENABLE"],
+            db = db, key = "fadeOnIdle",
+            x = GF:Col(1), y = GF:Row(1) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                W:ApplyDisableStates(fadeContent)
+                refresh()
+            end
+        })
+
+        W:CreateSlider(fadeContent, {
+            label = L["MOUSE_FADE_DELAY"],
+            min = 200, max = 5000, step = 100,
+            x = GF:Col(2), y = GF:Row(1),
+            disableif = fadeDisabled,
+            value = db.fadeIdleDelay or 2000,
+            onChange = function(val)
+                db.fadeIdleDelay = val
+                DebouncedSave()
+            end
+        })
+
+        W:CreateSlider(fadeContent, {
+            label = L["MOUSE_FADE_OPACITY"],
+            min = 0, max = 100, step = 5,
+            x = GF:Col(1), y = GF:Row(2),
+            isPercent = true,
+            disableif = fadeDisabled,
+            value = (db.fadeIdleOpacity or 0) * 100,
+            onChange = function(val)
+                db.fadeIdleOpacity = val / 100
+                DebouncedSave()
+            end
+        })
+
+        fadeContent:SetHeight(GF:Height(2))
+        fadeWrap:RecalcHeight()
+
+        local allSections = { appWrap, gcdWrap, trailWrap, mlWrap, dotWrap, fadeWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

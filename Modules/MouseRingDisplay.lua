@@ -5,7 +5,23 @@ local W = ns.Widgets
 local ASSET_PATH = "Interface\\AddOns\\NaowhQOL\\Assets\\"
 local RING_TEXEL = 0.5 / 256
 local TRAIL_TEXEL = 0.5 / 128
-local TRAIL_MAX = 20
+local TRAIL_MAX = 60
+local TRAIL_SHAPES = {
+    glow     = "trail_glow.tga",
+    circle   = "nq_circle.tga",
+    ring     = "nq_ring_soft1.tga",
+    star     = "nq_star.tga",
+    sparkle  = "sparkle.tga",
+}
+local SPARKLE_COUNT = 40
+local sparkleColors = {}
+for i = 1, SPARKLE_COUNT do
+    sparkleColors[i] = {
+        r = math.random(30, 90) / 100,
+        g = math.random(30, 90) / 100,
+        b = math.random(30, 90) / 100,
+    }
+end
 local GCD_SPELL = 61304
 local SWIPE_DELAY_DEFAULT = 0.08
 local floor, max = math.floor, math.max
@@ -35,6 +51,8 @@ local state = {
     castDelayTimer = nil,
     isOutOfMelee = false,
     meleeLastInRange = nil,
+    lastMoveTime = 0,
+    idleAlpha = 1,
 }
 
 local HPAL_ITEM_ID = 129055
@@ -50,7 +68,7 @@ local function HasAttackableTarget()
     return true
 end
 
-local container, ring, borderRing, readyRing
+local container, ring, borderRing, readyRing, centerDot
 local gcdSweep = {}
 local trailContainer, trailPoints = nil, {}
 
@@ -120,10 +138,13 @@ end
 
 local function GetOpacity()
     local db = GetDB()
+    local base
     if state.inCombat or state.inInstance then
-        return db.opacityInCombat or 1.0
+        base = db.opacityInCombat or 1.0
+    else
+        base = db.opacityOutOfCombat or 1.0
     end
-    return db.opacityOutOfCombat or 1.0
+    return base * state.idleAlpha
 end
 
 local function GetRingColor()
@@ -263,6 +284,19 @@ UpdateRender = function()
             trailContainer:Show()
         else
             trailContainer:Hide()
+        end
+    end
+
+    if centerDot then
+        if db.dotEnabled then
+            local ds = db.dotSize or 6
+            centerDot:SetSize(ds, ds)
+            local dr, dg, db2 = W.GetEffectiveColor(db, "dotR", "dotG", "dotB", "dotUseClassColor")
+            centerDot:SetVertexColor(dr, dg, db2, 1)
+            centerDot:SetAlpha(alpha)
+            centerDot:Show()
+        else
+            centerDot:Hide()
         end
     end
 end
@@ -483,6 +517,11 @@ local function CreateRing()
         if gcdSweepState.active then UpdateGCDSweep() end
     end)
 
+    centerDot = container:CreateTexture(nil, "OVERLAY")
+    centerDot:SetTexture([[Interface\Buttons\WHITE8x8]])
+    centerDot:SetPoint("CENTER", container, "CENTER", 0, 0)
+    centerDot:Hide()
+
     local lastX, lastY = 0, 0
     container:SetScript("OnUpdate", function(self, elapsed)
         if not ShouldBeVisible() then return end
@@ -493,12 +532,38 @@ local function CreateRing()
 
         if x ~= lastX or y ~= lastY then
             lastX, lastY = x, y
+            state.lastMoveTime = GetTime()
             self:ClearAllPoints()
             self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x, y)
+        end
+
+        local db = GetDB()
+        if db.fadeOnIdle then
+            local idleDelay = (db.fadeIdleDelay or 2000) / 1000
+            local elapsed2 = GetTime() - state.lastMoveTime
+            if elapsed2 > idleDelay then
+                local targetAlpha = db.fadeIdleOpacity or 0
+                local fadeDur = 0.5
+                local fadeElapsed = elapsed2 - idleDelay
+                state.idleAlpha = max(targetAlpha, 1 - (fadeElapsed / fadeDur) * (1 - targetAlpha))
+            else
+                state.idleAlpha = 1
+            end
+            local currentAlpha = GetOpacity()
+            self:SetAlpha(currentAlpha)
+            if trailContainer then trailContainer:SetAlpha(currentAlpha) end
+        else
+            state.idleAlpha = 1
         end
     end)
 
     UpdateRender()
+end
+
+local function GetTrailTexture()
+    local db = GetDB()
+    local key = db.trailShape or "glow"
+    return ASSET_PATH .. (TRAIL_SHAPES[key] or TRAIL_SHAPES.glow)
 end
 
 local function CreateTrail()
@@ -511,9 +576,10 @@ local function CreateTrail()
     trailContainer:SetSize(1, 1)
     trailContainer:Hide()
 
+    local texPath = GetTrailTexture()
     for i = 1, TRAIL_MAX do
         local tex = trailContainer:CreateTexture(nil, "BACKGROUND")
-        tex:SetTexture(ASSET_PATH .. "trail_glow.tga", "CLAMP", "CLAMP", "TRILINEAR")
+        tex:SetTexture(texPath, "CLAMP", "CLAMP", "TRILINEAR")
         tex:SetTexCoord(TRAIL_TEXEL, 1 - TRAIL_TEXEL, TRAIL_TEXEL, 1 - TRAIL_TEXEL)
         tex:SetBlendMode("ADD")
         tex:SetSize(24, 24)
@@ -542,10 +608,12 @@ local function CreateTrail()
             x, y = floor(x / scale + 0.5), floor(y / scale + 0.5)
 
             local dx, dy = x - lastX, y - lastY
+            local spacing = max(2, (db.trailSize or 24) * 0.1)
 
-            if dx * dx + dy * dy >= 4 then
+            if dx * dx + dy * dy >= spacing * spacing then
                 lastX, lastY = x, y
-                head = (head % TRAIL_MAX) + 1
+                local trailLen = db.trailLength or 20
+                head = (head % trailLen) + 1
                 local pt = trailPoints[head]
                 if not pt.active then
                     activeCount = activeCount + 1
@@ -558,6 +626,9 @@ local function CreateTrail()
             local duration = max(db.trailDuration or 0.6, 0.1)
             local tr, tg, tb = W.GetEffectiveColor(db, "trailR", "trailG", "trailB", "trailUseClassColor")
             local opacity = GetOpacity()
+            local baseSize = db.trailSize or 24
+            local useSparkle = db.trailSparkle
+            local brightness = db.trailBrightness or 0.8
 
             for i = 1, TRAIL_MAX do
                 local pt = trailPoints[i]
@@ -570,8 +641,13 @@ local function CreateTrail()
                     else
                         pt.tex:ClearAllPoints()
                         pt.tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pt.x, pt.y)
-                        pt.tex:SetVertexColor(tr, tg, tb, fade * opacity * 0.8)
-                        pt.tex:SetSize(24 * fade, 24 * fade)
+                        local cr, cg, cb = tr, tg, tb
+                        if useSparkle then
+                            local sc = sparkleColors[((i - 1) % SPARKLE_COUNT) + 1]
+                            cr, cg, cb = sc.r, sc.g, sc.b
+                        end
+                        pt.tex:SetVertexColor(cr, cg, cb, fade * opacity * brightness)
+                        pt.tex:SetSize(baseSize * fade, baseSize * fade)
                         pt.tex:Show()
                     end
                 end
@@ -643,7 +719,7 @@ events:RegisterUnitEvent("PLAYER_FLAGS_CHANGED", "player")
 
 events:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
-        state.isAfk = UnitIsAFK("player") or false
+        state.isAfk = (UnitIsAFK("player") == true)
         RefreshCombatState()
         state.isCasting = UnitCastingInfo("player") ~= nil
         state.isChanneling = UnitChannelInfo("player") ~= nil
@@ -651,6 +727,8 @@ events:SetScript("OnEvent", function(self, event, unit)
         state.castEnd = 0
         state.channelStart = 0
         state.channelEnd = 0
+        state.lastMoveTime = GetTime()
+        state.idleAlpha = 1
         CreateRing()
         CreateTrail()
         EvaluateHpalMode()
@@ -669,7 +747,7 @@ events:SetScript("OnEvent", function(self, event, unit)
 
     elseif event == "PLAYER_FLAGS_CHANGED" then
         local wasAfk = state.isAfk
-        state.isAfk = UnitIsAFK("player") or false
+        state.isAfk = (UnitIsAFK("player") == true)
         if wasAfk ~= state.isAfk then UpdateRender() end
 
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
@@ -816,6 +894,8 @@ function MouseRingDisplay:UpdateDisplay()
     if readyRing then SetupTexture(readyRing, shape) end
     if gcdCooldown then gcdCooldown:SetSwipeTexture(ASSET_PATH .. shape) end
 
+    self:RefreshTrailTextures()
+
     EvaluateHpalMode()
     CacheMeleeSpell()
     UpdateRender()
@@ -841,6 +921,18 @@ function MouseRingDisplay:UpdateShape(shape)
     if ring then SetupTexture(ring, shape) end
     if readyRing then SetupTexture(readyRing, shape) end
     if gcdCooldown then gcdCooldown:SetSwipeTexture(ASSET_PATH .. shape) end
+end
+
+function MouseRingDisplay:RefreshTrailTextures()
+    if not trailContainer then return end
+    local texPath = GetTrailTexture()
+    for i = 1, TRAIL_MAX do
+        local pt = trailPoints[i]
+        if pt and pt.tex then
+            pt.tex:SetTexture(texPath, "CLAMP", "CLAMP", "TRILINEAR")
+            pt.tex:SetTexCoord(TRAIL_TEXEL, 1 - TRAIL_TEXEL, TRAIL_TEXEL, 1 - TRAIL_TEXEL)
+        end
+    end
 end
 
 function MouseRingDisplay:RefreshGCD()

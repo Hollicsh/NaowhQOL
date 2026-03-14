@@ -92,7 +92,23 @@ function ns:InitPetTracker()
             onChange = refresh
         })
 
-        behaviorContent:SetHeight(115)
+        W:CreateCheckbox(behaviorContent, {
+            label = L["PETTRACKER_SHOW_PASSIVE"],
+            db = db, key = "showPassive",
+            x = 10, y = -105,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refresh
+        })
+
+        W:CreateCheckbox(behaviorContent, {
+            label = L["PETTRACKER_LOW_HEALTH_SHOW"],
+            db = db, key = "lowHealthEnabled",
+            x = 10, y = -130,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = refresh
+        })
+
+        behaviorContent:SetHeight(165)
         behaviorWrap:RecalcHeight()
 
         local appWrap, appContent = W:CreateCollapsibleSection(sectionContainer, {
@@ -217,8 +233,63 @@ function ns:InitPetTracker()
             refresh()
         end)
 
+        local lowHealthLbl = textContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        lowHealthLbl:SetPoint("TOPLEFT", 10, -115)
+        lowHealthLbl:SetText(L["PETTRACKER_LOW_HEALTH_LABEL"])
+
+        local lowHealthBox = CreateFrame("EditBox", nil, textContent, "BackdropTemplate")
+        lowHealthBox:SetSize(180, 24)
+        lowHealthBox:SetPoint("LEFT", lowHealthLbl, "RIGHT", 8, 0)
+        lowHealthBox:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]],
+            edgeFile = [[Interface\Buttons\WHITE8x8]], edgeSize = 1 })
+        lowHealthBox:SetBackdropColor(0, 0, 0, 1)
+        lowHealthBox:SetBackdropBorderColor(0, 0, 0, 1)
+        lowHealthBox:SetFontObject("GameFontHighlightSmall")
+        lowHealthBox:SetAutoFocus(false)
+        lowHealthBox:SetTextInsets(6, 6, 0, 0)
+        lowHealthBox:SetMaxLetters(30)
+        lowHealthBox:SetText(db.lowHealthText or L["PETTRACKER_LOW_HEALTH_DEFAULT"])
+        lowHealthBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+        lowHealthBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        lowHealthBox:SetScript("OnEditFocusLost", function(self)
+            local val = strtrim(self:GetText())
+            if val == "" then val = L["PETTRACKER_LOW_HEALTH_DEFAULT"]; self:SetText(val) end
+            db.lowHealthText = val
+            refresh()
+        end)
+
+        local hpThreshLbl = textContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        hpThreshLbl:SetPoint("TOPLEFT", 10, -150)
+        hpThreshLbl:SetText(L["PETTRACKER_LOW_HEALTH_THRESHOLD"])
+
+        local hpThreshBox = CreateFrame("EditBox", nil, textContent, "BackdropTemplate")
+        hpThreshBox:SetSize(45, 24)
+        hpThreshBox:SetPoint("LEFT", hpThreshLbl, "RIGHT", 8, 0)
+        hpThreshBox:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]],
+            edgeFile = [[Interface\Buttons\WHITE8x8]], edgeSize = 1 })
+        hpThreshBox:SetBackdropColor(0, 0, 0, 1)
+        hpThreshBox:SetBackdropBorderColor(0, 0, 0, 1)
+        hpThreshBox:SetFontObject("GameFontHighlightSmall")
+        hpThreshBox:SetAutoFocus(false)
+        hpThreshBox:SetTextInsets(6, 6, 0, 0)
+        hpThreshBox:SetMaxLetters(3)
+        hpThreshBox:SetNumeric(true)
+        hpThreshBox:SetText(tostring(db.lowHealthThreshold or 25))
+        hpThreshBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+        hpThreshBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        hpThreshBox:SetScript("OnEditFocusLost", function(self)
+            local val = math.max(1, math.min(100, tonumber(self:GetText()) or 25))
+            db.lowHealthThreshold = val
+            self:SetText(tostring(val))
+            refresh()
+        end)
+
+        local hpPctLbl = textContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        hpPctLbl:SetPoint("LEFT", hpThreshBox, "RIGHT", 4, 0)
+        hpPctLbl:SetText("%")
+
         local felguardLbl = textContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        felguardLbl:SetPoint("TOPLEFT", 10, -115)
+        felguardLbl:SetPoint("TOPLEFT", 10, -185)
         felguardLbl:SetText(L["PETTRACKER_FELGUARD_LABEL"])
 
         local felguardBox = CreateFrame("EditBox", nil, textContent, "BackdropTemplate")
@@ -241,7 +312,7 @@ function ns:InitPetTracker()
             refresh()
         end)
 
-        textContent:SetHeight(150)
+        textContent:SetHeight(225)
         textWrap:RecalcHeight()
 
         local allSections = { behaviorWrap, appWrap, textWrap }

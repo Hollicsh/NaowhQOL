@@ -872,6 +872,7 @@ function ns.Widgets:CreateDropdown(parent, opts)
     text:SetPoint("LEFT", 8, 0)
     text:SetPoint("RIGHT", -20, 0)
     text:SetJustifyH("LEFT")
+    text:SetWordWrap(false)
     text:SetTextColor(1, 1, 1, 1)
     btn.text = text
 
@@ -907,6 +908,7 @@ function ns.Widgets:CreateDropdown(parent, opts)
         itemText:SetPoint("LEFT", 8, 0)
         itemText:SetPoint("RIGHT", -8, 0)
         itemText:SetJustifyH("LEFT")
+        itemText:SetWordWrap(false)
         itemText:SetText(opt.text)
         itemText:SetTextColor(1, 1, 1, 1)
         item.text = itemText
