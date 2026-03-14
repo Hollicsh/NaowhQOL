@@ -1,18 +1,12 @@
 # Changelog
 
-## [20260314.01]
-
-### New Features
-
-**General Settings**
-- Added **"Disable Login Message"** option — hides the chat notification that appears every login / reload
-
-**Stealth / Stance Reminder**
-- Added **"Group Only"** option — hides the stealth reminder when you are playing solo; it will still appear when you are in a party or raid
-
-**Mouse Ring**
-- Added **"Hide When AFK"** option — hides the mouse ring while you are AFK, useful for OLED burn-in protection when used alongside a screen-darkening addon
+## [20260314.02]
 
 ### Fix
-**Movement Alert**
-- Fixed: Burning Rush triggering only in combat + triggering time spiral text
+**Buff Reminder**
+- Fixed: Shaman weapon embues showing missing even when shaman doesnt know/talent the imbue
+
+### Localization
+- Added updates to ruRU.lua for new keys 
+  #- Thank you Hollicsh
+- Updated 7 other locales with 4 new key values for features from 20260314.01
