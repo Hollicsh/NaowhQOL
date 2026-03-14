@@ -1,6 +1,6 @@
 # Changelog
 
-## [20260314.01] - March 14, 2026
+## [20260314.01]
 
 ### New Features
 
@@ -16,5 +16,3 @@
 ### Fix
 **Movement Alert**
 - Fixed: Burning Rush triggering only in combat + triggering time spiral text
-
----
