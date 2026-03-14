@@ -737,7 +737,7 @@ ns:RegisterLocale("ruRU", {
     PETTRACKER_LOW_HEALTH_SHOW = "Показать предупреждение о низком уровне здоровья",
     PETTRACKER_LOW_HEALTH_LABEL = "Текст с низким уровнем здоровья:",
     PETTRACKER_LOW_HEALTH_DEFAULT = "Низкий уровень здоровья у питомца",
-    PETTRACKER_LOW_HEALTH_THRESHOLD = "Пороговое значение уровеня здоровья:",
+    PETTRACKER_LOW_HEALTH_THRESHOLD = "Пороговое значение уровня здоровья:",
     PETTRACKER_SECTION_WARNINGS = "ТЕКСТ ПРЕДУПРЕЖДЕНИЙ",
     PETTRACKER_MISSING_LABEL = "Текст для отсутствующего питомца:",
     PETTRACKER_MISSING_DEFAULT = "Питомец отсутствует",
