@@ -52,8 +52,14 @@ local SPELL_CATEGORY_DURATION = {
 }
 
 local TALENT_CD_REDUCTIONS = {
-    { talent = 451041, trigger = 5217, spell = 109132, reduce = 5 },
+    { talent = 451041, trigger = 116841, spell = 109132, reduce = 5 },
+    { talent = 451041, trigger = 116841, spell = 115008, reduce = 5 },
 }
+
+local TALENT_CD_TRIGGER_SPELLS = {}
+for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
+    TALENT_CD_TRIGGER_SPELLS[mod.trigger] = true
+end
 
 local function GetEffectiveChargeDuration(spellId, fallback)
     return fallback
@@ -624,6 +630,7 @@ end
 
 local function OnTrackedSpellCast(spellId)
     if (GetTime() - cacheResetTime) < 2 then return end
+    if TALENT_CD_TRIGGER_SPELLS[spellId] then return end
     local baseId = trackedSpellSet[spellId]
     if not baseId then return end
     spellWasCast[baseId] = true
@@ -1519,34 +1526,35 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         local _, _, spellId = ...
         for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
             if spellId == mod.trigger and ns.IsPlayerSpell(mod.talent) then
-                local raw = cachedChargeCount[mod.spell]
-                local cur = raw ~= nil and (tonumber(tostring(raw)) or 0) or 0
-                if cur == 0 then
-                    local rechargeStart = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
-                    for _, entry in ipairs(cachedMovementSpells) do
-                        if entry.spellId == mod.spell then
+                for _, entry in ipairs(cachedMovementSpells) do
+                    if entry.spellId == mod.spell or entry.baseSpellId == mod.spell then
+                        local sid = entry.spellId
+                        local raw = cachedChargeCount[sid]
+                        local cur = raw ~= nil and (tonumber(tostring(raw)) or 0) or 0
+                        if cur == 0 then
+                            local rechargeStart = chargeRechargeStart[sid] or spellCastTime[sid]
                             local rechDur = entry.rechargeDuration or 0
                             if rechargeStart and rechDur > 0 then
                                 local remaining = math.max(0, (rechargeStart + rechDur) - GetTime())
                                 if remaining > 0 then
-                                    if rechargeTimers[mod.spell] then
-                                        rechargeTimers[mod.spell]:Cancel()
-                                        rechargeTimers[mod.spell] = nil
+                                    if rechargeTimers[sid] then
+                                        rechargeTimers[sid]:Cancel()
+                                        rechargeTimers[sid] = nil
                                     end
                                     local newRemaining = remaining - mod.reduce
                                     if newRemaining > 0 then
-                                        chargeRechargeStart[mod.spell] = GetTime() - (rechDur - newRemaining)
+                                        chargeRechargeStart[sid] = GetTime() - (rechDur - newRemaining)
                                         StartRechargeTimer(entry, newRemaining)
                                     else
-                                        chargeRechargeStart[mod.spell] = nil
-                                        spellWasCast[mod.spell] = nil
-                                        spellCastTime[mod.spell] = nil
-                                        cachedChargeCount[mod.spell] = math.min(cur + 1, entry.maxCharges or 1)
+                                        chargeRechargeStart[sid] = nil
+                                        spellWasCast[sid] = nil
+                                        spellCastTime[sid] = nil
+                                        cachedChargeCount[sid] = math.min(cur + 1, entry.maxCharges or 1)
                                     end
                                 end
                             end
-                            break
                         end
+                        break
                     end
                 end
             end
