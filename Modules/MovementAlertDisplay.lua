@@ -52,7 +52,7 @@ local SPELL_CATEGORY_DURATION = {
 }
 
 local TALENT_CD_REDUCTIONS = {
-    { talent = 451041, trigger = 5217, spell = 109132, reduce = 4.5 },
+    { talent = 451041, trigger = 5217, spell = 109132, reduce = 5 },
 }
 
 local function GetEffectiveChargeDuration(spellId, fallback)
@@ -602,9 +602,9 @@ local function CancelAllRechargeTimers()
     wipe(rechargeTimers)
 end
 
-local function StartRechargeTimer(entry)
+local function StartRechargeTimer(entry, delay)
     if rechargeTimers[entry.spellId] then return end
-    local duration = entry.rechargeDuration or 0
+    local duration = delay or entry.rechargeDuration or 0
     if duration <= 0 then return end
     rechargeTimers[entry.spellId] = C_Timer.NewTimer(duration, function()
         rechargeTimers[entry.spellId] = nil
@@ -1521,6 +1521,35 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                 end
                 if spellCastTime[mod.spell] then
                     spellCastTime[mod.spell] = spellCastTime[mod.spell] - mod.reduce
+                end
+                local t = rechargeTimers[mod.spell]
+                if t then
+                    t:Cancel()
+                    rechargeTimers[mod.spell] = nil
+                    for _, entry in ipairs(cachedMovementSpells) do
+                        if entry.spellId == mod.spell then
+                            local start = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
+                            local rechDur = entry.rechargeDuration or 0
+                            if start and rechDur > 0 then
+                                local newRemaining = math.max(0, (start + rechDur) - GetTime())
+                                if newRemaining > 0 then
+                                    StartRechargeTimer(entry, newRemaining)
+                                else
+                                    local rawCur = cachedChargeCount[mod.spell]
+                                    local cur = rawCur ~= nil and (tonumber(tostring(rawCur)) or 0) or 0
+                                    local max = entry.maxCharges or 1
+                                    cachedChargeCount[mod.spell] = math.min(cur + 1, max)
+                                    if cachedChargeCount[mod.spell] < max then
+                                        chargeRechargeStart[mod.spell] = GetTime()
+                                        StartRechargeTimer(entry)
+                                    else
+                                        chargeRechargeStart[mod.spell] = nil
+                                    end
+                                end
+                            end
+                            break
+                        end
+                    end
                 end
             end
         end

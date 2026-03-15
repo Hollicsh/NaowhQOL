@@ -126,11 +126,11 @@ Categories.DEFAULT_CLASS_BUFFS = {
             key = "earth_shield",
             name = "Earth Shield",
             checkType = "self",
-            spellIDs = {974},
+            spellIDs = {383684},
             specFilter = {},
             minRequired = 1,
             thresholds = { dungeon = 0, raid = 0, other = 0 },
-            talentCondition = { talentID = 974, mode = "activate" },
+            talentCondition = { talentID = 383684, mode = "activate" },
         },
         {
             key = "water_shield",
