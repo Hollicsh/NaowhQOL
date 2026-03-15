@@ -872,7 +872,20 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
     if not db then return end
 
     local cdRemaining, cdStart, cdDuration, cdModRate
-    if duration then
+    if inCombat and spellEntry.isChargeSpell then
+        local rechargeStart = chargeRechargeStart[spellEntry.spellId]
+        local rechDur = spellEntry.rechargeDuration or 0
+        if rechargeStart and rechDur > 1.5 then
+            local r = math.max(0, (rechargeStart + rechDur) - GetTime())
+            if r > 0 then
+                cdRemaining = r
+                cdStart     = rechargeStart
+                cdDuration  = rechDur
+                cdModRate   = 1
+            end
+        end
+    end
+    if not cdRemaining and duration then
         local okR, rem   = pcall(duration.GetRemainingDuration, duration)
         local okT, total = pcall(duration.GetTotalDuration, duration)
         local okS, start = pcall(duration.GetStartTime, duration)
@@ -1516,34 +1529,33 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         local _, _, spellId = ...
         for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
             if spellId == mod.trigger and ns.IsPlayerSpell(mod.talent) then
-                if chargeRechargeStart[mod.spell] then
-                    chargeRechargeStart[mod.spell] = chargeRechargeStart[mod.spell] - mod.reduce
-                end
-                if spellCastTime[mod.spell] then
-                    spellCastTime[mod.spell] = spellCastTime[mod.spell] - mod.reduce
-                end
-                local t = rechargeTimers[mod.spell]
-                if t then
-                    t:Cancel()
-                    rechargeTimers[mod.spell] = nil
+                local raw = cachedChargeCount[mod.spell]
+                local cur = raw ~= nil and (tonumber(tostring(raw)) or 0) or 0
+                if cur == 0 then
                     for _, entry in ipairs(cachedMovementSpells) do
                         if entry.spellId == mod.spell then
-                            local start = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
+                            local rechargeStart = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
                             local rechDur = entry.rechargeDuration or 0
-                            if start and rechDur > 0 then
-                                local newRemaining = math.max(0, (start + rechDur) - GetTime())
-                                if newRemaining > 0 then
-                                    StartRechargeTimer(entry, newRemaining)
-                                else
-                                    local rawCur = cachedChargeCount[mod.spell]
-                                    local cur = rawCur ~= nil and (tonumber(tostring(rawCur)) or 0) or 0
-                                    local max = entry.maxCharges or 1
-                                    cachedChargeCount[mod.spell] = math.min(cur + 1, max)
-                                    if cachedChargeCount[mod.spell] < max then
-                                        chargeRechargeStart[mod.spell] = GetTime()
-                                        StartRechargeTimer(entry)
+                            if rechargeStart and rechDur > 0 then
+                                local remaining = math.max(0, (rechargeStart + rechDur) - GetTime())
+                                if remaining > 0 then
+                                    if rechargeTimers[mod.spell] then
+                                        rechargeTimers[mod.spell]:Cancel()
+                                        rechargeTimers[mod.spell] = nil
+                                    end
+                                    local newRemaining = remaining - mod.reduce
+                                    if newRemaining > 0 then
+                                        chargeRechargeStart[mod.spell] = GetTime() - (rechDur - newRemaining)
+                                        if spellCastTime[mod.spell] then
+                                            spellCastTime[mod.spell] = spellCastTime[mod.spell] - mod.reduce
+                                        end
+                                        StartRechargeTimer(entry, newRemaining)
                                     else
                                         chargeRechargeStart[mod.spell] = nil
+                                        spellCastTime[mod.spell] = nil
+                                        local rawCur = cachedChargeCount[mod.spell]
+                                        local c = rawCur ~= nil and (tonumber(tostring(rawCur)) or 0) or 0
+                                        cachedChargeCount[mod.spell] = math.min(c + 1, entry.maxCharges or 1)
                                     end
                                 end
                             end
