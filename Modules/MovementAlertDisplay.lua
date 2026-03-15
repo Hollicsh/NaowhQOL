@@ -1100,22 +1100,12 @@ CheckMovementCooldown = function()
                     local raw = cachedChargeCount[entry.spellId]
                     currentCharges = (raw ~= nil) and (tonumber(tostring(raw)) or 0) or 0
 
-                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
-                    if chOk and chargeInfo then
-                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                        local chDur = GetEffectiveChargeDuration(entry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
-                        if chDur > 1.5 then
-                            chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
-                        end
-                    end
-                    if chargeRemaining <= 0 then
-                        local rechargeStart = chargeRechargeStart[entry.spellId]
-                        local rechDur = entry.rechargeDuration or 0
-                        if rechargeStart and rechDur > 1.5 then
-                            chargeRemaining = math.max(0, (rechargeStart + rechDur) - GetTime())
-                        elseif spellCastTime[entry.spellId] and rechDur > 1.5 then
-                            chargeRemaining = math.max(0, (spellCastTime[entry.spellId] + rechDur) - GetTime())
-                        end
+                    local rechargeStart = chargeRechargeStart[entry.spellId]
+                    local rechDur = entry.rechargeDuration or 0
+                    if rechargeStart and rechDur > 1.5 then
+                        chargeRemaining = math.max(0, (rechargeStart + rechDur) - GetTime())
+                    elseif spellCastTime[entry.spellId] and rechDur > 1.5 then
+                        chargeRemaining = math.max(0, (spellCastTime[entry.spellId] + rechDur) - GetTime())
                     end
                 else
                     local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
@@ -1532,9 +1522,9 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                 local raw = cachedChargeCount[mod.spell]
                 local cur = raw ~= nil and (tonumber(tostring(raw)) or 0) or 0
                 if cur == 0 then
+                    local rechargeStart = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
                     for _, entry in ipairs(cachedMovementSpells) do
                         if entry.spellId == mod.spell then
-                            local rechargeStart = chargeRechargeStart[mod.spell] or spellCastTime[mod.spell]
                             local rechDur = entry.rechargeDuration or 0
                             if rechargeStart and rechDur > 0 then
                                 local remaining = math.max(0, (rechargeStart + rechDur) - GetTime())
@@ -1546,16 +1536,12 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                                     local newRemaining = remaining - mod.reduce
                                     if newRemaining > 0 then
                                         chargeRechargeStart[mod.spell] = GetTime() - (rechDur - newRemaining)
-                                        if spellCastTime[mod.spell] then
-                                            spellCastTime[mod.spell] = spellCastTime[mod.spell] - mod.reduce
-                                        end
                                         StartRechargeTimer(entry, newRemaining)
                                     else
                                         chargeRechargeStart[mod.spell] = nil
+                                        spellWasCast[mod.spell] = nil
                                         spellCastTime[mod.spell] = nil
-                                        local rawCur = cachedChargeCount[mod.spell]
-                                        local c = rawCur ~= nil and (tonumber(tostring(rawCur)) or 0) or 0
-                                        cachedChargeCount[mod.spell] = math.min(c + 1, entry.maxCharges or 1)
+                                        cachedChargeCount[mod.spell] = math.min(cur + 1, entry.maxCharges or 1)
                                     end
                                 end
                             end
