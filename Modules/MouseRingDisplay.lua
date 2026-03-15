@@ -130,9 +130,9 @@ local UpdateMouseWatcher
 local function ShouldBeVisible()
     local db = GetDB()
     if not db.enabled then return false end
-    if db.hideWhenUnfocused and state.isAfk then return false end
     if db.hideOnMouseClick and state.isRightMouseDown then return false end
     if state.inCombat then return true end
+    if db.hideWhenUnfocused and state.isAfk then return false end
     return db.showOutOfCombat ~= false
 end
 
@@ -719,7 +719,7 @@ events:RegisterUnitEvent("PLAYER_FLAGS_CHANGED", "player")
 
 events:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
-        state.isAfk = not not UnitIsAFK("player")
+        if UnitIsAFK("player") then state.isAfk = true else state.isAfk = false end
         RefreshCombatState()
         state.isCasting = UnitCastingInfo("player") ~= nil
         state.isChanneling = UnitChannelInfo("player") ~= nil
@@ -746,9 +746,15 @@ events:SetScript("OnEvent", function(self, event, unit)
         end)
 
     elseif event == "PLAYER_FLAGS_CHANGED" then
-        local wasAfk = state.isAfk
-        state.isAfk = not not UnitIsAFK("player")
-        if wasAfk ~= state.isAfk then UpdateRender() end
+        if not state.inCombat and not state.inInstance then
+            local wasAfk = state.isAfk
+            if UnitIsAFK("player") then
+                state.isAfk = true
+            else
+                state.isAfk = false
+            end
+            if wasAfk ~= state.isAfk then UpdateRender() end
+        end
 
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         RefreshCombatState()
