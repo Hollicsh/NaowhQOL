@@ -99,7 +99,7 @@ local GCD_TRACKER_DEFAULTS = {
     point = "CENTER", x = 0, y = -100, combatOnly = false,
     showInDungeon = true, showInRaid = true, showInArena = true,
     showInBattleground = true, showInWorld = true,
-    blocklist = { [6603] = true },
+    blocklist = { [6603] = true, [75] = true },
     timelineColorR = 0.01, timelineColorG = 0.56, timelineColorB = 0.91, timelineHeight = 4,
     downtimeSummaryEnabled = false,
 }
@@ -522,6 +522,25 @@ local function MigrateDefaultsV2()
     end
 end
 
+local function MigrateAutoShotBlocklist()
+    if not ns.db or not ns.db.sv then return end
+    if ns.db.global.autoShotBlocklistMigrated then return end
+
+    local rawProfiles = ns.db.sv.profiles
+    if rawProfiles then
+        for _, profileData in pairs(rawProfiles) do
+            if type(profileData) == "table" and profileData.gcdTracker then
+                local bl = profileData.gcdTracker.blocklist
+                if bl and bl[75] == nil then
+                    bl[75] = true
+                end
+            end
+        end
+    end
+
+    ns.db.global.autoShotBlocklistMigrated = true
+end
+
 local function MigrateSnapshotProfiles()
     if not ns.db or not ns.db.sv then return end
 
@@ -713,6 +732,8 @@ local function InitializeDB()
     MigrateSnapshotProfiles()
 
     MigrateDefaultsV2()
+
+    MigrateAutoShotBlocklist()
 
     if ns.SetLocale then
         ns:SetLocale(GetLocale())

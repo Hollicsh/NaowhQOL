@@ -1,9 +1,7 @@
 # Changelog
-## [20260315.01]
+## [20260315.02]
 ### Fix
-**Buff Watcher**
-- Fixed: Corrected Shaman Earth Shield to the proper spellID
-**Movement Tracker**
-- Roll cooldown display for Monks is now accurate when using Tiger’s Lust with the Tiger’s Vigor talent.
-### Localization
-- udpated ruRU with more key values translated
+**Pet Tracker**
+- Fixed taint on petracker health returning a secret if reloaded in combat (why are you doing this??)
+**GCD Tracker**
+- Added hunter Auto Shot(id:75) to default block list

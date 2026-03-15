@@ -71,11 +71,11 @@ local function ShouldHavePet()
 end
 
 local function IsPetLowHealth()
-    local maxHP = UnitHealthMax("pet")
+    local maxHP = tonumber(tostring(UnitHealthMax("pet")))
     if not maxHP or maxHP == 0 then return false end
     local db = NaowhQOL.petTracker
     local threshold = db and db.lowHealthThreshold or 25
-    return (UnitHealth("pet") / maxHP * 100) <= threshold
+    return (tonumber(tostring(UnitHealth("pet"))) / maxHP * 100) <= threshold
 end
 
 local function IsPetPassive()
