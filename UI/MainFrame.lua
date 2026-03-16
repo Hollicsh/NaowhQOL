@@ -175,7 +175,7 @@ do
             if strlower(dn):find(query, 1, true) and not seen[e.db] then
                 seen[e.db] = true; count = count + 1
                 local b = GetBtn(count)
-                b.lbl:SetText("|cffffa900\xc2\xbb|r " .. dn)
+                b.lbl:SetText("|cffffa900\194\187|r " .. dn)
                 b:SetScript("OnClick", function()
                     SearchBox:SetText(""); Placeholder:Show(); Results:Hide()
                     if e.tab and ns.OpenTab then ns:OpenTab(e.tab) end
@@ -192,7 +192,7 @@ do
                             seen[e.db] = true; count = count + 1
                             local dn = (dnames and dnames[e.db]) or e.db
                             local b = GetBtn(count)
-                            b.lbl:SetText("|cffffa900\xc2\xbb|r " .. dn .. " |cff666666\xe2\x80\xba " .. kw .. "|r")
+                            b.lbl:SetText("|cffffa900\194\187|r " .. dn .. " |cff666666\226\128\186 " .. kw .. "|r")
                             b:SetScript("OnClick", function()
                                 SearchBox:SetText(""); Placeholder:Show(); Results:Hide()
                                 if e.tab and ns.OpenTab then ns:OpenTab(e.tab) end
