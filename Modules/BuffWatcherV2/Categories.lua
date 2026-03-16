@@ -216,7 +216,7 @@ Categories.CONSUMABLE_GROUPS = {
             1235110,
             1235111,
         },
-        fallbackIcon = 5931173,
+        fallbackIcon = 241320,
     },
     {
         key = "food",
@@ -239,7 +239,7 @@ Categories.CONSUMABLE_GROUPS = {
             1264426,
             347901,
         },
-        fallbackIcon = 4549102,
+        fallbackIcon = 259085,
     },
     {
         key = "weaponBuff",
@@ -254,7 +254,7 @@ Categories.CONSUMABLE_GROUPS = {
             433583,
             433568,
         },
-        fallbackIcon = 463543,
+        fallbackIcon = 7548987,
     },
 }
 
@@ -262,12 +262,14 @@ Categories.INVENTORY_GROUPS = {
     {
         key = "dpsPotion",
         name = "DPS Potion",
-        itemIDs = {},
+        itemIDs = {241308},
+        fallbackIcon = 7548911,
     },
     {
         key = "healthPotion",
         name = "Health Potion",
-        itemIDs = {},
+        itemIDs = {241305},
+        fallbackIcon = 7548909,
     },
     {
         key = "healthstone",

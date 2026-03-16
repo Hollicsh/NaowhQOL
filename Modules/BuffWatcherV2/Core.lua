@@ -78,14 +78,10 @@ local function StartAlwaysOnWatcher()
         end
 
         if cdb.consumableAlwaysCheck and BuffDropAlert then
-            if BuffDropAlert:HasAlerts() then
-                BuffDropAlert:CheckRebuffsForPrefix("consumableAlways_")
-            end
+            BuffDropAlert:DismissByPrefix("consumableAlways_")
             local missing = BWV2:CheckAlwaysOnConsumables()
             if missing then
                 BuffDropAlert:AddAlerts(missing)
-            else
-                BuffDropAlert:DismissByPrefix("consumableAlways_")
             end
         end
 
@@ -291,8 +287,48 @@ local function TriggerScan()
 
     local db = BWV2:GetDB()
     if db.buffDropReminder then
-        if BuffDropAlert then BuffDropAlert:DismissAll() end
+        -- Preserve any alerts that were actively showing before the rescan,
+        -- so the drop reminder doesn't vanish during a ready-check scan.
+        local previousAlerts = {}
+        if BuffDropAlert then
+            for key, cell in pairs(BuffDropAlert.activeCells) do
+                previousAlerts[key] = {
+                    key = key,
+                    name = cell._alertName,
+                    icon = cell.icon:GetTexture(),
+                    expiryTime = cell._expiryTime,
+                    spellIDs = cell._spellIDs,
+                    checkType = cell._checkType,
+                    enchantIDs = cell._enchantIDs,
+                    minRequired = cell._minRequired,
+                }
+            end
+            BuffDropAlert:DismissAll()
+        end
         BWV2:BuildBuffSnapshot()
+        -- Re-add any alerts that were showing and are not covered by the fresh snapshot
+        if BuffDropAlert and next(previousAlerts) then
+            local toRestore = {}
+            for key, data in pairs(previousAlerts) do
+                local isAlwaysOn = (key:sub(1, 11) == "raidAlways_") or
+                                   (key:sub(1, 12) == "classAlways_") or
+                                   (key:sub(1, 18) == "consumableAlways_") or
+                                   (key:sub(1, 16) == "inventoryAlways_")
+                if isAlwaysOn then
+                    -- always-on alerts: restore unconditionally, the watcher will dismiss if buff came back
+                    toRestore[#toRestore + 1] = data
+                elseif BWV2.buffSnapshot[key] then
+                    -- buff is now in the snapshot (player has it) — drop reminder no longer needed
+                else
+                    -- buff still missing from snapshot — restore the drop reminder
+                    toRestore[#toRestore + 1] = data
+                    BWV2.buffDropReminded[key] = true -- prevent immediate re-fire from CheckBuffDrops
+                end
+            end
+            if #toRestore > 0 then
+                BuffDropAlert:AddAlerts(toRestore)
+            end
+        end
         StartWeaponEnchantPoller()
     end
 
@@ -442,6 +478,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
         end
+        if BuffDropAlert then
+            BuffDropAlert:DismissByPrefix("inventoryAlways_")
+        end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
         Core:OnPlayerAuraChanged()
@@ -462,6 +501,16 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         Categories:LocalizeSpecNames()
 
         BWV2:InitSavedVars()
+
+        if ns.ZoneUtil then
+            ns.ZoneUtil.RegisterCallback("BWV2_AlertFilter", function()
+                local cdb = BWV2:GetDB()
+                if cdb and cdb.enabled and BWV2:ShouldSuppressAlertsForZone() then
+                    if BuffDropAlert then BuffDropAlert:DismissAll() end
+                    BWV2:ClearBuffSnapshot()
+                end
+            end)
+        end
 
         ns.SettingsIO:RegisterRefresh("buffWatcherV2", function()
             StopTicker()
@@ -564,6 +613,12 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 StartAlwaysOnWatcher()
             end)
         end
+    elseif event == "PLAYER_UPDATE_RESTING" then
+        local db = BWV2:GetDB()
+        if db and db.enabled and db.buffDropAlertDisableRested and IsResting() then
+            if BuffDropAlert then BuffDropAlert:DismissAll() end
+            BWV2:ClearBuffSnapshot()
+        end
     end
 end)
 
@@ -577,6 +632,7 @@ eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("UNIT_AURA")
 eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
+eventFrame:RegisterEvent("PLAYER_UPDATE_RESTING")
 
 SLASH_NSCAN1 = "/nscan"
 SlashCmdList["NSCAN"] = function(msg)
@@ -646,17 +702,12 @@ function Core:OnPlayerAuraChanged()
     end
 
     if db.consumableAlwaysCheck and BuffDropAlert then
-        if BuffDropAlert:HasAlerts() then
-            BuffDropAlert:CheckRebuffsForPrefix("consumableAlways_")
-        end
-
         if now - lastConsumableCheck >= RAID_BUFF_THROTTLE then
             lastConsumableCheck = now
+            BuffDropAlert:DismissByPrefix("consumableAlways_")
             local missing = BWV2:CheckAlwaysOnConsumables()
             if missing then
                 BuffDropAlert:AddAlerts(missing)
-            else
-                BuffDropAlert:DismissByPrefix("consumableAlways_")
             end
         end
     end

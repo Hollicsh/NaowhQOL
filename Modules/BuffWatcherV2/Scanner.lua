@@ -551,7 +551,7 @@ function Scanner:ScanInventory()
             local count = Categories:GetInventoryItemCount(itemIDs)
             local pass = count > 0
 
-            local icon = GetCachedItemIcon(itemIDs[1])
+            local icon = GetCachedItemIcon(itemIDs[1]) or group.fallbackIcon
 
             BWV2.scanResults.inventory[#BWV2.scanResults.inventory + 1] = {
                 key = group.key,

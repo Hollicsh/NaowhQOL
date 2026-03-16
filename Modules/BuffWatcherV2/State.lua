@@ -173,6 +173,9 @@ function BWV2:InitSavedVars()
             buffDropGlowG = 0.95,
             buffDropGlowB = 0.32,
             buffDropGlowUseClassColor = false,
+            buffDropAlertInstanceOnly = false,
+            buffDropAlertDisableRested = false,
+            buffDropTextFontSize = 11,
             raidBuffAlwaysCheck = false,
             classBuffAlwaysCheck = false,
             consumableAlwaysCheck = false,
@@ -273,6 +276,15 @@ function BWV2:InitSavedVars()
     if NaowhQOL.buffWatcherV2.buffDropGlowUseClassColor == nil then
         NaowhQOL.buffWatcherV2.buffDropGlowUseClassColor = false
     end
+    if NaowhQOL.buffWatcherV2.buffDropAlertInstanceOnly == nil then
+        NaowhQOL.buffWatcherV2.buffDropAlertInstanceOnly = false
+    end
+    if NaowhQOL.buffWatcherV2.buffDropAlertDisableRested == nil then
+        NaowhQOL.buffWatcherV2.buffDropAlertDisableRested = false
+    end
+    if NaowhQOL.buffWatcherV2.buffDropTextFontSize == nil then
+        NaowhQOL.buffWatcherV2.buffDropTextFontSize = 11
+    end
 
     if not NaowhQOL.buffWatcherV2._classBuffDefaultsVersion then
         local Categories = ns.BWV2Categories
@@ -329,6 +341,14 @@ end
 function BWV2:GetDB()
     self:InitSavedVars()
     return NaowhQOL.buffWatcherV2
+end
+
+function BWV2:GetBuffDropFont()
+    local db = self:GetDB()
+    if db.buffDropTextFont then
+        return ns.Media.ResolveFont(db.buffDropTextFont)
+    end
+    return ns.DefaultFontPath()
 end
 
 function BWV2:IsEnabled()
@@ -450,12 +470,14 @@ function BWV2:CheckBuffDrops()
     if not self.buffSnapshot or not next(self.buffSnapshot) then
         return nil
     end
+    if self:ShouldSuppressAlertsForZone() then return nil end
 
     local dropped = {}
 
     for key, data in pairs(self.buffSnapshot) do
         if not self.buffDropReminded[key] then
             local stillPresent = false
+            local foundExpiry = nil
 
             if data.spellIDs and #data.spellIDs > 0 then
                 local contentType = self:GetCurrentContentType()
@@ -472,6 +494,8 @@ function BWV2:CheckBuffDrops()
                         if aura.expirationTime == 0 or remaining > threshold then
                             stillPresent = true
                             break
+                        elseif aura.expirationTime ~= 0 then
+                            foundExpiry = aura.expirationTime
                         end
                     end
                 end
@@ -486,6 +510,8 @@ function BWV2:CheckBuffDrops()
                         local remaining = (auraData.expirationTime or 0) - GetTime()
                         if auraData.expirationTime == 0 or remaining > threshold then
                             stillPresent = true
+                        elseif auraData.expirationTime ~= 0 then
+                            foundExpiry = auraData.expirationTime
                         end
                         break
                     end
@@ -514,6 +540,9 @@ function BWV2:CheckBuffDrops()
                 local entry = {}
                 for k, v in pairs(data) do entry[k] = v end
                 entry.key = key
+                if foundExpiry then
+                    entry.expiryTime = foundExpiry
+                end
                 dropped[#dropped + 1] = entry
                 self.buffDropReminded[key] = true
             end
@@ -617,6 +646,7 @@ end
 function BWV2:CheckAlwaysOnRaidBuffs()
     local db = self:GetDB()
     if not db or not db.raidBuffAlwaysCheck then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -670,6 +700,7 @@ end
 function BWV2:CheckAlwaysOnClassBuffs()
     local db = self:GetDB()
     if not db or not db.classBuffAlwaysCheck then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
 
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]
@@ -823,6 +854,7 @@ function BWV2:CheckAlwaysOnConsumables()
     local db = self:GetDB()
     if not db or not db.consumableAlwaysCheck then return nil end
     if InCombatLockdown() then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -857,7 +889,8 @@ function BWV2:CheckAlwaysOnConsumables()
                 end
 
                 local hasBuff = false
-                local icon = buff.fallbackIcon
+                local icon = nil
+                local foundExpiry = nil
 
                 if buff.checkType == "icon" and buff.buffIconID then
                     local idx = 1
@@ -869,6 +902,8 @@ function BWV2:CheckAlwaysOnConsumables()
                                 hasBuff = true
                                 icon = auraData.icon
                                 break
+                            elseif auraData.expirationTime ~= 0 then
+                                foundExpiry = auraData.expirationTime
                             end
                         end
                         idx = idx + 1
@@ -889,6 +924,9 @@ function BWV2:CheckAlwaysOnConsumables()
                                 hasBuff = true
                                 icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
                                 break
+                            elseif aura.expirationTime ~= 0 then
+                                foundExpiry = aura.expirationTime
+                                icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
                             end
                         end
                     end
@@ -903,6 +941,7 @@ function BWV2:CheckAlwaysOnConsumables()
                         name = buff.name,
                         icon = icon or buff.fallbackIcon,
                         category = "consumable",
+                        expiryTime = foundExpiry,
                     }
                 end
             end
@@ -916,6 +955,7 @@ function BWV2:CheckAlwaysOnInventory()
     local db = self:GetDB()
     if not db or not db.inventoryAlwaysCheck then return nil end
     if InCombatLockdown() then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -944,7 +984,7 @@ function BWV2:CheckAlwaysOnInventory()
                 missing[#missing + 1] = {
                     key = "inventoryAlways_" .. group.key,
                     name = group.name,
-                    icon = icon or 134400,
+                    icon = icon or group.fallbackIcon or 134400,
                     category = "inventory",
                 }
             end
@@ -976,4 +1016,15 @@ end
 function BWV2:ClearBuffSnapshot()
     wipe(self.buffSnapshot)
     wipe(self.buffDropReminded)
+end
+
+function BWV2:ShouldSuppressAlertsForZone()
+    local db = self:GetDB()
+    if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance() then
+        return true
+    end
+    if db.buffDropAlertDisableRested and IsResting() then
+        return true
+    end
+    return false
 end

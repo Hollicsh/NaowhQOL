@@ -1148,7 +1148,20 @@ function ns:InitBuffWatcherV2()
         inventoryAlwaysDesc:SetJustifyH("LEFT")
         inventoryAlwaysDesc:SetText(W.Colorize(L["BWV2_INVENTORY_ALWAYS_CHECK_DESC"] or "Alerts when you have 0 of a tracked item (e.g. potions, healthstones).", C.GRAY))
 
-        local bdaRow2Y = bdaRow1cY - 65
+        local bdaRow1dY = bdaRow1cY - 65
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_BUFF_DROP_INSTANCE_ONLY"] or "Dungeons / Raids Only",
+            db = db, key = "buffDropAlertInstanceOnly",
+            x = bdaG:Col(1), y = bdaRow1dY,
+        })
+
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_BUFF_DROP_DISABLE_RESTED"] or "Hide in Rested Areas",
+            db = db, key = "buffDropAlertDisableRested",
+            x = bdaG:Col(2), y = bdaRow1dY,
+        })
+
+        local bdaRow2Y = bdaRow1dY - 30
         W:CreateCheckbox(bdaContent, {
             label = L["COMMON_UNLOCK"],
             db = db, key = "buffDropUnlock",
@@ -1194,7 +1207,30 @@ function ns:InitBuffWatcherV2()
             end,
         })
 
-        bdaContent:SetHeight(math.abs(bdaRow4Y) + 40)
+        local bdaRow5Y = bdaRow4Y - 50
+        W:CreateSlider(bdaContent, {
+            label = L["COMMON_FONT_SIZE"],
+            min = 7, max = 20, step = 1,
+            db = db, key = "buffDropTextFontSize",
+            x = bdaG:Col(1), y = bdaRow5Y,
+            width = 180,
+            onChange = function(val)
+                db.buffDropTextFontSize = val
+                if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshTextFont() end
+            end,
+        })
+
+        local bdaRow6Y = bdaRow5Y - 55
+        local fontPickerLabel = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        fontPickerLabel:SetPoint("TOPLEFT", bdaG:Col(1), bdaRow6Y + 14)
+        fontPickerLabel:SetText(W.Colorize(L["BWV2_BUFF_DROP_TEXT"] or "Duration Text Font", C.BLUE))
+
+        local fontPicker = W:CreateFontPicker(bdaContent, bdaG:Col(1), bdaRow6Y - 10, db.buffDropTextFont or ns.DefaultFontPath(), function(name)
+            db.buffDropTextFont = name
+            if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshTextFont() end
+        end)
+
+        bdaContent:SetHeight(math.abs(bdaRow6Y) + 55)
         bdaWrap:RecalcHeight()
 
         local threshWrap, threshContent = W:CreateCollapsibleSection(sectionContainer, {

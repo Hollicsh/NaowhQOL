@@ -11,9 +11,28 @@ local ICON_SPACING = 6
 local LCG = LibStub("LibCustomGlow-1.0")
 local GLOW_KEY = "NaowhQOL_BuffDrop"
 
+local function FormatDuration(seconds)
+    if not seconds or seconds <= 0 then return "" end
+    seconds = math.floor(seconds)
+    if seconds >= 3600 then
+        return string.format("%dh%02dm", math.floor(seconds / 3600), math.floor((seconds % 3600) / 60))
+    else
+        return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+    end
+end
+
 local function GetIconSize()
     local db = BWV2:GetDB()
     return db.buffDropIconSize or 32
+end
+
+local function GetDurationFontPath()
+    return BWV2:GetBuffDropFont()
+end
+
+local function GetDurationFontSize()
+    local db = BWV2:GetDB()
+    return db.buffDropTextFontSize or 11
 end
 
 BuffDropAlert.activeCells = {}
@@ -51,6 +70,11 @@ local function AcquireCell(parent)
         cell:SetSize(iconSize, iconSize)
         cell.icon:ClearAllPoints()
         cell.icon:SetAllPoints()
+        if cell.durationText then
+            cell.durationText:SetFont(GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+            cell.durationText:Hide()
+            cell.durationText:SetText("")
+        end
         cell:Show()
         return cell
     end
@@ -61,7 +85,19 @@ local function AcquireCell(parent)
     local icon = cell:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    local iconMask = cell:CreateMaskTexture()
+    iconMask:SetAllPoints(icon)
+    iconMask:SetTexture("Interface\\AddOns\\NaowhQOL\\Assets\\Textures\\RoundedMask.tga")
+    icon:AddMaskTexture(iconMask)
     cell.icon = icon
+
+    local durationText = cell:CreateFontString(nil, "OVERLAY")
+    durationText:SetFont(GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+    durationText:SetPoint("CENTER", icon, "CENTER", 0, 0)
+    durationText:SetJustifyH("CENTER")
+    durationText:SetShadowOffset(1, -1)
+    durationText:Hide()
+    cell.durationText = durationText
 
     local close = CreateFrame("Button", nil, cell)
     close:SetSize(14, 14)
@@ -113,6 +149,13 @@ local function ReleaseCell(cell)
     cell._enchantIDs = nil
     cell._minRequired = nil
     cell._isAlwaysOn = nil
+    cell._expiryTime = nil
+    cell._expiryAcc = nil
+    cell:SetScript("OnUpdate", nil)
+    if cell.durationText then
+        cell.durationText:Hide()
+        cell.durationText:SetText("")
+    end
     table.insert(cellPool, cell)
 end
 
@@ -212,8 +255,13 @@ function BuffDropAlert:AddAlerts(droppedList)
             else
                 cell.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
             end
-            cell.icon:SetDesaturated(true)
-            cell.icon:SetVertexColor(1, 0.4, 0.3)
+            if data.expiryTime then
+                cell.icon:SetDesaturated(false)
+                cell.icon:SetVertexColor(1, 1, 1)
+            else
+                cell.icon:SetDesaturated(true)
+                cell.icon:SetVertexColor(1, 0.4, 0.3)
+            end
 
             cell.closeBtn:SetScript("OnClick", function()
                 BuffDropAlert:DismissAlert(key)
@@ -235,6 +283,32 @@ function BuffDropAlert:AddAlerts(droppedList)
             self.activeCells[key] = cell
 
             StartGlow(cell)
+
+            if data.expiryTime and data.expiryTime > GetTime() then
+                cell._expiryTime = data.expiryTime
+                cell._expiryAcc = 0
+                local remaining = data.expiryTime - GetTime()
+                if cell.durationText and remaining > 0 then
+                    cell.durationText:SetText(FormatDuration(remaining))
+                    cell.durationText:Show()
+                end
+                cell:SetScript("OnUpdate", function(self, elapsed)
+                    self._expiryAcc = (self._expiryAcc or 0) + elapsed
+                    if self._expiryAcc < 1 then return end
+                    self._expiryAcc = 0
+                    local rem = (self._expiryTime or 0) - GetTime()
+                    if rem <= 0 then
+                        self._expiryTime = nil
+                        if self.durationText then self.durationText:Hide() end
+                        self:SetScript("OnUpdate", nil)
+                    else
+                        if self.durationText then
+                            self.durationText:SetText(FormatDuration(rem))
+                            self.durationText:Show()
+                        end
+                    end
+                end)
+            end
         end
     end
 
@@ -259,6 +333,21 @@ function BuffDropAlert:DismissAll()
 
     if self.frame then
         self.frame:Hide()
+    end
+end
+
+function BuffDropAlert:RefreshTextFont()
+    local fontPath = GetDurationFontPath()
+    local fontSize = GetDurationFontSize()
+    for _, cell in pairs(self.activeCells) do
+        if cell.durationText then
+            cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
+        end
+    end
+    for _, cell in ipairs(cellPool) do
+        if cell.durationText then
+            cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
+        end
     end
 end
 
