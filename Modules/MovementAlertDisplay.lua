@@ -878,29 +878,58 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
     local db = NaowhQOL.movementAlert
     if not db then return end
 
-    local cdRemaining, cdStart, cdDuration, cdModRate
-    if inCombat and spellEntry.isChargeSpell then
-        local rechargeStart = chargeRechargeStart[spellEntry.spellId]
-        local rechDur = spellEntry.rechargeDuration or 0
-        if rechargeStart and rechDur > 1.5 then
-            local r = math.max(0, (rechargeStart + rechDur) - GetTime())
-            if r > 0 then
-                cdRemaining = r
-                cdStart     = rechargeStart
-                cdDuration  = rechDur
-                cdModRate   = 1
+    local slot = GetDisplaySlot(index)
+    StyleSlot(slot, db)
+    local displayMode = db.displayMode or "text"
+    local precision   = db.precision or 1
+    local spellName   = spellEntry.customText or spellEntry.spellName or L["MOVEMENT_ALERT_FALLBACK"] or "Movement"
+    local spellIcon   = spellEntry.spellIcon
+    local textFormat  = db.textFormat or "%ts\nNo %a"
+    local precFmt     = "%%." .. precision .. "f"
+    local fmtStr      = textFormat:gsub("\\n", "\n"):gsub("%%a", spellName):gsub("%%t", precFmt)
+
+    slot.text:Hide()
+    slot.icon:Hide()
+    slot.bar:Hide()
+
+    if cdInfo and cdInfo.timeUntilEndOfStartRecovery then
+        if displayMode == "icon" and spellIcon then
+            slot.icon.tex:SetTexture(spellIcon)
+            slot.icon.cooldown:Clear()
+            slot.icon.cooldown:SetHideCountdownNumbers(false)
+            slot.icon:Show()
+        elseif displayMode == "bar" then
+            local rechDur = spellEntry.rechargeDuration or 0
+            slot.bar:SetMinMaxValues(0, rechDur)
+            slot.bar:SetValue(cdInfo.timeUntilEndOfStartRecovery)
+            local barR, barG, barB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
+            slot.bar:SetStatusBarColor(barR, barG, barB)
+            slot.bar.text:SetFormattedText("%." .. precision .. "f", cdInfo.timeUntilEndOfStartRecovery)
+            if db.barShowIcon ~= false and spellIcon then
+                slot.bar.icon:SetTexture(spellIcon)
+                slot.bar.icon:Show()
+            else
+                slot.bar.icon:Hide()
             end
+            slot.bar:Show()
+        else
+            slot.text:SetFormattedText(fmtStr, cdInfo.timeUntilEndOfStartRecovery)
+            slot.text:Show()
         end
+        slot:Show()
+        return true
     end
-    if not cdRemaining and duration then
+
+    local cdRemaining, cdStart, cdDuration, cdModRate
+    if duration then
         local okR, rem   = pcall(duration.GetRemainingDuration, duration)
         local okT, total = pcall(duration.GetTotalDuration, duration)
         local okS, start = pcall(duration.GetStartTime, duration)
         local okM, rate  = pcall(duration.GetModRate, duration)
-        rem   = tonumber(tostring(rem or 0)) or 0
+        rem   = tonumber(tostring(rem   or 0)) or 0
         total = tonumber(tostring(total or 0)) or 0
         start = tonumber(tostring(start or 0)) or 0
-        rate  = tonumber(tostring(rate or 1)) or 1
+        rate  = tonumber(tostring(rate  or 1)) or 1
         if okR and total > 1.5 and rem > 0 then
             cdRemaining = rem
             cdDuration  = total
@@ -909,63 +938,18 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
         end
     end
 
-    if not cdRemaining then
-        if inCombat then
-            local resolved = false
-            if spellEntry.isChargeSpell then
-                local chargeId = spellEntry.baseSpellId or spellEntry.chargeSpellId or spellEntry.spellId
-                local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
-                if chOk and chargeInfo then
-                    local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                    local chDur = GetEffectiveChargeDuration(spellEntry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
-                    if chDur > 1.5 then
-                        cdStart     = chStart
-                        cdDuration  = chDur
-                        cdRemaining = math.max(0, (chStart + chDur) - GetTime())
-                        cdModRate   = 1
-                        resolved    = true
-                    end
-                end
-            end
-            if not resolved then
-                local baseDur = spellEntry.isChargeSpell
-                    and (spellEntry.rechargeDuration or 0)
-                    or  (spellEntry.baseDuration or 0)
-                local startTime = spellEntry.isChargeSpell
-                    and (chargeRechargeStart[spellEntry.spellId] or spellCastTime[spellEntry.spellId] or GetTime())
-                    or  (spellCastTime[spellEntry.spellId] or GetTime())
-                cdStart    = startTime
-                cdDuration = baseDur
-                cdRemaining = math.max(0, (startTime + baseDur) - GetTime())
-                cdModRate  = 1
-            end
-        else
-            cdStart     = tonumber(tostring(cdInfo.startTime or 0)) or 0
-            cdDuration  = tonumber(tostring(cdInfo.duration or 0)) or 0
-            cdModRate   = tonumber(tostring(cdInfo.modRate or 1)) or 1
-            cdRemaining = math.max(0, (cdStart + cdDuration) - GetTime())
-        end
+    if not cdRemaining and cdInfo then
+        cdStart     = tonumber(tostring(cdInfo.startTime or 0)) or 0
+        cdDuration  = tonumber(tostring(cdInfo.duration  or 0)) or 0
+        cdModRate   = tonumber(tostring(cdInfo.modRate   or 1)) or 1
+        cdRemaining = math.max(0, (cdStart + cdDuration) - GetTime())
     end
 
     if not cdRemaining or cdRemaining <= 0 then
         return false
     end
 
-    local slot = GetDisplaySlot(index)
-    StyleSlot(slot, db)
-    local displayMode = db.displayMode or "text"
-    local precision = db.precision or 1
-    local spellName = spellEntry.customText or spellEntry.spellName or L["MOVEMENT_ALERT_FALLBACK"] or "Movement"
-    local spellIcon = spellEntry.spellIcon
-
-    slot.text:Hide()
-    slot.icon:Hide()
-    slot.bar:Hide()
-
     if displayMode == "text" then
-        local textFormat = db.textFormat or "%ts\nNo %a"
-        local precFmt = "%%." .. precision .. "f"
-        local fmtStr = textFormat:gsub("\\n", "\n"):gsub("%%a", spellName):gsub("%%t", precFmt)
         slot.text:SetFormattedText(fmtStr, cdRemaining)
         slot.text:Show()
     elseif displayMode == "icon" then
@@ -979,9 +963,6 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
             slot.icon.cooldown:SetHideCountdownNumbers(false)
             slot.icon:Show()
         else
-            local textFormat = db.textFormat or "%ts\nNo %a"
-            local precFmt = "%%." .. precision .. "f"
-            local fmtStr = textFormat:gsub("\\n", "\n"):gsub("%%a", spellName):gsub("%%t", precFmt)
             slot.text:SetFormattedText(fmtStr, cdRemaining)
             slot.text:Show()
         end
@@ -990,16 +971,13 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
         slot.bar:SetValue(cdRemaining)
         local barR, barG, barB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
         slot.bar:SetStatusBarColor(barR, barG, barB)
-
         slot.bar.text:SetFormattedText("%." .. precision .. "f", cdRemaining)
-
         if db.barShowIcon ~= false and spellIcon then
             slot.bar.icon:SetTexture(spellIcon)
             slot.bar.icon:Show()
         else
             slot.bar.icon:Hide()
         end
-
         slot.bar:Show()
     end
 
@@ -1084,109 +1062,25 @@ CheckMovementCooldown = function()
                 end
             end
         else
-        local cdOk, cdInfo = pcall(C_Spell.GetSpellCooldown, entry.spellId)
-        if not cdOk then cdInfo = nil end
-        if entry.baseSpellId then
-            local cdDurCheck = cdInfo and (tonumber(tostring(cdInfo.duration or 0)) or 0) or 0
-            if not cdInfo or cdDurCheck == 0 then
-                local bOk, bInfo = pcall(C_Spell.GetSpellCooldown, entry.baseSpellId)
-                if bOk and bInfo then cdInfo = bInfo end
+        -- WA logic applied directly: use base spell ID for charges, display spell for others
+        local spellId = (entry.baseSpellId) or entry.spellId
+        local hasCharges = C_Spell.GetSpellCharges(spellId)
+        local spellInfo  = C_Spell.GetSpellCooldown(spellId)
+        if spellInfo and spellInfo.timeUntilEndOfStartRecovery and
+           (spellInfo.isOnGCD == false or
+            (spellInfo.isOnGCD == nil and not hasCharges)) then
+            -- truthy check only — never compare the secret value
+            local duration
+            if entry.isChargeSpell and C_Spell.GetSpellChargeDuration then
+                local ok, d = pcall(C_Spell.GetSpellChargeDuration, spellId)
+                if ok then duration = d end
+            elseif not entry.isChargeSpell and C_Spell.GetSpellCooldownDuration then
+                local ok, d = pcall(C_Spell.GetSpellCooldownDuration, spellId)
+                if ok then duration = d end
             end
-        end
-
-        if cdInfo then
-            local remaining = 0
-            local showThis = false
-
-            if entry.isChargeSpell then
-                local chargeId = entry.baseSpellId or entry.chargeSpellId or entry.spellId
-                local currentCharges
-                local chargeRemaining = 0
-
-                if inCombat then
-                    local raw = cachedChargeCount[entry.spellId]
-                    currentCharges = (raw ~= nil) and (tonumber(tostring(raw)) or 0) or 0
-
-                    local rechargeStart = chargeRechargeStart[entry.spellId]
-                    local rechDur = entry.rechargeDuration or 0
-                    if rechargeStart and rechDur > 1.5 then
-                        chargeRemaining = math.max(0, (rechargeStart + rechDur) - GetTime())
-                    elseif spellCastTime[entry.spellId] and rechDur > 1.5 then
-                        chargeRemaining = math.max(0, (spellCastTime[entry.spellId] + rechDur) - GetTime())
-                    end
-                else
-                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
-                    currentCharges = 0
-                    if chOk and chargeInfo then
-                        if chargeInfo.currentCharges ~= nil then
-                            currentCharges = tonumber(tostring(chargeInfo.currentCharges)) or 0
-                        end
-                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                        local chDur = GetEffectiveChargeDuration(entry.spellId, tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0)
-                        if chDur > 1.5 then
-                            chargeRemaining = math.max(0, (chStart + chDur) - GetTime())
-                        end
-                    end
-                    cachedChargeCount[entry.spellId] = currentCharges
-                end
-
-                remaining = chargeRemaining
-                if currentCharges == 0 and spellWasCast[entry.spellId] and chargeRemaining > 0.05 then
-                    showThis = true
-                end
-            else
-                local cdStartRaw = tonumber(tostring(cdInfo.startTime or 0)) or 0
-                local cdDurRaw = tonumber(tostring(cdInfo.duration or 0)) or 0
-                remaining = cdDurRaw > 0 and math.max(0, (cdStartRaw + cdDurRaw) - GetTime()) or 0
-                if remaining <= 0 and spellWasCast[entry.spellId] then
-                    local chargeId = entry.baseSpellId or entry.spellId
-                    local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
-                    if not (chOk and chargeInfo) then
-                        chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, entry.spellId)
-                    end
-                    if chOk and chargeInfo then
-                        local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                        local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
-                        if chDur > 0.5 and chStart > 0 then
-                            remaining = math.max(0, (chStart + chDur) - GetTime())
-                        end
-                    end
-                    if remaining <= 0 then
-                        local castT = spellCastTime[entry.spellId]
-                        local baseDur = entry.baseDuration or 0
-                        if baseDur <= 0 then baseDur = GetKnownCategoryDuration(entry.spellId) end
-                        if baseDur <= 0 and entry.baseSpellId then baseDur = GetKnownCategoryDuration(entry.baseSpellId) end
-                        if castT and baseDur > 0.5 then
-                            remaining = math.max(0, (castT + baseDur) - GetTime())
-                        end
-                    end
-                end
-                if spellWasCast[entry.spellId] and remaining > 0.05 then
-                    showThis = true
-                end
+            if ShowMovementSlot(count + 1, spellInfo, entry, duration) then
+                count = count + 1
             end
-
-            if remaining <= 0 and spellWasCast[entry.spellId] then
-                spellWasCast[entry.spellId] = nil
-                spellCastTime[entry.spellId] = nil
-            end
-
-            if showThis then
-                local duration
-                if entry.isChargeSpell and C_Spell.GetSpellChargeDuration then
-                    local ok, d = pcall(C_Spell.GetSpellChargeDuration, entry.baseSpellId or entry.chargeSpellId or entry.spellId)
-                    if ok then duration = d end
-                elseif not entry.isChargeSpell and C_Spell.GetSpellCooldownDuration then
-                    local ok, d = pcall(C_Spell.GetSpellCooldownDuration, entry.spellId)
-                    if ok then duration = d end
-                end
-                if ShowMovementSlot(count + 1, cdInfo, entry, duration) then
-                    count = count + 1
-                end
-            end
-        else
-            spellWasCast[entry.spellId] = nil
-            spellCastTime[entry.spellId] = nil
         end
         end
     end
@@ -1479,24 +1373,6 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         RefreshCastFilters()
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
-        for _, entry in ipairs(cachedMovementSpells) do
-            if entry.isChargeSpell then
-                local chargeId = entry.baseSpellId or entry.chargeSpellId or entry.spellId
-                local chOk, chargeInfo = pcall(C_Spell.GetSpellCharges, chargeId)
-                if chOk and chargeInfo then
-                    local chStart = tonumber(tostring(chargeInfo.cooldownStartTime or 0)) or 0
-                    local chDur = tonumber(tostring(chargeInfo.cooldownDuration or 0)) or 0
-                    if chDur > 1.5 and chStart > 0 then
-                        chargeRechargeStart[entry.spellId] = chStart
-                    end
-                end
-                local rawCur = cachedChargeCount[entry.spellId]
-                local cur = rawCur ~= nil and tonumber(tostring(rawCur)) or nil
-                if cur and cur < (entry.maxCharges or 1) and not rechargeTimers[entry.spellId] then
-                    StartRechargeTimer(entry)
-                end
-            end
-        end
         CheckMovementCooldown()
         CheckGatewayUsable()
     elseif event == "PLAYER_REGEN_ENABLED" then
@@ -1546,10 +1422,16 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                                         chargeRechargeStart[sid] = GetTime() - (rechDur - newRemaining)
                                         StartRechargeTimer(entry, newRemaining)
                                     else
-                                        chargeRechargeStart[sid] = nil
+                                        local newCharges = math.min(cur + 1, entry.maxCharges or 1)
+                                        cachedChargeCount[sid] = newCharges
                                         spellWasCast[sid] = nil
                                         spellCastTime[sid] = nil
-                                        cachedChargeCount[sid] = math.min(cur + 1, entry.maxCharges or 1)
+                                        if newCharges < (entry.maxCharges or 1) then
+                                            chargeRechargeStart[sid] = GetTime()
+                                            StartRechargeTimer(entry)
+                                        else
+                                            chargeRechargeStart[sid] = nil
+                                        end
                                     end
                                 end
                             end
