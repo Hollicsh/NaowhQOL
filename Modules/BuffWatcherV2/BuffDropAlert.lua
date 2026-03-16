@@ -271,7 +271,9 @@ function BuffDropAlert:AddAlerts(droppedList)
                 self.closeBtn:Show()
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:AddLine(self._alertName or "", 1, 1, 1)
-                if self._isAlwaysOn then
+                if self._checkType == "inventory" then
+                    GameTooltip:AddLine("You are out of these!", 1, 0.4, 0.0)
+                elseif self._isAlwaysOn then
                     GameTooltip:AddLine("You know this buff but it's not active!", 1, 0.4, 0.0)
                 else
                     GameTooltip:AddLine("This buff has expired!", 1, 0.4, 0.0)

@@ -95,6 +95,7 @@ local MODULE_KEYWORDS = {
     misc            = { "Faster Auto Loot", "Suppress Loot Warnings", "Easy Item Destroy", "Auto Insert Keystone", "AH Current Expansion", "Hide Alerts", "Hide Talking Head", "Hide Event Toasts", "Hide Zone Text", "Skip Queue Confirmation", "Hide Minimap Icon", "Don't Release", "Death Release Protection", "Auto Repair", "Use Guild Funds", "Durability Warning", "Warning Threshold", "Auto Accept Quests", "Auto Turn-in Quests", "Auto Select Gossip Quests", "Quest Automation" },
     optimizations   = { "Optimal FPS Settings", "Ultra Settings", "Revert Settings", "Render Scale", "VSync", "Multisampling", "Low Latency Mode", "Anti-Aliasing", "Shadow Quality", "Liquid Detail", "Particle Density", "SSAO", "Depth Effects", "Compute Effects", "Outline Mode", "Texture Resolution", "Spell Density", "Projected Textures", "View Distance", "Environment Detail", "Ground Clutter", "Triple Buffering", "Texture Filtering", "Ray Traced Shadows", "Resample Quality", "Graphics API", "Physics Integration", "Target FPS", "Background FPS", "Resample Sharpness", "Camera Shake", "Spell Queue Window", "Addon Profiler" },
 }
+ns.MODULE_KEYWORDS = MODULE_KEYWORDS
 
 local function RefreshAllModuleDisplays()
     if ns.CombatTimerDisplay    then pcall(ns.CombatTimerDisplay.UpdateDisplay, ns.CombatTimerDisplay) end
@@ -273,162 +274,6 @@ function ns:InitGeneral()
         lockContent:SetHeight(100)
         lockWrap:RecalcHeight()
 
-        local searchWrap, searchContent = W:CreateCollapsibleSection(sections, {
-            text = L["GENERAL_SECTION_SEARCH"],
-            startOpen = true,
-            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
-        })
-
-        local searchDescLabel = searchContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        searchDescLabel:SetPoint("TOPLEFT", 10, -5)
-        searchDescLabel:SetText(W.Colorize(L["GENERAL_SEARCH_DESC"], C.GRAY))
-        searchDescLabel:SetWidth(450)
-        searchDescLabel:SetJustifyH("LEFT")
-
-        local searchBox = CreateFrame("EditBox", nil, searchContent, "BackdropTemplate")
-        searchBox:SetSize(300, 26)
-        searchBox:SetPoint("TOPLEFT", 10, -25)
-        searchBox:SetBackdrop({
-            bgFile = [[Interface\Buttons\WHITE8x8]],
-            edgeFile = [[Interface\Buttons\WHITE8x8]],
-            edgeSize = 1,
-        })
-        searchBox:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
-        searchBox:SetBackdropBorderColor(0, 0.49, 0.79, 0.4)
-        searchBox:SetFont(ns.DefaultFontPath(), 12, "")
-        searchBox:SetTextColor(1, 1, 1, 0.9)
-        searchBox:SetTextInsets(8, 8, 0, 0)
-        searchBox:SetAutoFocus(false)
-        searchBox:SetMaxLetters(50)
-
-        local searchPlaceholder = searchBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        searchPlaceholder:SetPoint("LEFT", 10, 0)
-        searchPlaceholder:SetText(L["GENERAL_SEARCH_PLACEHOLDER"])
-
-        searchBox:SetScript("OnEditFocusGained", function() searchPlaceholder:Hide() end)
-        searchBox:SetScript("OnEditFocusLost", function(self)
-            if self:GetText() == "" then searchPlaceholder:Show() end
-        end)
-
-        local RESULT_HEIGHT = 28
-        local MAX_RESULTS = 12
-        local resultArea = CreateFrame("Frame", nil, searchContent)
-        resultArea:SetPoint("TOPLEFT", 10, -58)
-        resultArea:SetSize(400, RESULT_HEIGHT * MAX_RESULTS)
-
-        local resultButtons = {}
-
-        local function ClearResults()
-            for _, btn in ipairs(resultButtons) do
-                btn:Hide()
-            end
-        end
-
-        local function CreateResultButton(index)
-            if resultButtons[index] then return resultButtons[index] end
-
-            local btn = CreateFrame("Button", nil, resultArea, "BackdropTemplate")
-            btn:SetSize(390, RESULT_HEIGHT - 2)
-            btn:SetPoint("TOPLEFT", 0, -((index - 1) * RESULT_HEIGHT))
-            btn:SetBackdrop({
-                bgFile = [[Interface\Buttons\WHITE8x8]],
-                edgeFile = [[Interface\Buttons\WHITE8x8]],
-                edgeSize = 1,
-            })
-            btn:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
-            btn:SetBackdropBorderColor(0, 0.49, 0.79, 0.3)
-
-            local txt = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            txt:SetPoint("LEFT", 10, 0)
-            txt:SetPoint("RIGHT", -10, 0)
-            txt:SetJustifyH("LEFT")
-            txt:SetTextColor(1, 1, 1, 0.9)
-            btn.label = txt
-
-            btn:SetScript("OnEnter", function(self)
-                self:SetBackdropColor(1, 0.66, 0, 0.25)
-                self:SetBackdropBorderColor(1, 0.66, 0, 0.8)
-            end)
-            btn:SetScript("OnLeave", function(self)
-                self:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
-                self:SetBackdropBorderColor(0, 0.49, 0.79, 0.3)
-            end)
-
-            resultButtons[index] = btn
-            return btn
-        end
-
-        local function DoSearch(query)
-            ClearResults()
-            if not query or query == "" then return end
-            query = strlower(strtrim(query))
-
-            local seen = {}
-            local count = 0
-
-            for _, entry in ipairs(MODULE_REGISTRY) do
-                if count >= MAX_RESULTS then break end
-                local displayName = MODULE_DISPLAY_NAMES[entry.db] or entry.db
-                if strlower(displayName):find(query, 1, true) and not seen[entry.db] then
-                    seen[entry.db] = true
-                    count = count + 1
-                    local btn = CreateResultButton(count)
-                    btn.label:SetText("|cffffa900»|r  " .. displayName)
-                    btn:SetScript("OnClick", function()
-                        if entry.tab and ns.OpenTab then
-                            ns:OpenTab(entry.tab)
-                        end
-                    end)
-                    btn:Show()
-                end
-            end
-
-            for _, entry in ipairs(MODULE_REGISTRY) do
-                if count >= MAX_RESULTS then break end
-                if not seen[entry.db] then
-                    local keywords = MODULE_KEYWORDS[entry.db]
-                    if keywords then
-                        for _, kw in ipairs(keywords) do
-                            if strlower(kw):find(query, 1, true) then
-                                seen[entry.db] = true
-                                count = count + 1
-                                local displayName = MODULE_DISPLAY_NAMES[entry.db] or entry.db
-                                local btn = CreateResultButton(count)
-                                btn.label:SetText("|cffffa900»|r  " .. displayName .. "  |cff888888>  " .. kw .. "|r")
-                                btn:SetScript("OnClick", function()
-                                    if entry.tab and ns.OpenTab then
-                                        ns:OpenTab(entry.tab)
-                                    end
-                                end)
-                                btn:Show()
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-
-            if count == 0 then
-                local btn = CreateResultButton(1)
-                btn.label:SetText(W.Colorize(L["GENERAL_SEARCH_NO_RESULTS"], C.GRAY))
-                btn:SetScript("OnClick", nil)
-                btn:Show()
-            end
-        end
-
-        searchBox:SetScript("OnTextChanged", function(self)
-            DoSearch(self:GetText())
-        end)
-        searchBox:SetScript("OnEscapePressed", function(self)
-            self:ClearFocus()
-        end)
-        searchBox:SetScript("OnEnterPressed", function(self)
-            self:ClearFocus()
-        end)
-
-        searchContent:SetHeight(60 + RESULT_HEIGHT * 4)
-        searchWrap:RecalcHeight()
-
         local optionsWrap, optionsContent = W:CreateCollapsibleSection(sections, {
             text = L["GENERAL_SECTION_OPTIONS"],
             startOpen = true,
@@ -445,7 +290,7 @@ function ns:InitGeneral()
         optionsContent:SetHeight(40)
         optionsWrap:RecalcHeight()
 
-        local sectionList = { fontWrap, lockWrap, searchWrap, optionsWrap }
+        local sectionList = { fontWrap, lockWrap, optionsWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(sectionList) do

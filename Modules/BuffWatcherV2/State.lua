@@ -986,6 +986,7 @@ function BWV2:CheckAlwaysOnInventory()
                     name = group.name,
                     icon = icon or group.fallbackIcon or 134400,
                     category = "inventory",
+                    checkType = "inventory",
                 }
             end
         end

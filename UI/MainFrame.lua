@@ -87,6 +87,158 @@ local CloseButton = CreateFrame("Button", nil, MainWindow, "UIPanelCloseButton")
 CloseButton:SetPoint("TOPRIGHT", -3, -3)
 CloseButton:SetSize(32, 32)
 
+do
+    local srchBlue   = { r = 0.00, g = 0.49, b = 0.79 }
+    local srchOrange = { r = 1.00, g = 0.66, b = 0.00 }
+    local SRCH_H, SRCH_MAX = 26, 8
+    local srchBtns = {}
+
+    local SearchBox = CreateFrame("EditBox", nil, MainWindow, "BackdropTemplate")
+    SearchBox:SetSize(160, 24)
+    SearchBox:SetPoint("TOPRIGHT", MainWindow, "TOPRIGHT", -40, -11)
+    SearchBox:SetBackdrop({
+        bgFile   = [[Interface\Buttons\WHITE8X8]],
+        edgeFile = [[Interface\Buttons\WHITE8X8]],
+        edgeSize = 1,
+    })
+    SearchBox:SetBackdropColor(0.04, 0.04, 0.04, 0.95)
+    SearchBox:SetBackdropBorderColor(srchBlue.r, srchBlue.g, srchBlue.b, 0.5)
+    SearchBox:SetFont([[Interface\AddOns\NaowhQOL\Assets\Fonts\Naowh.ttf]], 11, "")
+    SearchBox:SetTextColor(1, 1, 1, 0.9)
+    SearchBox:SetTextInsets(22, 6, 0, 0)
+    SearchBox:SetAutoFocus(false)
+    SearchBox:SetMaxLetters(50)
+
+    local MagIcon = SearchBox:CreateTexture(nil, "OVERLAY")
+    MagIcon:SetSize(13, 13)
+    MagIcon:SetPoint("LEFT", SearchBox, "LEFT", 5, 0)
+    MagIcon:SetTexture("Interface\\Common\\UI-Searchbox-Icon")
+    MagIcon:SetVertexColor(0.6, 0.6, 0.6, 0.9)
+
+    local Placeholder = SearchBox:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    Placeholder:SetPoint("LEFT",  SearchBox, "LEFT",  22, 0)
+    Placeholder:SetPoint("RIGHT", SearchBox, "RIGHT", -6, 0)
+    Placeholder:SetJustifyH("LEFT")
+    Placeholder:SetNonSpaceWrap(false)
+    Placeholder:SetText("Search")
+
+    local Results = CreateFrame("Frame", nil, MainWindow, "BackdropTemplate")
+    Results:SetWidth(200)
+    Results:SetPoint("TOPRIGHT", SearchBox, "BOTTOMRIGHT", 0, -2)
+    Results:SetFrameStrata("DIALOG")
+    Results:SetFrameLevel(300)
+    Results:SetBackdrop({
+        bgFile   = [[Interface\Buttons\WHITE8X8]],
+        edgeFile = [[Interface\Buttons\WHITE8X8]],
+        edgeSize = 1,
+    })
+    Results:SetBackdropColor(0.04, 0.04, 0.04, 0.97)
+    Results:SetBackdropBorderColor(srchBlue.r, srchBlue.g, srchBlue.b, 0.6)
+    Results:Hide()
+
+    local function ClearBtns()
+        for _, b in ipairs(srchBtns) do b:Hide() end
+    end
+
+    local function GetBtn(i)
+        if srchBtns[i] then return srchBtns[i] end
+        local b = CreateFrame("Button", nil, Results, "BackdropTemplate")
+        b:SetSize(198, SRCH_H - 2)
+        b:SetPoint("TOPLEFT", 1, -((i - 1) * SRCH_H) - 1)
+        b:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8X8]] })
+        b:SetBackdropColor(0.04, 0.04, 0.04, 0)
+        local t = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        t:SetPoint("LEFT",  b, "LEFT",  8, 0)
+        t:SetPoint("RIGHT", b, "RIGHT", -8, 0)
+        t:SetJustifyH("LEFT")
+        t:SetNonSpaceWrap(false)
+        t:SetTextColor(1, 1, 1, 0.9)
+        b.lbl = t
+        b:SetScript("OnEnter", function(self) self:SetBackdropColor(srchOrange.r, srchOrange.g, srchOrange.b, 0.2) end)
+        b:SetScript("OnLeave", function(self) self:SetBackdropColor(0.04, 0.04, 0.04, 0) end)
+        srchBtns[i] = b
+        return b
+    end
+
+    local function DoSearch(query)
+        ClearBtns()
+        if not query or query == "" then Results:Hide() return end
+        query = strlower(strtrim(query))
+        local reg    = ns.MODULE_REGISTRY
+        local dnames = ns.MODULE_DISPLAY_NAMES
+        local kws    = ns.MODULE_KEYWORDS
+        if not reg then Results:Hide() return end
+        local seen, count = {}, 0
+        for _, e in ipairs(reg) do
+            if count >= SRCH_MAX then break end
+            local dn = (dnames and dnames[e.db]) or e.db
+            if strlower(dn):find(query, 1, true) and not seen[e.db] then
+                seen[e.db] = true; count = count + 1
+                local b = GetBtn(count)
+                b.lbl:SetText("|cffffa900\xc2\xbb|r " .. dn)
+                b:SetScript("OnClick", function()
+                    SearchBox:SetText(""); Placeholder:Show(); Results:Hide()
+                    if e.tab and ns.OpenTab then ns:OpenTab(e.tab) end
+                end)
+                b:Show()
+            end
+        end
+        if kws then
+            for _, e in ipairs(reg) do
+                if count >= SRCH_MAX then break end
+                if not seen[e.db] and kws[e.db] then
+                    for _, kw in ipairs(kws[e.db]) do
+                        if strlower(kw):find(query, 1, true) then
+                            seen[e.db] = true; count = count + 1
+                            local dn = (dnames and dnames[e.db]) or e.db
+                            local b = GetBtn(count)
+                            b.lbl:SetText("|cffffa900\xc2\xbb|r " .. dn .. " |cff666666\xe2\x80\xba " .. kw .. "|r")
+                            b:SetScript("OnClick", function()
+                                SearchBox:SetText(""); Placeholder:Show(); Results:Hide()
+                                if e.tab and ns.OpenTab then ns:OpenTab(e.tab) end
+                            end)
+                            b:Show(); break
+                        end
+                    end
+                end
+            end
+        end
+        if count == 0 then
+            local b = GetBtn(1)
+            b.lbl:SetText("|cff666666No results found.|r")
+            b:SetScript("OnClick", nil); b:Show(); count = 1
+        end
+        Results:SetHeight(count * SRCH_H + 2)
+        Results:Show()
+    end
+
+    SearchBox:SetScript("OnEditFocusGained", function(self)
+        Placeholder:Hide()
+        MagIcon:Hide()
+        self:SetBackdropBorderColor(srchOrange.r, srchOrange.g, srchOrange.b, 0.9)
+        self:SetTextInsets(6, 6, 0, 0)
+        if self:GetText() ~= "" then DoSearch(self:GetText()) end
+    end)
+    SearchBox:SetScript("OnEditFocusLost", function(self)
+        if self:GetText() == "" then
+            Placeholder:Show()
+            MagIcon:Show()
+            self:SetTextInsets(22, 6, 0, 0)
+        end
+        self:SetBackdropBorderColor(srchBlue.r, srchBlue.g, srchBlue.b, 0.5)
+        C_Timer.After(0.15, function()
+            if not SearchBox:HasFocus() then Results:Hide() end
+        end)
+    end)
+    SearchBox:SetScript("OnTextChanged", function(self) DoSearch(self:GetText()) end)
+    SearchBox:SetScript("OnEscapePressed", function(self)
+        self:SetText(""); Placeholder:Show(); MagIcon:Show()
+        self:SetTextInsets(22, 6, 0, 0)
+        Results:Hide(); self:ClearFocus()
+    end)
+    SearchBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+end
+
 local ResizeHandle = CreateFrame("Button", nil, MainWindow)
 ResizeHandle:SetSize(16, 16)
 ResizeHandle:SetPoint("BOTTOMRIGHT", -2, 2)
