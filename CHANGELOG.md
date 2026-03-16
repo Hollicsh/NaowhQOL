@@ -6,4 +6,5 @@
 **GCD Tracker**
 - Added hunter Auto Shot(id:75) to default block list
 **Movement Alert**
-- Refactored movement tracker to more accurately detect when spells cds are modified by external sources like hero talents.
+- Refactored movement tracker to more accurately detect when spells cds are modified by external sources like hero talents. 
+    -# Massive credit to sunaruqtx for not only finding a solutioon but testing these changes for weeks now.
