@@ -470,12 +470,15 @@ function BWV2:CheckBuffDrops()
     if not self.buffSnapshot or not next(self.buffSnapshot) then
         return nil
     end
-    if self:ShouldSuppressAlertsForZone() then return nil end
+    local db = self:GetDB()
+    local suppressForInstance = db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance()
+    local suppressForRested = db.buffDropAlertDisableRested and IsResting()
 
     local dropped = {}
 
     for key, data in pairs(self.buffSnapshot) do
-        if not self.buffDropReminded[key] then
+        local isPersonalBuff = data.category == "raidBuff" or data.category == "classBuff"
+        if not (suppressForRested or (suppressForInstance and not isPersonalBuff)) and not self.buffDropReminded[key] then
             local stillPresent = false
             local foundExpiry = nil
 
@@ -646,11 +649,34 @@ end
 function BWV2:CheckAlwaysOnRaidBuffs()
     local db = self:GetDB()
     if not db or not db.raidBuffAlwaysCheck then return nil end
-    if self:ShouldSuppressAlertsForZone() then return nil end
+    if db.buffDropAlertDisableRested and IsResting() then return nil end
+    if InCombatLockdown() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
 
+    local units = {}
+    local inRaid = IsInRaid()
+    local groupSize = GetNumGroupMembers()
+    if groupSize == 0 then
+        units[1] = "player"
+    else
+        for i = 1, groupSize do
+            local unit
+            if inRaid then
+                unit = "raid" .. i
+            else
+                unit = (i == 1) and "player" or ("party" .. (i - 1))
+            end
+            if UnitExists(unit) and UnitIsConnected(unit) and UnitIsVisible(unit) then
+                units[#units + 1] = unit
+            end
+        end
+    end
+
+    if #units == 0 then return nil end
+
+    local threshold = self:GetThreshold()
     local missing = {}
 
     for _, buff in ipairs(Categories.RAID) do
@@ -667,20 +693,30 @@ function BWV2:CheckAlwaysOnRaidBuffs()
             end
 
             if playerKnows then
-                local hasBuff = false
-                local threshold = self:GetThreshold()
-                for _, spellID in ipairs(spellIDs) do
-                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-                    if aura then
-                        local remaining = (aura.expirationTime or 0) - GetTime()
-                        if aura.expirationTime == 0 or remaining > threshold then
-                            hasBuff = true
-                            break
+                local covered = 0
+                local total = #units
+                for _, unit in ipairs(units) do
+                    local idx = 1
+                    local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                    local hasBuff = false
+                    while auraData do
+                        for _, spellID in ipairs(spellIDs) do
+                            if auraData.spellId == spellID then
+                                local remaining = (auraData.expirationTime or 0) - GetTime()
+                                if auraData.expirationTime == 0 or remaining > threshold then
+                                    hasBuff = true
+                                end
+                                break
+                            end
                         end
+                        if hasBuff then break end
+                        idx = idx + 1
+                        auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                     end
+                    if hasBuff then covered = covered + 1 end
                 end
 
-                if not hasBuff then
+                if covered < total then
                     local icon = C_Spell.GetSpellTexture(primaryID)
                     missing[#missing + 1] = {
                         key = "raidAlways_" .. buff.key,
@@ -688,6 +724,9 @@ function BWV2:CheckAlwaysOnRaidBuffs()
                         spellIDs = spellIDs,
                         icon = icon,
                         category = "raidBuff",
+                        covered = covered,
+                        total = total,
+                        isGroupCoverage = true,
                     }
                 end
             end
@@ -700,7 +739,7 @@ end
 function BWV2:CheckAlwaysOnClassBuffs()
     local db = self:GetDB()
     if not db or not db.classBuffAlwaysCheck then return nil end
-    if self:ShouldSuppressAlertsForZone() then return nil end
+    if db.buffDropAlertDisableRested and IsResting() then return nil end
 
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]

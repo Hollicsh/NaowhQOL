@@ -106,6 +106,7 @@ local CDM_FRAMES = {
     BuffIconCooldownViewer = true,
     EssentialCooldownViewer = true,
     UtilityCooldownViewer = true,
+    BuffBarCooldownViewer = true,
 }
 
 local function IsAnchoredToCDM()
@@ -385,15 +386,40 @@ local function UpdateWhirlingSurge(startTime, duration)
     end
 end
 
+local CDM_VIEWER_NAMES = {
+    "EssentialCooldownViewer",
+    "UtilityCooldownViewer",
+    "BuffIconCooldownViewer",
+    "BuffBarCooldownViewer",
+}
+
+local function SetCdmAlpha(alpha)
+    for _, vName in ipairs(CDM_VIEWER_NAMES) do
+        local viewer = _G[vName]
+        if viewer then
+            viewer:SetAlpha(alpha)
+            if viewer.itemFramePool then
+                for frame in viewer.itemFramePool:EnumerateActive() do
+                    if frame then frame:SetAlpha(alpha) end
+                end
+            end
+        end
+    end
+    local ayijeCDM = _G["Ayije_CDM"]
+    if ayijeCDM and ayijeCDM.anchorContainers then
+        for _, container in pairs(ayijeCDM.anchorContainers) do
+            if container then container:SetAlpha(alpha) end
+        end
+    end
+end
+
 local cdmHidden = false
 local function HideCooldownManager()
     if cdmHidden then return end
     local success = pcall(function()
         StashPositionAndReanchor()
         cdmHidden = true
-        if BuffIconCooldownViewer then BuffIconCooldownViewer:SetAlpha(0) end
-        if EssentialCooldownViewer then EssentialCooldownViewer:SetAlpha(0) end
-        if UtilityCooldownViewer then UtilityCooldownViewer:SetAlpha(0) end
+        SetCdmAlpha(0)
     end)
     if not success and InCombatLockdown() then
         cdmHidden = false
@@ -406,9 +432,7 @@ local function ShowCooldownManager()
     if not cdmHidden then return end
     local success = pcall(function()
         cdmHidden = false
-        if BuffIconCooldownViewer then BuffIconCooldownViewer:SetAlpha(1) end
-        if EssentialCooldownViewer then EssentialCooldownViewer:SetAlpha(1) end
-        if UtilityCooldownViewer then UtilityCooldownViewer:SetAlpha(1) end
+        SetCdmAlpha(1)
         RestoreOriginalAnchor()
     end)
     if not success and InCombatLockdown() then
@@ -418,13 +442,21 @@ local function ShowCooldownManager()
     end
 end
 
+local function SetResourceBarAlpha(alpha)
+    if C_AddOns.IsAddOnLoaded("Ayije_CDM") then
+        if Ayije_CDM_ResourcesContainer then Ayije_CDM_ResourcesContainer:SetAlpha(alpha) end
+    elseif C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
+        if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(alpha) end
+        if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(alpha) end
+    end
+end
+
 local bcmHidden = false
 local function HideBCM()
     if bcmHidden then return end
     local success = pcall(function()
         bcmHidden = true
-        if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(0) end
-        if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(0) end
+        SetResourceBarAlpha(0)
     end)
     if not success and InCombatLockdown() then
         bcmHidden = false
@@ -437,8 +469,7 @@ local function ShowBCM()
     if not bcmHidden then return end
     local success = pcall(function()
         bcmHidden = false
-        if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(1) end
-        if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(1) end
+        SetResourceBarAlpha(1)
     end)
     if not success and InCombatLockdown() then
         bcmHidden = true
@@ -765,6 +796,7 @@ eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_LOGOUT")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 eventFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
@@ -804,6 +836,17 @@ eventFrame:SetScript("OnEvent", function(self, event)
         elseif pendingBcmHide then
             pendingBcmHide = false
             HideBCM()
+        end
+        return
+    end
+
+    if event == "PLAYER_ENTERING_WORLD" then
+        if uiBuilt and IsAnchoredToCDM() then
+            C_Timer.After(0.5, function()
+                if mainFrame then
+                    UpdateLayout()
+                end
+            end)
         end
         return
     end

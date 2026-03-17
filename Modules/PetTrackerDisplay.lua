@@ -70,20 +70,34 @@ local function ShouldHavePet()
     return false
 end
 
-local function IsPetLowHealth()
-    local maxHP = tonumber(tostring(UnitHealthMax("pet")))
-    if not maxHP or maxHP == 0 then return false end
-    local db = NaowhQOL.petTracker
-    local threshold = db and db.lowHealthThreshold or 25
-    return (tonumber(tostring(UnitHealth("pet"))) / maxHP * 100) <= threshold
+local healthCurves = {}
+local function GetHealthCurve(thresholdPct)
+    thresholdPct = math.max(1, math.min(100, thresholdPct or 30))
+    if healthCurves[thresholdPct] then return healthCurves[thresholdPct] end
+    local curve = C_CurveUtil.CreateColorCurve()
+    curve:SetType(Enum.LuaCurveType.Step)
+    curve:AddPoint(0, CreateColor(1, 1, 1, 1))
+    curve:AddPoint(thresholdPct / 100, CreateColor(1, 1, 1, 0))
+    healthCurves[thresholdPct] = curve
+    return curve
+end
+
+local function GetPetLowHealthAlpha(thresholdPct)
+    if not UnitHealthPercent then return nil end
+    if not UnitExists("pet") or UnitIsDeadOrGhost("pet") then return nil end
+    local curve = GetHealthCurve(thresholdPct)
+    local ok, color = pcall(UnitHealthPercent, "pet", false, curve)
+    if not ok or not color or type(color.GetRGBA) ~= "function" then return nil end
+    local _, _, _, a = color:GetRGBA()
+    return a
 end
 
 local function IsPetPassive()
     if not PetHasActionBar() then return false end
 
     for i = 1, NUM_PET_ACTION_SLOTS or 10 do
-        local name, _, isToken, isActive = GetPetActionInfo(i)
-        if isToken and name == "PET_MODE_PASSIVE" and isActive then
+        local name, _, _, isActive = GetPetActionInfo(i)
+        if name == "PET_MODE_PASSIVE" and isActive then
             return true
         end
     end
@@ -165,10 +179,6 @@ local function EvaluateWarning()
         return WARNING_WRONG_PET
     end
 
-    if db.lowHealthEnabled and IsPetLowHealth() then
-        return WARNING_LOW_HEALTH
-    end
-
     if IsPetPassive() then
         if not db.showPassive then return WARNING_NONE end
         return WARNING_PASSIVE
@@ -237,7 +247,21 @@ function petFrame:UpdateDisplay()
 
     local warning = EvaluateWarning()
 
+    local r, g, b = W.GetEffectiveColor(db, "colorR", "colorG", "colorB", "colorUseClassColor")
+
     if warning == WARNING_NONE then
+        if db.lowHealthEnabled then
+            local threshold = db.lowHealthThreshold or 25
+            local alpha = GetPetLowHealthAlpha(threshold)
+            if alpha ~= nil then
+                warningLabel:SetText(db.lowHealthText or L["PETTRACKER_LOW_HEALTH_DEFAULT"])
+                warningLabel:SetTextColor(r, g, b)
+                pcall(petFrame.SetAlpha, petFrame, alpha)
+                petFrame:Show()
+                return
+            end
+        end
+        pcall(petFrame.SetAlpha, petFrame, 1)
         if not canUnlock then
             petFrame:Hide()
         else
@@ -247,16 +271,13 @@ function petFrame:UpdateDisplay()
         return
     end
 
-    local r, g, b = W.GetEffectiveColor(db, "colorR", "colorG", "colorB", "colorUseClassColor")
+    pcall(petFrame.SetAlpha, petFrame, 1)
 
     if warning == WARNING_MISSING then
         warningLabel:SetText(db.missingText or L["PETTRACKER_MISSING_DEFAULT"])
         warningLabel:SetTextColor(r, g, b)
     elseif warning == WARNING_PASSIVE then
         warningLabel:SetText(db.passiveText or L["PETTRACKER_PASSIVE_DEFAULT"])
-        warningLabel:SetTextColor(r, g, b)
-    elseif warning == WARNING_LOW_HEALTH then
-        warningLabel:SetText(db.lowHealthText or L["PETTRACKER_LOW_HEALTH_DEFAULT"])
         warningLabel:SetTextColor(r, g, b)
     elseif warning == WARNING_WRONG_PET then
         warningLabel:SetText(db.wrongPetText or L["PETTRACKER_WRONGPET_DEFAULT"])

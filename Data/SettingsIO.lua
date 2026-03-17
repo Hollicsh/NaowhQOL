@@ -908,9 +908,8 @@ NaowhQOL_API = {
 
 -- WagoUI Pack Integration API
 -- https://forum.wago.io/t/ui-pack-implementation-guide
--- IMPORTANT: These functions use C_EncodingUtil (CBOR + Deflate + Base64) which is a
--- SEPARATE encoding from the existing NaowhQOL_API.Import / Export format.
--- Existing user import strings remain fully compatible and are unaffected.
+-- These functions use the same encoding as the UI Export / Import button (Base64 + custom serializer),
+-- so strings produced here are fully interchangeable with the addon's built-in import system.
 
 ---@param profileKey string
 ---@return string|nil
@@ -918,25 +917,28 @@ function NaowhQOL_API:ExportProfile(profileKey)
     if not ns.db or not ns.db.sv then return nil end
     local profileData = ns.db.sv.profiles and ns.db.sv.profiles[profileKey]
     if not profileData then return nil end
-    local serialized = C_EncodingUtil.SerializeCBOR(profileData)
-    local compressed = C_EncodingUtil.CompressString(serialized, Enum.CompressionMethod.Deflate,
-        Enum.CompressionLevel.OptimizeForSize)
-    return C_EncodingUtil.EncodeBase64(compressed)
+    local data = {}
+    for _, m in ipairs(ns.SettingsIO.modules) do
+        local val = profileData[m.key]
+        if val then data[m.key] = val end
+    end
+    return Base64Encode(Serialize(data))
 end
 
 ---@param profileString string
 ---@param profileKey string
 function NaowhQOL_API:ImportProfile(profileString, profileKey)
     if not ns.db or not ns.db.sv then return end
-    local decoded = C_EncodingUtil.DecodeBase64(profileString)
-    if not decoded then return end
-    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
-    if not decompressed then return end
-    local deserialized = C_EncodingUtil.DeserializeCBOR(decompressed)
+    local raw = Base64Decode(profileString)
+    if not raw then return end
+    local deserialized = Deserialize(raw)
     if type(deserialized) ~= "table" then return end
 
     ns.db.sv.profiles = ns.db.sv.profiles or {}
-    ns.db.sv.profiles[profileKey] = deserialized
+    ns.db.sv.profiles[profileKey] = ns.db.sv.profiles[profileKey] or {}
+    for k, v in pairs(deserialized) do
+        ns.db.sv.profiles[profileKey][k] = v
+    end
 
     if ns.db.global then
         ns.db.global.savedProfiles = ns.db.global.savedProfiles or {}
@@ -952,11 +954,9 @@ end
 ---@param profileString string
 ---@return table|nil
 function NaowhQOL_API:DecodeProfileString(profileString)
-    local decoded = C_EncodingUtil.DecodeBase64(profileString)
-    if not decoded then return nil end
-    local decompressed = C_EncodingUtil.DecompressString(decoded, Enum.CompressionMethod.Deflate)
-    if not decompressed then return nil end
-    return C_EncodingUtil.DeserializeCBOR(decompressed)
+    local raw = Base64Decode(profileString)
+    if not raw then return nil end
+    return Deserialize(raw)
 end
 
 ---@param profileKey string

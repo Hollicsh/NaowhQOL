@@ -149,6 +149,7 @@ local function ReleaseCell(cell)
     cell._enchantIDs = nil
     cell._minRequired = nil
     cell._isAlwaysOn = nil
+    cell._isGroupCoverage = nil
     cell._expiryTime = nil
     cell._expiryAcc = nil
     cell:SetScript("OnUpdate", nil)
@@ -240,6 +241,15 @@ function BuffDropAlert:AddAlerts(droppedList)
             end
         end
 
+        if data.isGroupCoverage and self.activeCells[key] then
+            local existingCell = self.activeCells[key]
+            if existingCell.durationText and data.covered ~= nil and data.total ~= nil then
+                existingCell.durationText:SetText(data.covered .. "/" .. data.total)
+                existingCell.durationText:Show()
+            end
+            shouldAdd = false
+        end
+
         if shouldAdd and not self.activeCells[key] then
             local cell = AcquireCell(parent)
             cell._alertKey = key
@@ -249,13 +259,17 @@ function BuffDropAlert:AddAlerts(droppedList)
             cell._enchantIDs = data.enchantIDs
             cell._minRequired = data.minRequired
             cell._isAlwaysOn = isAlwaysOn
+            cell._isGroupCoverage = data.isGroupCoverage
 
             if data.icon then
                 cell.icon:SetTexture(data.icon)
             else
                 cell.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
             end
-            if data.expiryTime then
+            if data.isGroupCoverage then
+                cell.icon:SetDesaturated(false)
+                cell.icon:SetVertexColor(1, 0.75, 0.25)
+            elseif data.expiryTime then
                 cell.icon:SetDesaturated(false)
                 cell.icon:SetVertexColor(1, 1, 1)
             else
@@ -271,7 +285,9 @@ function BuffDropAlert:AddAlerts(droppedList)
                 self.closeBtn:Show()
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:AddLine(self._alertName or "", 1, 1, 1)
-                if self._checkType == "inventory" then
+                if self._isGroupCoverage then
+                    GameTooltip:AddLine("Not all group members are buffed!", 1, 0.6, 0.0)
+                elseif self._checkType == "inventory" then
                     GameTooltip:AddLine("You are out of these!", 1, 0.4, 0.0)
                 elseif self._isAlwaysOn then
                     GameTooltip:AddLine("You know this buff but it's not active!", 1, 0.4, 0.0)
@@ -286,7 +302,12 @@ function BuffDropAlert:AddAlerts(droppedList)
 
             StartGlow(cell)
 
-            if data.expiryTime and data.expiryTime > GetTime() then
+            if data.isGroupCoverage and data.covered ~= nil and data.total ~= nil then
+                if cell.durationText then
+                    cell.durationText:SetText(data.covered .. "/" .. data.total)
+                    cell.durationText:Show()
+                end
+            elseif data.expiryTime and data.expiryTime > GetTime() then
                 cell._expiryTime = data.expiryTime
                 cell._expiryAcc = 0
                 local remaining = data.expiryTime - GetTime()
@@ -469,7 +490,7 @@ function BuffDropAlert:CheckRebuffsForPrefix(prefix)
     local anyDismissed = false
 
     for key, cell in pairs(self.activeCells) do
-        if key:sub(1, #prefix) == prefix then
+        if key:sub(1, #prefix) == prefix and not cell._isGroupCoverage then
             local isBack = false
 
             if cell._checkType == "weaponEnchant" and cell._enchantIDs then
