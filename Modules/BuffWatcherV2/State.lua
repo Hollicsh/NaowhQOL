@@ -470,6 +470,7 @@ function BWV2:CheckBuffDrops()
     if not self.buffSnapshot or not next(self.buffSnapshot) then
         return nil
     end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
     local db = self:GetDB()
     local suppressForInstance = db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance()
     local suppressForRested = db.buffDropAlertDisableRested and IsResting()
@@ -509,7 +510,7 @@ function BWV2:CheckBuffDrops()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if tonumber(auraData.icon) == tonumber(data.iconCheck) then
+                    if auraData.icon == data.iconCheck then
                         local remaining = (auraData.expirationTime or 0) - GetTime()
                         if auraData.expirationTime == 0 or remaining > threshold then
                             stillPresent = true
@@ -524,18 +525,20 @@ function BWV2:CheckBuffDrops()
             end
 
             if not stillPresent and data.checkType == "weaponEnchant" then
-                local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                if data.enchantIDs and #data.enchantIDs > 0 then
-                    local count = 0
-                    for _, eid in ipairs(data.enchantIDs) do
-                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                            count = count + 1
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    if data.enchantIDs and #data.enchantIDs > 0 then
+                        local count = 0
+                        for _, eid in ipairs(data.enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
+                            end
                         end
+                        local needed = (data.minRequired == 0) and #data.enchantIDs or (data.minRequired or 1)
+                        stillPresent = count >= needed
+                    else
+                        stillPresent = hasMain and true or false
                     end
-                    local needed = (data.minRequired == 0) and #data.enchantIDs or (data.minRequired or 1)
-                    stillPresent = count >= needed
-                else
-                    stillPresent = hasMain and true or false
                 end
             end
 
@@ -651,6 +654,7 @@ function BWV2:CheckAlwaysOnRaidBuffs()
     if not db or not db.raidBuffAlwaysCheck then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
     if InCombatLockdown() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -740,6 +744,7 @@ function BWV2:CheckAlwaysOnClassBuffs()
     local db = self:GetDB()
     if not db or not db.classBuffAlwaysCheck then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
 
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]
@@ -857,15 +862,17 @@ function BWV2:CheckAlwaysOnClassBuffs()
             elseif group.checkType == "weaponEnchant" then
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
-                    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                    local count = 0
-                    for _, eid in ipairs(enchantIDs) do
-                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                            count = count + 1
+                    local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                    if wOk then
+                        local count = 0
+                        for _, eid in ipairs(enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
+                            end
                         end
+                        local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
+                        hasBuff = count >= needed
                     end
-                    local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
-                    hasBuff = count >= needed
                 end
                 local scanner = ns.BWV2Scanner
                 icon = (scanner and #(group.enchantIDs or {}) > 0 and scanner:GetEnchantIcon(group.enchantIDs[1])) or 463543
@@ -893,6 +900,7 @@ function BWV2:CheckAlwaysOnConsumables()
     local db = self:GetDB()
     if not db or not db.consumableAlwaysCheck then return nil end
     if InCombatLockdown() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
     if self:ShouldSuppressAlertsForZone() then return nil end
 
     local Categories = ns.BWV2Categories
@@ -935,7 +943,7 @@ function BWV2:CheckAlwaysOnConsumables()
                     local idx = 1
                     local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                     while auraData do
-                        if tonumber(auraData.icon) == buff.buffIconID then
+                        if auraData.icon == buff.buffIconID then
                             local remaining = (auraData.expirationTime or 0) - GetTime()
                             if auraData.expirationTime == 0 or remaining > threshold then
                                 hasBuff = true

@@ -1,4 +1,13 @@
 # Changelog
+## [20260317.02]
+
+### Bug Fixes
+- **Battleground / PvP Taint Errors** — Fixed widespread errors that occurred in battlegrounds and other PvP instances caused by Blizzard's secret/tainted aura and spell data. Buff Watcher, Movement Alert, and Mouse Ring now gracefully skip checks when data is restricted instead of throwing errors.
+- **Mouse Ring** — Fixed a taint error on the AFK check when entering a battleground or arena.
+- **Buff Watcher — Class Buffs / Consumables / Raid Buffs / Buff Drop** — Fixed repeated taint errors from reading aura fields (spell ID, expiration, icon) that Blizzard marks as secret in PvP. These checks now safely bail out when aura data is unreadable.
+- **Buff Watcher — Weapon Enchant Checks** — Weapon enchant detection (poisons, sharpening stones, etc.) no longer causes errors when enchant info is tainted.
+- **Movement Alert** — Removed 26 instances of a forbidden conversion pattern on spell cooldown, charge, and override data that could produce taint errors in combat. Cooldown and charge tracking now reads API values directly.
+
 ## [20260317.01]
 
 ### Changes

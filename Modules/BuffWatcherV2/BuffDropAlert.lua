@@ -444,7 +444,7 @@ function BuffDropAlert:CheckRebuffs()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if tonumber(auraData.icon) == snap.iconCheck then
+                    if auraData.icon == snap.iconCheck then
                         isBack = true
                         break
                     end
@@ -454,18 +454,20 @@ function BuffDropAlert:CheckRebuffs()
             end
 
             if not isBack and snap.checkType == "weaponEnchant" then
-                local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                if snap.enchantIDs and #snap.enchantIDs > 0 then
-                    local count = 0
-                    for _, eid in ipairs(snap.enchantIDs) do
-                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                            count = count + 1
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    if snap.enchantIDs and #snap.enchantIDs > 0 then
+                        local count = 0
+                        for _, eid in ipairs(snap.enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
+                            end
                         end
+                        local needed = (snap.minRequired == 0) and #snap.enchantIDs or (snap.minRequired or 1)
+                        isBack = count >= needed
+                    else
+                        isBack = hasMain and true or false
                     end
-                    local needed = (snap.minRequired == 0) and #snap.enchantIDs or (snap.minRequired or 1)
-                    isBack = count >= needed
-                else
-                    isBack = hasMain and true or false
                 end
             end
 
@@ -494,15 +496,17 @@ function BuffDropAlert:CheckRebuffsForPrefix(prefix)
             local isBack = false
 
             if cell._checkType == "weaponEnchant" and cell._enchantIDs then
-                local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                local count = 0
-                for _, eid in ipairs(cell._enchantIDs) do
-                    if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                        count = count + 1
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    local count = 0
+                    for _, eid in ipairs(cell._enchantIDs) do
+                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                            count = count + 1
+                        end
                     end
+                    local needed = (cell._minRequired == 0) and #cell._enchantIDs or (cell._minRequired or 1)
+                    isBack = count >= needed
                 end
-                local needed = (cell._minRequired == 0) and #cell._enchantIDs or (cell._minRequired or 1)
-                isBack = count >= needed
             elseif cell._spellIDs then
                 for _, spellID in ipairs(cell._spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)

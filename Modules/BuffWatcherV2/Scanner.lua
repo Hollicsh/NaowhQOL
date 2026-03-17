@@ -21,11 +21,12 @@ function Scanner:GetPlayerBuffs()
     end
     local buffs = {}
     local idx = 1
+    if not ns.DisplayUtils.CanReadAuras() then return buffs end
     local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
     while auraData do
         buffs[auraData.spellId] = {
             expiry = auraData.expirationTime,
-            icon = tonumber(auraData.icon),
+            icon = auraData.icon,
             name = auraData.name,
             sourceUnit = auraData.sourceUnit,
         }
@@ -127,13 +128,14 @@ end
 
 function Scanner:ScanUnitBuffs(unit)
     local buffs = {}
+    if not ns.DisplayUtils.CanReadAuras() then return buffs end
     local i = 1
     local auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
     while auraData do
         buffs[auraData.spellId] = {
             expiry = auraData.expirationTime,
-            icon = tonumber(auraData.icon),
+            icon = auraData.icon,
             name = auraData.name,
             sourceUnit = auraData.sourceUnit,
         }
@@ -234,7 +236,8 @@ function Scanner:CheckTargetedBuffSpells(spellIDs)
 end
 
 function Scanner:CheckWeaponEnchantIDs(enchantIDs, minRequired)
-    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
+    local ok, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+    if not ok then return false end
 
     local count = 0
     for _, enchantID in ipairs(enchantIDs) do
@@ -336,11 +339,13 @@ function Scanner:ScanClassBuffs()
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
                     hasBuff = self:CheckWeaponEnchantIDs(enchantIDs, group.minRequired or 1)
-                    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
-                    for _, eid in ipairs(enchantIDs) do
-                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                            foundIcon = GetCachedEnchantIcon(eid)
-                            break
+                    local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                    if wOk then
+                        for _, eid in ipairs(enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                foundIcon = GetCachedEnchantIcon(eid)
+                                break
+                            end
                         end
                     end
                     if not foundIcon then

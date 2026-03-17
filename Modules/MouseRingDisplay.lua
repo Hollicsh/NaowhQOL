@@ -719,8 +719,12 @@ events:RegisterUnitEvent("PLAYER_FLAGS_CHANGED", "player")
 
 events:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
-        if UnitIsAFK("player") then state.isAfk = true else state.isAfk = false end
         RefreshCombatState()
+        if not state.inInstance then
+            state.isAfk = UnitIsAFK("player") and true or false
+        else
+            state.isAfk = false
+        end
         state.isCasting = UnitCastingInfo("player") ~= nil
         state.isChanneling = UnitChannelInfo("player") ~= nil
         state.castStart = 0

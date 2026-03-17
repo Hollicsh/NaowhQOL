@@ -335,7 +335,8 @@ function Categories:ApplyTalentMods(categoryKey, baseRequirements)
 end
 
 function Categories:CheckRoguePoisons()
-    local hasMain, _, _, mainEnchantId, hasOff, _, _, offEnchantId = GetWeaponEnchantInfo()
+    local ok, hasMain, _, _, mainEnchantId, hasOff, _, _, offEnchantId = pcall(GetWeaponEnchantInfo)
+    if not ok then return nil end
 
     local reqs = self:ApplyTalentMods("roguePoisons", { count = 2 })
     if reqs.skip then return nil end
@@ -451,6 +452,8 @@ function Categories:UnitHasBuffFromList(unit, spellIDs, threshold)
         spellIDs = {spellIDs}
     end
 
+    if not ns.DisplayUtils.CanReadAuras() then return false, 0, nil end
+
     local now = GetTime()
     threshold = threshold or 0
 
@@ -472,13 +475,15 @@ function Categories:UnitHasBuffFromList(unit, spellIDs, threshold)
 end
 
 function Categories:UnitHasBuffByIcon(unit, iconID, threshold)
+    if not ns.DisplayUtils.CanReadAuras() then return false, 0 end
+
     local now = GetTime()
     threshold = threshold or 0
 
     local i = 1
     local auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
     while auraData do
-        if tonumber(auraData.icon) == iconID then
+        if auraData.icon == iconID then
             local remaining = (auraData.expirationTime or 0) - now
             if auraData.expirationTime == 0 or remaining > threshold then
                 return true, remaining
@@ -492,7 +497,8 @@ function Categories:UnitHasBuffByIcon(unit, iconID, threshold)
 end
 
 function Categories:HasWeaponEnchant(enchantID)
-    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
+    local ok, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+    if not ok then return false end
     if hasMain and mainID == enchantID then
         return true
     end
@@ -519,7 +525,8 @@ function Categories:CheckWeaponBuffStatus()
         return false, "NO_WEAPON"
     end
 
-    local hasMain, _, _, _, hasOff, _, _, _ = GetWeaponEnchantInfo()
+    local ok, hasMain, _, _, _, hasOff, _, _, _ = pcall(GetWeaponEnchantInfo)
+    if not ok then return false, "TAINTED" end
 
     if not hasMain then
         return false, "MISSING_MAIN"
