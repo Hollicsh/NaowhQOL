@@ -181,7 +181,7 @@ ns:RegisterLocale("deDE", {
     DRAGON_HIDE_COOLDOWN = "Abklingzeitverwaltung beim Reiten ausblenden",
     DRAGON_HIDE_COOLDOWN_DESC = "Hinweis: Ein-/Ausblenden kann im Kampf fehlschlagen, auf eigenes Risiko verwenden.",
     DRAGON_HIDE_BCM = "CDM-Ressourcenleisten beim Reiten ausblenden",
-    DRAGON_HIDE_BCM_DESC = "Blendet die Ressourcenleisten von Ayije CDM beim Himmelsreiten aus.",
+    DRAGON_HIDE_BCM_DESC = "Blendet die Ressourcenleisten von CDM beim Himmelsreiten aus.",
     DRAGON_SECTION_FEATURES = "FUNKTIONEN",
     DRAGON_SECOND_WIND = "Zweiter Wind",
     DRAGON_SECOND_WIND_DESC = "Zweiter-Wind-Ladungen als Unterebene anzeigen",
