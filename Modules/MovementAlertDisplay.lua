@@ -464,7 +464,7 @@ local function GetPlayerMovementSpells()
 end
 
 local function UpdateCachedCharges()
-    if inCombat then return end
+    if inCombat or InCombatLockdown() then return end
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.isChargeSpell then
             local chargeId = entry.baseSpellId or entry.chargeSpellId or entry.spellId
@@ -609,8 +609,15 @@ local function StartRechargeTimer(entry, delay)
         local rawCur = cachedChargeCount[entry.spellId]
         local cur = rawCur or 0
         local max = entry.maxCharges or 1
-        cachedChargeCount[entry.spellId] = math.min(cur + 1, max)
-        if cachedChargeCount[entry.spellId] < max then
+        local incOk, newVal = pcall(function() return math.min(cur + 1, max) end)
+        if not incOk then
+            cachedChargeCount[entry.spellId] = 1
+            chargeRechargeStart[entry.spellId] = nil
+            return
+        end
+        cachedChargeCount[entry.spellId] = newVal
+        local ltOk, isLess = pcall(function() return newVal < max end)
+        if ltOk and isLess then
             chargeRechargeStart[entry.spellId] = GetTime()
             StartRechargeTimer(entry)
         else
@@ -647,7 +654,12 @@ local function OnTrackedSpellCast(spellId)
         if entry.spellId == baseId and entry.isChargeSpell then
             local rawCur = cachedChargeCount[baseId]
             local cur = rawCur or entry.maxCharges or 1
-            cachedChargeCount[baseId] = math.max(0, cur - 1)
+            local decOk, newVal = pcall(function() return math.max(0, cur - 1) end)
+            if not decOk then
+                cachedChargeCount[baseId] = 0
+            else
+                cachedChargeCount[baseId] = newVal
+            end
             if not chargeRechargeStart[baseId] then
                 chargeRechargeStart[baseId] = GetTime()
             end
@@ -1407,7 +1419,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                         local sid = entry.spellId
                         local raw = cachedChargeCount[sid]
                         local cur = raw or 0
-                        if cur == 0 then
+                        local eqOk, isZero = pcall(function() return cur == 0 end)
+                        if eqOk and isZero then
                             local rechargeStart = chargeRechargeStart[sid] or spellCastTime[sid]
                             local rechDur = entry.rechargeDuration or 0
                             if rechargeStart and rechDur > 0 then
@@ -1422,11 +1435,16 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                                         chargeRechargeStart[sid] = GetTime() - (rechDur - newRemaining)
                                         StartRechargeTimer(entry, newRemaining)
                                     else
-                                        local newCharges = math.min(cur + 1, entry.maxCharges or 1)
-                                        cachedChargeCount[sid] = newCharges
+                                        local incOk2, newCharges = pcall(function() return math.min(cur + 1, entry.maxCharges or 1) end)
+                                        if not incOk2 then
+                                            cachedChargeCount[sid] = 1
+                                        else
+                                            cachedChargeCount[sid] = newCharges
+                                        end
                                         spellWasCast[sid] = nil
                                         spellCastTime[sid] = nil
-                                        if newCharges < (entry.maxCharges or 1) then
+                                        local ltOk2, isLess2 = pcall(function() return (cachedChargeCount[sid] or 0) < (entry.maxCharges or 1) end)
+                                        if ltOk2 and isLess2 then
                                             chargeRechargeStart[sid] = GetTime()
                                             StartRechargeTimer(entry)
                                         else

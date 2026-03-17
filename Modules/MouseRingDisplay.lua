@@ -162,6 +162,7 @@ local function SetupTexture(tex, shape)
 end
 
 UpdateRender = function()
+    if not container then return end
     local db = GetDB()
     local alpha = GetOpacity()
 

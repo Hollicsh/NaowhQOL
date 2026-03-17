@@ -119,7 +119,7 @@ end
 function ns.DisplayUtils.CanReadAuras()
     local aura = C_UnitAuras.GetAuraDataByIndex("player", 1, "HELPFUL")
     if not aura then return true end
-    local ok = pcall(function() local _ = aura.spellId end)
+    local ok = pcall(function() return aura.spellId == 0 end)
     return ok
 end
 

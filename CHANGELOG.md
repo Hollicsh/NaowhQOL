@@ -1,20 +1,10 @@
 # Changelog
-## [20260317.02]
+# Hotfix
+## [20260317.03]
 
 ### Bug Fixes
-- **Battleground / PvP Taint Errors** — Fixed widespread errors that occurred in battlegrounds and other PvP instances caused by Blizzard's secret/tainted aura and spell data. Buff Watcher, Movement Alert, and Mouse Ring now gracefully skip checks when data is restricted instead of throwing errors.
-- **Mouse Ring** — Fixed a taint error on the AFK check when entering a battleground or arena.
-- **Buff Watcher — Class Buffs / Consumables / Raid Buffs / Buff Drop** — Fixed repeated taint errors from reading aura fields (spell ID, expiration, icon) that Blizzard marks as secret in PvP. These checks now safely bail out when aura data is unreadable.
-- **Buff Watcher — Weapon Enchant Checks** — Weapon enchant detection (poisons, sharpening stones, etc.) no longer causes errors when enchant info is tainted.
-- **Movement Alert** — Removed 26 instances of a forbidden conversion pattern on spell cooldown, charge, and override data that could produce taint errors in combat. Cooldown and charge tracking now reads API values directly.
-
-## [20260317.01]
-
-### Changes
-- **Buff Drop Alert** — The "Dungeons / Raids Only" filter no longer blocks alerts for personal raid buffs (Battle Shout, Mark of the Wild, etc.) or class buffs. Those will now always alert regardless of zone.
-- **Buff Drop Alert** — With "Always Monitor Raid Buffs" enabled, an icon now appears showing how many group members are missing a buff you provide (e.g. **3/5**), updating live — no more guessing who's unbuffed.
-
-### Bug Fixes
-- **Import / Export** — Profiles exported via the WagoUI API are now fully compatible with the in-game Import button, and vice versa.
-- **Dragonriding bar** — The bar no longer loses its position after a UI reload when anchored to a CDM frame. It now repositions itself automatically on login.
-- **Dragonriding bar — Hide CDM / BCM while skyriding** — This option now actually works for **Ayije CDM** as well. Left backwards support for **BetterCooldownManager** 
+- **Buff Watcher — Raid Buff Scanning** — Fixed "attempt to compare secret number value" errors that could occur when receiving buffs during a boss encounter (e.g. Arcane Familiar). Aura spell ID comparisons are now fully protected against Blizzard taint.
+- **Movement Alert — Charge Tracking** — Fixed "attempt to perform arithmetic on secret number value" errors during combat. Charge count math (incrementing, decrementing, comparisons) is now taint-safe and won't throw errors mid-fight.
+- **Movement Alert — Charge Updates** — Added an extra combat lockdown check to prevent reading tainted charge data during the brief window between entering combat and the addon being notified.
+- **Mouse Ring — PvP Loading** — Fixed a "container is nil" error  that happened when loading into battlegrounds or arenas where combat starts before the UI is fully initialized. The ring now waits until it's been created before trying to update.
+- **Taint Detection** — Improved the internal aura-readability check so it correctly detects Blizzard's secret/tainted values. The previous check could miss tainted data, allowing other modules to hit errors downstream.

@@ -705,10 +705,14 @@ function BWV2:CheckAlwaysOnRaidBuffs()
                     local hasBuff = false
                     while auraData do
                         for _, spellID in ipairs(spellIDs) do
-                            if auraData.spellId == spellID then
-                                local remaining = (auraData.expirationTime or 0) - GetTime()
-                                if auraData.expirationTime == 0 or remaining > threshold then
-                                    hasBuff = true
+                            local cmpOk, cmpMatch = pcall(function() return auraData.spellId == spellID end)
+                            if cmpOk and cmpMatch then
+                                local expOk, remaining = pcall(function() return (auraData.expirationTime or 0) - GetTime() end)
+                                if expOk then
+                                    local zeroOk, isZero = pcall(function() return auraData.expirationTime == 0 end)
+                                    if (zeroOk and isZero) or remaining > threshold then
+                                        hasBuff = true
+                                    end
                                 end
                                 break
                             end
@@ -838,12 +842,16 @@ function BWV2:CheckAlwaysOnClassBuffs()
                             local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                             while auraData do
                                 for _, spellID in ipairs(spellIDs) do
-                                    if auraData.spellId == spellID
+                                    local cmpOk, cmpMatch = pcall(function() return auraData.spellId == spellID end)
+                                    if cmpOk and cmpMatch
                                        and auraData.sourceUnit
                                        and UnitIsUnit(auraData.sourceUnit, "player") then
-                                        local remaining = (auraData.expirationTime or 0) - GetTime()
-                                        if auraData.expirationTime == 0 or remaining > threshold then
-                                            hasBuff = true
+                                        local expOk, remaining = pcall(function() return (auraData.expirationTime or 0) - GetTime() end)
+                                        if expOk then
+                                            local zeroOk, isZero = pcall(function() return auraData.expirationTime == 0 end)
+                                            if (zeroOk and isZero) or remaining > threshold then
+                                                hasBuff = true
+                                            end
                                         end
                                         break
                                     end
