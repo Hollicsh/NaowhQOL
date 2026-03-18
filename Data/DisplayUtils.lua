@@ -119,8 +119,34 @@ end
 function ns.DisplayUtils.CanReadAuras()
     local aura = C_UnitAuras.GetAuraDataByIndex("player", 1, "HELPFUL")
     if not aura then return true end
+    if issecretvalue and issecretvalue(aura.spellId) then return false end
     local ok = pcall(function() return aura.spellId == 0 end)
     return ok
+end
+
+function ns.DisplayUtils.CanReadGroupAuras()
+    if not ns.DisplayUtils.CanReadAuras() then return false end
+    local groupSize = GetNumGroupMembers()
+    if groupSize <= 1 then return true end
+    local inRaid = IsInRaid()
+    for i = 1, groupSize do
+        local unit
+        if inRaid then
+            unit = "raid" .. i
+        else
+            unit = (i == 1) and "player" or ("party" .. (i - 1))
+        end
+        if unit ~= "player" and UnitExists(unit) then
+            local aura = C_UnitAuras.GetAuraDataByIndex(unit, 1, "HELPFUL")
+            if aura then
+                if issecretvalue and issecretvalue(aura.spellId) then return false end
+                local ok = pcall(function() return aura.spellId == 0 end)
+                if not ok then return false end
+            end
+            return true
+        end
+    end
+    return true
 end
 
 ns.DisplayUtils.FRAME_BACKDROP = {

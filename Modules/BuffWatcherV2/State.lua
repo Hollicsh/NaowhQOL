@@ -654,7 +654,7 @@ function BWV2:CheckAlwaysOnRaidBuffs()
     if not db or not db.raidBuffAlwaysCheck then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
     if InCombatLockdown() then return nil end
-    if not ns.DisplayUtils.CanReadAuras() then return nil end
+    if not ns.DisplayUtils.CanReadGroupAuras() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -823,9 +823,11 @@ function BWV2:CheckAlwaysOnClassBuffs()
                 local spellIDs = group.spellIDs or {}
                 local threshold = self:GetThreshold()
                 if GetNumGroupMembers() == 0 then
-                    hasBuff = true -- solo: no one to buff, suppress alert
+                    hasBuff = true
                 elseif InCombatLockdown() then
-                    hasBuff = true -- aura data is tainted in combat; skip check
+                    hasBuff = true
+                elseif not ns.DisplayUtils.CanReadGroupAuras() then
+                    hasBuff = true
                 elseif #spellIDs > 0 then
                     local inRaid = IsInRaid()
                     local groupSize = GetNumGroupMembers()

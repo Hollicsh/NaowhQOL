@@ -483,7 +483,11 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
-        Core:OnPlayerAuraChanged()
+        C_Timer.After(0.5, function()
+            if not InCombatLockdown() then
+                Core:OnPlayerAuraChanged()
+            end
+        end)
         return
 
     elseif event == "CHALLENGE_MODE_START" then
