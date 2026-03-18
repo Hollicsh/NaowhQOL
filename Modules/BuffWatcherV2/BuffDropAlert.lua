@@ -1,5 +1,9 @@
 local _, ns = ...
 
+local function IsSecret(v)
+    return issecretvalue and issecretvalue(v) or false
+end
+
 local BuffDropAlert = {}
 ns.BWV2BuffDropAlert = BuffDropAlert
 
@@ -444,7 +448,8 @@ function BuffDropAlert:CheckRebuffs()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if auraData.icon == snap.iconCheck then
+                    local icon = auraData.icon
+                    if not IsSecret(icon) and icon == snap.iconCheck then
                         isBack = true
                         break
                     end

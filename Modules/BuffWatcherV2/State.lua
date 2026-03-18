@@ -1,5 +1,9 @@
 local _, ns = ...
 
+local function IsSecret(v)
+    return issecretvalue and issecretvalue(v) or false
+end
+
 local BWV2 = {}
 ns.BWV2 = BWV2
 
@@ -494,12 +498,17 @@ function BWV2:CheckBuffDrops()
                 for _, spellID in ipairs(data.spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
-                        local remaining = (aura.expirationTime or 0) - GetTime()
-                        if aura.expirationTime == 0 or remaining > threshold then
+                        local expTime = aura.expirationTime
+                        if IsSecret(expTime) then
                             stillPresent = true
                             break
-                        elseif aura.expirationTime ~= 0 then
-                            foundExpiry = aura.expirationTime
+                        end
+                        local remaining = (expTime or 0) - GetTime()
+                        if expTime == 0 or remaining > threshold then
+                            stillPresent = true
+                            break
+                        elseif expTime ~= 0 then
+                            foundExpiry = expTime
                         end
                     end
                 end
@@ -510,12 +519,18 @@ function BWV2:CheckBuffDrops()
                 local idx = 1
                 local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                 while auraData do
-                    if auraData.icon == data.iconCheck then
-                        local remaining = (auraData.expirationTime or 0) - GetTime()
-                        if auraData.expirationTime == 0 or remaining > threshold then
+                    local icon = auraData.icon
+                    if not IsSecret(icon) and icon == data.iconCheck then
+                        local expTime = auraData.expirationTime
+                        if IsSecret(expTime) then
                             stillPresent = true
-                        elseif auraData.expirationTime ~= 0 then
-                            foundExpiry = auraData.expirationTime
+                        else
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                stillPresent = true
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
+                            end
                         end
                         break
                     end
@@ -748,6 +763,7 @@ function BWV2:CheckAlwaysOnClassBuffs()
     local db = self:GetDB()
     if not db or not db.classBuffAlwaysCheck then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
+    if InCombatLockdown() then return nil end
     if not ns.DisplayUtils.CanReadAuras() then return nil end
 
     local _, playerClass = UnitClass("player")
@@ -793,8 +809,13 @@ function BWV2:CheckAlwaysOnClassBuffs()
                 for _, spellID in ipairs(spellIDs) do
                     local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                     if aura then
-                        local remaining = (aura.expirationTime or 0) - GetTime()
-                        if aura.expirationTime == 0 or remaining > threshold then
+                        local expTime = aura.expirationTime
+                        if IsSecret(expTime) then
+                            hasBuff = true
+                            break
+                        end
+                        local remaining = (expTime or 0) - GetTime()
+                        if expTime == 0 or remaining > threshold then
                             count = count + 1
                         end
                     end
@@ -954,13 +975,19 @@ function BWV2:CheckAlwaysOnConsumables()
                     local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                     while auraData do
                         if auraData.icon == buff.buffIconID then
-                            local remaining = (auraData.expirationTime or 0) - GetTime()
-                            if auraData.expirationTime == 0 or remaining > threshold then
+                            local expTime = auraData.expirationTime
+                            if IsSecret(expTime) then
                                 hasBuff = true
                                 icon = auraData.icon
                                 break
-                            elseif auraData.expirationTime ~= 0 then
-                                foundExpiry = auraData.expirationTime
+                            end
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                hasBuff = true
+                                icon = auraData.icon
+                                break
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
                             end
                         end
                         idx = idx + 1
@@ -976,13 +1003,19 @@ function BWV2:CheckAlwaysOnConsumables()
                     for _, spellID in ipairs(spellIDs) do
                         local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
                         if aura then
-                            local remaining = (aura.expirationTime or 0) - GetTime()
-                            if aura.expirationTime == 0 or remaining > threshold then
+                            local expTime = aura.expirationTime
+                            if IsSecret(expTime) then
                                 hasBuff = true
                                 icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
                                 break
-                            elseif aura.expirationTime ~= 0 then
-                                foundExpiry = aura.expirationTime
+                            end
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                hasBuff = true
+                                icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
+                                break
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
                                 icon = aura.icon or C_Spell.GetSpellTexture(spellID) or buff.fallbackIcon
                             end
                         end

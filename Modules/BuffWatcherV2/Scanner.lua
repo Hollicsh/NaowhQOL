@@ -1,5 +1,9 @@
 local _, ns = ...
 
+local function IsSecret(v)
+    return issecretvalue and issecretvalue(v) or false
+end
+
 local Scanner = {}
 ns.BWV2Scanner = Scanner
 
@@ -133,12 +137,15 @@ function Scanner:ScanUnitBuffs(unit)
     local auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
 
     while auraData do
-        buffs[auraData.spellId] = {
-            expiry = auraData.expirationTime,
-            icon = auraData.icon,
-            name = auraData.name,
-            sourceUnit = auraData.sourceUnit,
-        }
+        local spellId = auraData.spellId
+        if not IsSecret(spellId) then
+            buffs[spellId] = {
+                expiry = auraData.expirationTime,
+                icon = auraData.icon,
+                name = auraData.name,
+                sourceUnit = auraData.sourceUnit,
+            }
+        end
         i = i + 1
         auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
     end

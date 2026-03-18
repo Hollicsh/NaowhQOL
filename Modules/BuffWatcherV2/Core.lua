@@ -52,6 +52,7 @@ local function StartAlwaysOnWatcher()
             StopAlwaysOnWatcher()
             return
         end
+        if InCombatLockdown() then return end
 
         if cdb.raidBuffAlwaysCheck and BuffDropAlert then
             if BuffDropAlert:HasAlerts() then
@@ -178,6 +179,7 @@ local function StartClassBuffEnchantPoller()
             StopClassBuffEnchantPoller()
             return
         end
+        if InCombatLockdown() then return end
 
         if BuffDropAlert then
             if BuffDropAlert:HasAlerts() then
@@ -672,8 +674,9 @@ function Core:OnPlayerAuraChanged()
     if suppressed then return end
 
     local now = GetTime()
+    local inCombat = InCombatLockdown()
 
-    if db.raidBuffAlwaysCheck and BuffDropAlert then
+    if not inCombat and db.raidBuffAlwaysCheck and BuffDropAlert then
         if BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
         end
@@ -689,7 +692,7 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if db.classBuffAlwaysCheck and BuffDropAlert then
+    if not inCombat and db.classBuffAlwaysCheck and BuffDropAlert then
         if BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
         end

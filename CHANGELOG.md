@@ -1,8 +1,9 @@
 # Changelog
 # Hotfix
-## [20260317.05]
+## [20260317.06]
 
 ### Fixes
-- **Buff Watcher**
-  - Corrected loop that would not detect raidbuffs after combat ended showing false postive on buffs missing
-
+ **Buff Watcher**
+  - Fixed buff drop alerts randomly going off during combat when they should not.
+  - Group buff scanning after combat now waits a little longer so the game can finish updating aura data properly.
+  - Fixed additional Lua errors related to buff scanning and rebuff checks.
