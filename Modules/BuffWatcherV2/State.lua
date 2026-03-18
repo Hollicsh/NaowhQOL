@@ -719,15 +719,14 @@ function BWV2:CheckAlwaysOnRaidBuffs()
                     local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                     local hasBuff = false
                     while auraData do
+                        if IsSecret(auraData.spellId) then return nil end
                         for _, spellID in ipairs(spellIDs) do
-                            local cmpOk, cmpMatch = pcall(function() return auraData.spellId == spellID end)
-                            if cmpOk and cmpMatch then
-                                local expOk, remaining = pcall(function() return (auraData.expirationTime or 0) - GetTime() end)
-                                if expOk then
-                                    local zeroOk, isZero = pcall(function() return auraData.expirationTime == 0 end)
-                                    if (zeroOk and isZero) or remaining > threshold then
-                                        hasBuff = true
-                                    end
+                            if auraData.spellId == spellID then
+                                local expTime = auraData.expirationTime
+                                if IsSecret(expTime) then
+                                    hasBuff = true
+                                elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                    hasBuff = true
                                 end
                                 break
                             end
@@ -864,17 +863,19 @@ function BWV2:CheckAlwaysOnClassBuffs()
                             local idx = 1
                             local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                             while auraData do
+                                if IsSecret(auraData.spellId) then
+                                    hasBuff = true
+                                    break
+                                end
                                 for _, spellID in ipairs(spellIDs) do
-                                    local cmpOk, cmpMatch = pcall(function() return auraData.spellId == spellID end)
-                                    if cmpOk and cmpMatch
+                                    if auraData.spellId == spellID
                                        and auraData.sourceUnit
                                        and UnitIsUnit(auraData.sourceUnit, "player") then
-                                        local expOk, remaining = pcall(function() return (auraData.expirationTime or 0) - GetTime() end)
-                                        if expOk then
-                                            local zeroOk, isZero = pcall(function() return auraData.expirationTime == 0 end)
-                                            if (zeroOk and isZero) or remaining > threshold then
-                                                hasBuff = true
-                                            end
+                                        local expTime = auraData.expirationTime
+                                        if IsSecret(expTime) then
+                                            hasBuff = true
+                                        elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                            hasBuff = true
                                         end
                                         break
                                     end
@@ -974,7 +975,7 @@ function BWV2:CheckAlwaysOnConsumables()
                     local idx = 1
                     local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                     while auraData do
-                        if auraData.icon == buff.buffIconID then
+                        if not IsSecret(auraData.icon) and auraData.icon == buff.buffIconID then
                             local expTime = auraData.expirationTime
                             if IsSecret(expTime) then
                                 hasBuff = true

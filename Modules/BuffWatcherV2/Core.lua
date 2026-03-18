@@ -129,6 +129,7 @@ local function StartWeaponEnchantPoller()
             StopWeaponEnchantPoller()
             return
         end
+        if InCombatLockdown() then return end
 
         if BuffDropAlert and BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffs()
@@ -463,7 +464,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "BAG_UPDATE_DELAYED" then
         local db = BWV2:GetDB()
-        if db and db.enabled and db.inventoryAlwaysCheck and BuffDropAlert then
+        if db and db.enabled and db.inventoryAlwaysCheck and BuffDropAlert and not InCombatLockdown() then
             local now = GetTime()
             if now - lastInventoryCheck >= RAID_BUFF_THROTTLE then
                 lastInventoryCheck = now
@@ -481,6 +482,9 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             ReportCard:Hide()
         end
         if BuffDropAlert then
+            BuffDropAlert:DismissByPrefix("raidAlways_")
+            BuffDropAlert:DismissByPrefix("classAlways_")
+            BuffDropAlert:DismissByPrefix("consumableAlways_")
             BuffDropAlert:DismissByPrefix("inventoryAlways_")
         end
 
@@ -708,7 +712,7 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if db.consumableAlwaysCheck and BuffDropAlert then
+    if not inCombat and db.consumableAlwaysCheck and BuffDropAlert then
         if now - lastConsumableCheck >= RAID_BUFF_THROTTLE then
             lastConsumableCheck = now
             BuffDropAlert:DismissByPrefix("consumableAlways_")
@@ -719,6 +723,7 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
+    if inCombat then return end
     if not db.buffDropReminder then return end
     if BWV2.lastScanTime == 0 then return end
 
