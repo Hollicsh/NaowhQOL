@@ -4,6 +4,10 @@ local W = ns.Widgets
 local MakeSlot = ns.DisplayUtils.MakeSlot
 local COMBAT_REZ_SPELL_IDS = { 20484, 61999, 20707, 391054 }
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
 local inMythicPlus = false
 local encounterActive = false
 
@@ -62,19 +66,31 @@ local function UpdateRezDisplay()
 
     local icon = C_Spell.GetSpellTexture(activeSpellID)
     rezSlot.tex:SetTexture(icon or "Interface\\Icons\\Spell_Nature_Reincarnation")
-    rezSlot.count:SetText(tostring(charges.currentCharges))
 
-    if charges.currentCharges >= charges.maxCharges then
+    local cc = charges.currentCharges
+    local mc = charges.maxCharges
+    local cd = charges.cooldownDuration
+    local cs = charges.cooldownStartTime
+
+    rezSlot.count:SetFormattedText("%d", cc)
+
+    if IsSecret(cc) or IsSecret(mc) then
         rezSlot.timer:SetText("")
         rezSlot.tex:SetDesaturated(false)
+    elseif cc >= mc then
+        rezSlot.timer:SetText("")
+        rezSlot.tex:SetDesaturated(false)
+    elseif IsSecret(cd) or IsSecret(cs) then
+        rezSlot.timer:SetText("")
+        rezSlot.tex:SetDesaturated(cc == 0)
     else
-        local remaining = charges.cooldownDuration - (GetTime() - charges.cooldownStartTime)
+        local remaining = cd - (GetTime() - cs)
         if remaining > 0 then
             rezSlot.timer:SetText(format("%d:%02d", remaining / 60, remaining % 60))
         else
             rezSlot.timer:SetText("")
         end
-        rezSlot.tex:SetDesaturated(charges.currentCharges == 0)
+        rezSlot.tex:SetDesaturated(cc == 0)
     end
 end
 

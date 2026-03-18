@@ -1,10 +1,24 @@
 # Changelog
 # Hotfix
-## [20260317.03]
+## [20260317.04]
 
-### Bug Fixes
-- **Buff Watcher — Raid Buff Scanning** — Fixed "attempt to compare secret number value" errors that could occur when receiving buffs during a boss encounter (e.g. Arcane Familiar). Aura spell ID comparisons are now fully protected against Blizzard taint.
-- **Movement Alert — Charge Tracking** — Fixed "attempt to perform arithmetic on secret number value" errors during combat. Charge count math (incrementing, decrementing, comparisons) is now taint-safe and won't throw errors mid-fight.
-- **Movement Alert — Charge Updates** — Added an extra combat lockdown check to prevent reading tainted charge data during the brief window between entering combat and the addon being notified.
-- **Mouse Ring — PvP Loading** — Fixed a "container is nil" error  that happened when loading into battlegrounds or arenas where combat starts before the UI is fully initialized. The ring now waits until it's been created before trying to update.
-- **Taint Detection** — Improved the internal aura-readability check so it correctly detects Blizzard's secret/tainted values. The previous check could miss tainted data, allowing other modules to hit errors downstream.
+### Fixes
+- **Search for Buff Watcher**
+  Searching for things like **"buff drop"** should now correctly bring up the **Buff Watcher** module.
+
+  We also added more search terms for that section, including:
+  - Buff Drop Reminder
+  - Always Monitor My Raid Buffs
+  - Always Monitor My Class Buffs
+  - Always Monitor My Consumables
+  - Always Monitor My Inventory
+
+- **Continued Lua Errors**
+  Fixed addon-wide issues related to secret Values, which could cause Lua errors in certain situations.
+  This hotfix improves how the addon handles cooldowns, charges, durations, and similar timer data so affected modules work properly without throwing errors.
+  Modules most impacted as part of this fix:
+  - Movement Alert
+  - Combat Rez Timer
+  - Dragonriding / Vigor
+  - Mouse Ring GCD Sweep
+

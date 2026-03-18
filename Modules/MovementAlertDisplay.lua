@@ -2,6 +2,10 @@ local addonName, ns = ...
 local L = ns.L
 local W = ns.Widgets
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
 local inCombat = false
 
 local UNLOCK_BACKDROP = {
@@ -282,49 +286,46 @@ local gatewayPollTicker = nil
 local knownChargeSpells = {}
 
 local function SafeGetChargeInfo(spellId)
-    local ok, isCharge, maxCh, rechDur = pcall(function()
-        local chargeInfo = C_Spell.GetSpellCharges(spellId)
-        if not chargeInfo then return false, 1, 0 end
-        local m = chargeInfo.maxCharges or 1
-        local r = chargeInfo.cooldownDuration or 0
-        return m > 1, m, r
-    end)
-    if ok and isCharge then
-        knownChargeSpells[spellId] = { maxCh = maxCh, rechDur = rechDur }
-        return true, maxCh, rechDur
+    local chargeInfo = C_Spell.GetSpellCharges(spellId)
+    if not chargeInfo then
+        local cached = knownChargeSpells[spellId]
+        if cached then return true, cached.maxCh, cached.rechDur end
+        return false, 1, 0
+    end
+    local m = chargeInfo.maxCharges or 1
+    local r = chargeInfo.cooldownDuration or 0
+    if IsSecret(m) or IsSecret(r) then
+        local cached = knownChargeSpells[spellId]
+        if cached then return true, cached.maxCh, cached.rechDur end
+        return false, 1, 0
+    end
+    if m > 1 then
+        knownChargeSpells[spellId] = { maxCh = m, rechDur = r }
+        return true, m, r
     end
     local cached = knownChargeSpells[spellId]
-    if cached then
-        return true, cached.maxCh, cached.rechDur
-    end
-    if not ok then return false, 1, 0 end
-    return isCharge, maxCh, rechDur
+    if cached then return true, cached.maxCh, cached.rechDur end
+    return false, m, r
 end
 
 local function SafeGetBaseDuration(spellId)
     if C_Spell.GetSpellCooldownDuration then
-        local ok, dur = pcall(C_Spell.GetSpellCooldownDuration, spellId)
-        if ok and dur then
-            local ok2, total = pcall(dur.GetTotalDuration, dur)
-            if ok2 and total and total > 1.5 then
-                return total
-            end
+        local dur = C_Spell.GetSpellCooldownDuration(spellId)
+        if dur then
+            local total = dur:GetTotalDuration()
+            if not IsSecret(total) and total and total > 1.5 then return total end
         end
     end
     if C_Spell.GetSpellBaseCooldown then
-        local ok, ms = pcall(C_Spell.GetSpellBaseCooldown, spellId)
-        if ok and ms and ms > 1500 then
-            return ms / 1000
-        end
+        local ms = C_Spell.GetSpellBaseCooldown(spellId)
+        if not IsSecret(ms) and ms and ms > 1500 then return ms / 1000 end
     end
-    local ok, dur = pcall(function()
-        local cdInfo = C_Spell.GetSpellCooldown(spellId)
-        if cdInfo and cdInfo.duration then
-            return cdInfo.duration
-        end
-        return 0
-    end)
-    return (ok and dur and dur > 1.5) and dur or 0
+    local cdInfo = C_Spell.GetSpellCooldown(spellId)
+    if cdInfo and cdInfo.duration then
+        local d = cdInfo.duration
+        if not IsSecret(d) and d > 1.5 then return d end
+    end
+    return 0
 end
 
 local function GetPlayerMovementSpells()
@@ -468,26 +469,15 @@ local function UpdateCachedCharges()
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.isChargeSpell then
             local chargeId = entry.baseSpellId or entry.chargeSpellId or entry.spellId
-            local ok, charges = pcall(function()
-                local chargeInfo = C_Spell.GetSpellCharges(chargeId)
-                if chargeInfo then
-                    return chargeInfo.currentCharges or 0
-                end
-            end)
-            if ok and charges then
-                cachedChargeCount[entry.spellId] = charges
+            local chargeInfo = C_Spell.GetSpellCharges(chargeId)
+            if chargeInfo and chargeInfo.currentCharges and not IsSecret(chargeInfo.currentCharges) then
+                cachedChargeCount[entry.spellId] = chargeInfo.currentCharges
             end
         end
         if not entry.isChargeSpell then
-            local ok, dur = pcall(function()
-                local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
-                if cdInfo and cdInfo.duration then
-                    return cdInfo.duration
-                end
-                return 0
-            end)
-            if ok and dur and dur > 0 then
-                entry.baseDuration = dur
+            local cdInfo = C_Spell.GetSpellCooldown(entry.spellId)
+            if cdInfo and cdInfo.duration and not IsSecret(cdInfo.duration) and cdInfo.duration > 0 then
+                entry.baseDuration = cdInfo.duration
             end
         end
     end
@@ -606,18 +596,11 @@ local function StartRechargeTimer(entry, delay)
     if duration <= 0 then return end
     rechargeTimers[entry.spellId] = C_Timer.NewTimer(duration, function()
         rechargeTimers[entry.spellId] = nil
-        local rawCur = cachedChargeCount[entry.spellId]
-        local cur = rawCur or 0
+        local cur = cachedChargeCount[entry.spellId] or 0
         local max = entry.maxCharges or 1
-        local incOk, newVal = pcall(function() return math.min(cur + 1, max) end)
-        if not incOk then
-            cachedChargeCount[entry.spellId] = 1
-            chargeRechargeStart[entry.spellId] = nil
-            return
-        end
+        local newVal = math.min(cur + 1, max)
         cachedChargeCount[entry.spellId] = newVal
-        local ltOk, isLess = pcall(function() return newVal < max end)
-        if ltOk and isLess then
+        if newVal < max then
             chargeRechargeStart[entry.spellId] = GetTime()
             StartRechargeTimer(entry)
         else
@@ -652,14 +635,8 @@ local function OnTrackedSpellCast(spellId)
     if not inCombat then return end
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.spellId == baseId and entry.isChargeSpell then
-            local rawCur = cachedChargeCount[baseId]
-            local cur = rawCur or entry.maxCharges or 1
-            local decOk, newVal = pcall(function() return math.max(0, cur - 1) end)
-            if not decOk then
-                cachedChargeCount[baseId] = 0
-            else
-                cachedChargeCount[baseId] = newVal
-            end
+            local cur = cachedChargeCount[baseId] or entry.maxCharges or 1
+            cachedChargeCount[baseId] = math.max(0, cur - 1)
             if not chargeRechargeStart[baseId] then
                 chargeRechargeStart[baseId] = GetTime()
             end
@@ -924,38 +901,45 @@ local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
     end
 
     local cdRemaining, cdStart, cdDuration, cdModRate
+    local hasSecretDuration = false
     if duration then
-        local okR, rem   = pcall(duration.GetRemainingDuration, duration)
-        local okT, total = pcall(duration.GetTotalDuration, duration)
-        local okS, start = pcall(duration.GetStartTime, duration)
-        local okM, rate  = pcall(duration.GetModRate, duration)
-        if not okR then rem   = 0 end
-        if not okT then total = 0 end
-        if not okS then start = 0 end
-        if not okM then rate  = 1 end
-        if okR and total > 1.5 and rem > 0 then
+        local rem   = duration:GetRemainingDuration()
+        local total = duration:GetTotalDuration()
+        if IsSecret(rem) or IsSecret(total) then
+            -- Secret values: pass through to display APIs (string.format/SetValue accept secrets)
+            hasSecretDuration = true
             cdRemaining = rem
             cdDuration  = total
-            cdStart     = start
-            cdModRate   = rate
+            cdStart     = duration:GetStartTime()
+            cdModRate   = duration:GetModRate()
+        elseif total and total > 1.5 and rem and rem > 0 then
+            cdRemaining = rem
+            cdDuration  = total
+            cdStart     = duration:GetStartTime()
+            cdModRate   = duration:GetModRate()
         end
     end
 
     if not cdRemaining and cdInfo then
-        local okS2, s2 = pcall(function() return cdInfo.startTime or 0 end)
-        local okD2, d2 = pcall(function() return cdInfo.duration  or 0 end)
-        local okM2, m2 = pcall(function() return cdInfo.modRate   or 1 end)
-        if okS2 and okD2 and okM2 then
-            cdStart     = s2
-            cdDuration  = d2
-            cdModRate   = m2
-            cdRemaining = math.max(0, (cdStart + cdDuration) - GetTime())
+        local s = cdInfo.startTime or 0
+        local d = cdInfo.duration or 0
+        local m = cdInfo.modRate or 1
+        if IsSecret(s) or IsSecret(d) then
+            hasSecretDuration = true
+            cdStart     = s
+            cdDuration  = d
+            cdModRate   = m
+            cdRemaining = true -- placeholder: we know there's a CD, display via duration object
+        elseif d > 0 then
+            cdStart     = s
+            cdDuration  = d
+            cdModRate   = m
+            cdRemaining = math.max(0, (s + d) - GetTime())
         end
     end
 
-    if not cdRemaining or cdRemaining <= 0 then
-        return false
-    end
+    if not cdRemaining then return false end
+    if not hasSecretDuration and cdRemaining <= 0 then return false end
 
     if displayMode == "text" then
         slot.text:SetFormattedText(fmtStr, cdRemaining)
@@ -1077,14 +1061,11 @@ CheckMovementCooldown = function()
         if spellInfo and spellInfo.timeUntilEndOfStartRecovery and
            (spellInfo.isOnGCD == false or
             (spellInfo.isOnGCD == nil and not hasCharges)) then
-            -- truthy check only — never compare the secret value
             local duration
             if entry.isChargeSpell and C_Spell.GetSpellChargeDuration then
-                local ok, d = pcall(C_Spell.GetSpellChargeDuration, spellId)
-                if ok then duration = d end
+                duration = C_Spell.GetSpellChargeDuration(spellId)
             elseif not entry.isChargeSpell and C_Spell.GetSpellCooldownDuration then
-                local ok, d = pcall(C_Spell.GetSpellCooldownDuration, spellId)
-                if ok then duration = d end
+                duration = C_Spell.GetSpellCooldownDuration(spellId)
             end
             if ShowMovementSlot(count + 1, spellInfo, entry, duration) then
                 count = count + 1
@@ -1390,14 +1371,12 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CancelAllRechargeTimers()
         wipe(chargeRechargeStart)
         for spellId in pairs(spellWasCast) do
-            local rOk, cdInfo = pcall(C_Spell.GetSpellCooldown, spellId)
+            local cdInfo = C_Spell.GetSpellCooldown(spellId)
             local cdRemain = 0
-            if rOk and cdInfo then
-                local sOk, s = pcall(function() return cdInfo.startTime or 0 end)
-                local dOk, d = pcall(function() return cdInfo.duration or 0 end)
-                if sOk and dOk and d > 0 then
-                    cdRemain = math.max(0, (s + d) - GetTime())
-                end
+            if cdInfo and cdInfo.startTime and cdInfo.duration
+                and not IsSecret(cdInfo.startTime) and not IsSecret(cdInfo.duration)
+                and cdInfo.duration > 0 then
+                cdRemain = math.max(0, (cdInfo.startTime + cdInfo.duration) - GetTime())
             end
             if cdRemain <= 0 then
                 spellWasCast[spellId] = nil
@@ -1417,10 +1396,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                 for _, entry in ipairs(cachedMovementSpells) do
                     if entry.spellId == mod.spell or entry.baseSpellId == mod.spell then
                         local sid = entry.spellId
-                        local raw = cachedChargeCount[sid]
-                        local cur = raw or 0
-                        local eqOk, isZero = pcall(function() return cur == 0 end)
-                        if eqOk and isZero then
+                        local cur = cachedChargeCount[sid] or 0
+                        if cur == 0 then
                             local rechargeStart = chargeRechargeStart[sid] or spellCastTime[sid]
                             local rechDur = entry.rechargeDuration or 0
                             if rechargeStart and rechDur > 0 then
@@ -1435,16 +1412,10 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
                                         chargeRechargeStart[sid] = GetTime() - (rechDur - newRemaining)
                                         StartRechargeTimer(entry, newRemaining)
                                     else
-                                        local incOk2, newCharges = pcall(function() return math.min(cur + 1, entry.maxCharges or 1) end)
-                                        if not incOk2 then
-                                            cachedChargeCount[sid] = 1
-                                        else
-                                            cachedChargeCount[sid] = newCharges
-                                        end
+                                        cachedChargeCount[sid] = math.min(cur + 1, entry.maxCharges or 1)
                                         spellWasCast[sid] = nil
                                         spellCastTime[sid] = nil
-                                        local ltOk2, isLess2 = pcall(function() return (cachedChargeCount[sid] or 0) < (entry.maxCharges or 1) end)
-                                        if ltOk2 and isLess2 then
+                                        if (cachedChargeCount[sid] or 0) < (entry.maxCharges or 1) then
                                             chargeRechargeStart[sid] = GetTime()
                                             StartRechargeTimer(entry)
                                         else

@@ -2,6 +2,10 @@ local addonName, ns = ...
 local L = ns.L
 local W = ns.Widgets
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
 local ASSET_PATH = "Interface\\AddOns\\NaowhQOL\\Assets\\"
 local RING_TEXEL = 0.5 / 256
 local TRAIL_TEXEL = 0.5 / 128
@@ -777,7 +781,7 @@ events:SetScript("OnEvent", function(self, event, unit)
 
     elseif event == "UNIT_SPELLCAST_START" then
         local _, _, _, startTime, endTime = UnitCastingInfo("player")
-        if startTime and endTime then
+        if startTime and endTime and not IsSecret(startTime) and not IsSecret(endTime) then
             state.isCasting = true
             state.castStart = startTime / 1000
             state.castEnd = endTime / 1000
@@ -796,7 +800,7 @@ events:SetScript("OnEvent", function(self, event, unit)
 
     elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
         local _, _, _, startTime, endTime = UnitChannelInfo("player")
-        if startTime and endTime then
+        if startTime and endTime and not IsSecret(startTime) and not IsSecret(endTime) then
             state.isChanneling = true
             state.channelStart = startTime / 1000
             state.channelEnd = endTime / 1000
@@ -825,7 +829,7 @@ events:SetScript("OnEvent", function(self, event, unit)
             state.castSwipeAllowed = false
         end
         local _, _, _, startTime, endTime = UnitChannelInfo("player")
-        if startTime and endTime then
+        if startTime and endTime and not IsSecret(startTime) and not IsSecret(endTime) then
             state.isChanneling = true
             state.channelStart = startTime / 1000
             state.channelEnd = endTime / 1000
@@ -848,7 +852,9 @@ events:SetScript("OnEvent", function(self, event, unit)
         if not db.gcdEnabled then return end
 
         local info = C_Spell.GetSpellCooldown(GCD_SPELL)
-        if info and info.duration and info.duration > 0 then
+        local dur = info and info.duration
+        if info and dur and not IsSecret(dur) and dur > 0
+           and not IsSecret(info.startTime) and not IsSecret(info.modRate or 1) then
             local wasReady = state.gcdReady
             state.gcdInfo = info
             state.gcdReady = false

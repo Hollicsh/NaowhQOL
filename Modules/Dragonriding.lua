@@ -2,6 +2,10 @@ local addonName, ns = ...
 local W = ns.Widgets
 local L = ns.LayoutUtil
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
 local VIGOR_SPELL = 372608
 local SECOND_WIND_SPELL = 425782
 local WHIRLING_SURGE_SPELL = 361584
@@ -160,23 +164,32 @@ end
 local function GetVigorInfo()
     local data = C_Spell.GetSpellCharges(VIGOR_SPELL)
     if not data then return 0, 6, 0, 0, false, false end
-    local isThrill = data.cooldownDuration > 0 and data.cooldownDuration <= THRILL_THRESHOLD
-    local isGroundSkim = math.abs(data.cooldownDuration - GROUND_SKIM_DURATION) < 0.05 and not isThrill
-    return data.currentCharges, data.maxCharges,
-           data.cooldownStartTime, data.cooldownDuration,
-           isThrill, isGroundSkim
+    local cc = data.currentCharges
+    local mc = data.maxCharges
+    local cs = data.cooldownStartTime
+    local cd = data.cooldownDuration
+    if IsSecret(cc) or IsSecret(mc) or IsSecret(cs) or IsSecret(cd) then
+        return 0, 6, 0, 0, false, false
+    end
+    local isThrill = cd > 0 and cd <= THRILL_THRESHOLD
+    local isGroundSkim = math.abs(cd - GROUND_SKIM_DURATION) < 0.05 and not isThrill
+    return cc, mc, cs, cd, isThrill, isGroundSkim
 end
 
 local function GetSecondWindCharges()
     local data = C_Spell.GetSpellCharges(SECOND_WIND_SPELL)
     if not data then return 0 end
-    return data.currentCharges
+    local cc = data.currentCharges
+    if IsSecret(cc) then return 0 end
+    return cc
 end
 
 local function GetWhirlingSurgeCooldown()
     local data = C_Spell.GetSpellCooldown(WHIRLING_SURGE_SPELL)
     if not data then return 0, 0 end
-    return data.startTime, data.duration
+    local s, d = data.startTime, data.duration
+    if IsSecret(s) or IsSecret(d) then return 0, 0 end
+    return s, d
 end
 
 local function GetPreset()
