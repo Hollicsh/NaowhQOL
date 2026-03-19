@@ -82,7 +82,7 @@ function stealthFrame:UpdateDisplay()
         return
     end
 
-    if db.disableWhenRested and isResting and not db.unlock then
+    if db.disableWhenRested and isResting and not inInstance and not db.unlock then
         stealthFrame:Hide()
         return
     end
@@ -266,7 +266,7 @@ function stanceFrame:UpdateDisplay()
         return
     end
 
-    if db.stanceDisableWhenRested and isResting and not db.stanceUnlock then
+    if db.stanceDisableWhenRested and isResting and not inInstance and not db.stanceUnlock then
         StopStanceSound()
         stanceFrame:Hide()
         return

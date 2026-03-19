@@ -1,7 +1,7 @@
 # Changelog
 # Hotfix
-## [20260318.01]
+## [20260319.01]
 
 ### Fixes
- **Buff Watcher**
-  - Fixed several additional paths that could still trigger buff alerts during combat (weapon enchant poller, bag update checks).
+ **Stance Alert**
+  - Fixed stance alert "Disable in rested areas" also triggering when inInstance()
