@@ -229,15 +229,17 @@ function BuffDropAlert:AddAlerts(droppedList)
     for _, data in ipairs(droppedList) do
         local key = data.key or data.name
         local isAlwaysOn = (key:sub(1, 11) == "raidAlways_") or (key:sub(1, 12) == "classAlways_")
+            or (key:sub(1, 18) == "consumableAlways_") or (key:sub(1, 16) == "inventoryAlways_")
         local shouldAdd = true
 
         if isAlwaysOn then
             local baseKey = key:match("^raidAlways_(.+)$") or key:match("^classAlways_(.+)$")
+                or key:match("^consumableAlways_(.+)$") or key:match("^inventoryAlways_(.+)$")
             if baseKey and self.activeCells[baseKey] then
                 shouldAdd = false
             end
         else
-            for _, prefix in ipairs({"raidAlways_", "classAlways_"}) do
+            for _, prefix in ipairs({"raidAlways_", "classAlways_", "consumableAlways_", "inventoryAlways_"}) do
                 local alwaysKey = prefix .. key
                 if self.activeCells[alwaysKey] then
                     self:DismissAlert(alwaysKey)
