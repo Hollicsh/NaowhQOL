@@ -87,7 +87,7 @@ Categories.DEFAULT_CLASS_BUFFS = {
             key = "roguePoisons",
             name = "Poisons",
             checkType = "self",
-            spellIDs = {2823, 3408, 5761, 8679, 381637,315884, 381664},
+            spellIDs = {2823, 3408, 5761, 8679, 381637,315584, 381664},
             minRequired = 2,
             thresholds = { dungeon = 25, raid = 25, other = 5 },
             specFilter = {},
