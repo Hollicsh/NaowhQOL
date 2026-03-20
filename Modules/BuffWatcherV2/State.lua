@@ -340,6 +340,30 @@ function BWV2:InitSavedVars()
         end
         NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 4
     end
+
+    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 5 then
+        local Categories = ns.BWV2Categories
+        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
+        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["ROGUE"] then
+            local rogueData = NaowhQOL.buffWatcherV2.classBuffs["ROGUE"]
+            local newGroups = {}
+            for _, group in ipairs(defaults["ROGUE"]) do
+                local copy = {}
+                for k, v in pairs(group) do
+                    if type(v) == "table" then
+                        local t = {}
+                        for k2, v2 in pairs(v) do t[k2] = v2 end
+                        copy[k] = t
+                    else
+                        copy[k] = v
+                    end
+                end
+                newGroups[#newGroups + 1] = copy
+            end
+            rogueData.groups = newGroups
+        end
+        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 5
+    end
 end
 
 function BWV2:GetDB()
