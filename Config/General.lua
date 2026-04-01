@@ -24,7 +24,7 @@ local MODULE_REGISTRY = {
     { db = "emoteDetection",  unlockKeys = {"unlock"},                       tab = "emote_detection" },
     { db = "equipmentReminder", unlockKeys = {},                             tab = "equipment_reminder" },
     { db = "cRez",            unlockKeys = {"unlock"},                       tab = "crez" },
-    { db = "buffWatcherV2",   unlockKeys = {"reportCardUnlock"},              tab = "buff_watcher" },
+    { db = "buffWatcherV2",   unlockKeys = {"reportCardUnlock", "buffDropUnlock"}, tab = "buff_watcher" },
     { db = "misc",            unlockKeys = {},                               tab = "misc" },
     { db = "optimizations",   unlockKeys = {},                               tab = "optimizations" },
 }
@@ -129,6 +129,13 @@ local function RefreshReportCard(unlocking)
         pcall(ns.BWV2ReportCard.ShowPreview, ns.BWV2ReportCard)
     else
         pcall(ns.BWV2ReportCard.Hide, ns.BWV2ReportCard)
+    end
+    if ns.BWV2BuffDropAlert then
+        if unlocking then
+            pcall(ns.BWV2BuffDropAlert.ShowPreview, ns.BWV2BuffDropAlert)
+        else
+            pcall(ns.BWV2BuffDropAlert.HidePreview, ns.BWV2BuffDropAlert)
+        end
     end
 end
 

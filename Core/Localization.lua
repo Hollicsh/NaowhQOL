@@ -45,16 +45,4 @@ function ns:SetLocale(locale)
     return false
 end
 
-function ns:GetAvailableLocales()
-    local list = {}
-    for locale in pairs(locales) do
-        table.insert(list, locale)
-    end
-    return list
-end
-
-function ns:GetMissingKeys()
-    return missingKeys
-end
-
 ns.L = L

@@ -281,6 +281,10 @@ local function TriggerScan()
         return
     end
 
+    if ns.ZoneUtil.IsInPvP() then
+        return
+    end
+
     BWV2.scanInProgress = true
 
     Scanner:PerformScan()
@@ -482,7 +486,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             ReportCard:Hide()
         end
         if BuffDropAlert then
-            BuffDropAlert:DismissByPrefix("raidAlways_")
             BuffDropAlert:DismissByPrefix("classAlways_")
             BuffDropAlert:DismissByPrefix("consumableAlways_")
             BuffDropAlert:DismissByPrefix("inventoryAlways_")
@@ -492,6 +495,15 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         C_Timer.After(0.5, function()
             if not InCombatLockdown() then
                 Core:OnPlayerAuraChanged()
+                local rdb = BWV2:GetDB()
+                if rdb and rdb.enabled then
+                    if rdb.raidBuffAlwaysCheck or rdb.classBuffAlwaysCheck or rdb.consumableAlwaysCheck or rdb.inventoryAlwaysCheck then
+                        StartAlwaysOnWatcher()
+                    end
+                    if rdb.classBuffAlwaysCheck then
+                        StartClassBuffEnchantPoller()
+                    end
+                end
             end
         end)
         return

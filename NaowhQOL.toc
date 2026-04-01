@@ -84,7 +84,6 @@ Modules/CoTankDisplay.lua
 Modules/SlashCommands.lua
 Modules/BuffWatcherV2/State.lua
 Modules/BuffWatcherV2/Categories.lua
-Modules/BuffWatcherV2/Watchers.lua
 Modules/BuffWatcherV2/Scanner.lua
 Modules/BuffWatcherV2/ReportCard.lua
 Modules/BuffWatcherV2/BuffDropAlert.lua

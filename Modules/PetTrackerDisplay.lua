@@ -309,6 +309,7 @@ loader:RegisterEvent("SPELLS_CHANGED")
 loader:RegisterEvent("PLAYER_REGEN_DISABLED")
 loader:RegisterEvent("PLAYER_REGEN_ENABLED")
 loader:RegisterEvent("UNIT_HEALTH")
+loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("PetTracker", function(self, event, unit)
     local db = NaowhQOL.petTracker
@@ -372,6 +373,11 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("PetTracker", function(self, eve
         isInCombat = true
     elseif event == "PLAYER_REGEN_ENABLED" then
         isInCombat = false
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        isMounted = IsMounted()
+        isInVehicle = UnitInVehicle("player")
+        isDead = UnitIsDeadOrGhost("player")
+        isInCombat = UnitAffectingCombat("player")
     elseif event == "UNIT_PET" then
         CancelDismountTimer()
     elseif event == "UNIT_HEALTH" then

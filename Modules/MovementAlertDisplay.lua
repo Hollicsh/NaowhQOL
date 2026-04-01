@@ -1200,6 +1200,7 @@ loader:RegisterEvent("PLAYER_REGEN_DISABLED")
 loader:RegisterEvent("PLAYER_REGEN_ENABLED")
 loader:RegisterEvent("PLAYER_LOGOUT")
 loader:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 local movementEventsRegistered = false
 local timeSpiralEventsRegistered = false
@@ -1362,6 +1363,11 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CheckMovementCooldown()
     elseif event == "LOADING_SCREEN_DISABLED" then
         RefreshCastFilters()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        inCombat = UnitAffectingCombat("player")
+        CacheMovementSpells(true)
+        CheckMovementCooldown()
+        CheckGatewayUsable()
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
         CheckMovementCooldown()
@@ -1449,7 +1455,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         or event == "PLAYER_SPECIALIZATION_CHANGED"
         or event == "PLAYER_TALENT_UPDATE"
         or event == "TRAIT_CONFIG_UPDATED"
-        or event == "LOADING_SCREEN_DISABLED" then
+        or event == "LOADING_SCREEN_DISABLED"
+        or event == "PLAYER_ENTERING_WORLD" then
         movementFrame:UpdateDisplay()
         timeSpiralFrame:UpdateDisplay()
         gatewayFrame:UpdateDisplay()

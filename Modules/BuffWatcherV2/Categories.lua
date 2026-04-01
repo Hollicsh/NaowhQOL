@@ -189,6 +189,7 @@ Categories.DEFAULT_CLASS_BUFFS = {
             checkType = "targeted",
             spellIDs = {369459},
             specFilter = {},
+            talentCondition = { talentID = 369459, mode = "activate" },
         },
         {
             key = "blisteringScales",
@@ -343,30 +344,6 @@ function Categories:ApplyTalentMods(categoryKey, baseRequirements)
     end
 
     return requirements
-end
-
-function Categories:CheckRoguePoisons()
-    local ok, hasMain, _, _, mainEnchantId, hasOff, _, _, offEnchantId = pcall(GetWeaponEnchantInfo)
-    if not ok then return nil end
-
-    local reqs = self:ApplyTalentMods("roguePoisons", { count = 2 })
-    if reqs.skip then return nil end
-
-    local enchantCount = 0
-    if hasMain and mainEnchantId then enchantCount = enchantCount + 1 end
-    if hasOff and offEnchantId then enchantCount = enchantCount + 1 end
-
-    if enchantCount < reqs.count then
-        return { missing = true, have = enchantCount, need = reqs.count }
-    end
-    return nil
-end
-
-function Categories:RunCustomCheck(key)
-    if key == "roguePoisons" then
-        return self:CheckRoguePoisons()
-    end
-    return nil
 end
 
 function Categories:GetSpellIDs(categoryKey)
@@ -548,11 +525,6 @@ function Categories:CheckWeaponBuffStatus()
     end
 
     return true, nil
-end
-
-function Categories:HasAnyWeaponEnchant()
-    local success, _ = self:CheckWeaponBuffStatus()
-    return success
 end
 
 function Categories:HasInventoryItem(itemIDs)

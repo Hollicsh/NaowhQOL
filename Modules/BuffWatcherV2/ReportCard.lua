@@ -5,13 +5,9 @@ ns.BWV2ReportCard = ReportCard
 
 local L = ns.L
 local BWV2 = ns.BWV2
-local Watchers = ns.BWV2Watchers
 
 if not BWV2 then
     error("BuffWatcherV2: State module not loaded before ReportCard")
-end
-if not Watchers then
-    error("BuffWatcherV2: Watchers module not loaded before ReportCard")
 end
 
 local DEFAULT_ICON_SIZE = 32
@@ -48,23 +44,6 @@ local function CancelAutoClose(frame)
         UIFrameFadeRemoveFrame(frame)
         frame:SetAlpha(1)
     end
-end
-
-local function AllChecksPassed()
-    local results = BWV2.scanResults
-    if not results then return true end
-
-    for _, category in ipairs({"raidBuffs", "consumables", "inventory", "classBuffs"}) do
-        local items = results[category]
-        if items then
-            for _, item in ipairs(items) do
-                if not item.pass then
-                    return false
-                end
-            end
-        end
-    end
-    return true
 end
 
 local BACKDROP_COLOR = {0.08, 0.08, 0.08, 0.95}
@@ -721,7 +700,6 @@ function ReportCard:Hide()
     if self.frame then
         self.frame:Hide()
     end
-    Watchers:RemoveAllWatchers()
 end
 
 function ReportCard:Toggle()

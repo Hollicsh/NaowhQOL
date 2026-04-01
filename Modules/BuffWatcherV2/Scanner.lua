@@ -28,12 +28,15 @@ function Scanner:GetPlayerBuffs()
     if not ns.DisplayUtils.CanReadAuras() then return buffs end
     local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
     while auraData do
-        buffs[auraData.spellId] = {
-            expiry = auraData.expirationTime,
-            icon = auraData.icon,
-            name = auraData.name,
-            sourceUnit = auraData.sourceUnit,
-        }
+        local spellId = auraData.spellId
+        if not IsSecret(spellId) then
+            buffs[spellId] = {
+                expiry = auraData.expirationTime,
+                icon = auraData.icon,
+                name = auraData.name,
+                sourceUnit = auraData.sourceUnit,
+            }
+        end
         idx = idx + 1
         auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
     end

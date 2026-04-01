@@ -42,6 +42,10 @@ function ns.ZoneUtil.IsInMythicPlus()
     return currentZone.instanceType == "party" and currentZone.difficulty == 8
 end
 
+function ns.ZoneUtil.IsInPvP()
+    return currentZone.instanceType == "pvp" or currentZone.instanceType == "arena"
+end
+
 function ns.ZoneUtil.RegisterCallback(key, func)
     if type(key) == "string" and type(func) == "function" then
         callbacks[key] = func

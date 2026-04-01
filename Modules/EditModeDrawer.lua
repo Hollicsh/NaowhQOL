@@ -53,6 +53,21 @@ local function SetAllUnlocks(state)
     if state and ns.DisplayUtils then
         ns.DisplayUtils.DisableEditModeSnap()
     end
+    if ns.BWV2ReportCard then
+        if state then
+            pcall(ns.BWV2ReportCard.ApplySettings, ns.BWV2ReportCard)
+            pcall(ns.BWV2ReportCard.ShowPreview, ns.BWV2ReportCard)
+        else
+            pcall(ns.BWV2ReportCard.Hide, ns.BWV2ReportCard)
+        end
+    end
+    if ns.BWV2BuffDropAlert then
+        if state then
+            pcall(ns.BWV2BuffDropAlert.ShowPreview, ns.BWV2BuffDropAlert)
+        else
+            pcall(ns.BWV2BuffDropAlert.HidePreview, ns.BWV2BuffDropAlert)
+        end
+    end
 end
 
 local function OnEnterEditMode()

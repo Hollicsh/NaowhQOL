@@ -364,6 +364,30 @@ function BWV2:InitSavedVars()
         end
         NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 5
     end
+
+    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 6 then
+        local Categories = ns.BWV2Categories
+        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
+        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["EVOKER"] then
+            local evokerData = NaowhQOL.buffWatcherV2.classBuffs["EVOKER"]
+            local newGroups = {}
+            for _, group in ipairs(defaults["EVOKER"]) do
+                local copy = {}
+                for k, v in pairs(group) do
+                    if type(v) == "table" then
+                        local t = {}
+                        for k2, v2 in pairs(v) do t[k2] = v2 end
+                        copy[k] = t
+                    else
+                        copy[k] = v
+                    end
+                end
+                newGroups[#newGroups + 1] = copy
+            end
+            evokerData.groups = newGroups
+        end
+        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 6
+    end
 end
 
 function BWV2:GetDB()
@@ -691,6 +715,7 @@ end
 function BWV2:CheckAlwaysOnRaidBuffs()
     local db = self:GetDB()
     if not db or not db.raidBuffAlwaysCheck then return nil end
+    if ns.ZoneUtil.IsInPvP() then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
     if InCombatLockdown() then return nil end
     if not ns.DisplayUtils.CanReadGroupAuras() then return nil end
@@ -785,6 +810,7 @@ end
 function BWV2:CheckAlwaysOnClassBuffs()
     local db = self:GetDB()
     if not db or not db.classBuffAlwaysCheck then return nil end
+    if ns.ZoneUtil.IsInPvP() then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
     if InCombatLockdown() then return nil end
     if not ns.DisplayUtils.CanReadAuras() then return nil end
@@ -1136,6 +1162,9 @@ end
 
 function BWV2:ShouldSuppressAlertsForZone()
     local db = self:GetDB()
+    if ns.ZoneUtil.IsInPvP() then
+        return true
+    end
     if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance() then
         return true
     end
