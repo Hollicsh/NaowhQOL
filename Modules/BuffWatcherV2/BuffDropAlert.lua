@@ -395,6 +395,11 @@ function BuffDropAlert:Relayout()
         return
     end
 
+    if InCombatLockdown() then
+        parent:Hide()
+        return
+    end
+
     local iconSize = GetIconSize()
     local totalWidth = #keys * iconSize + (#keys - 1) * ICON_SPACING
     parent:SetSize(totalWidth, iconSize)

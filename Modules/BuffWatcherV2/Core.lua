@@ -486,9 +486,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             ReportCard:Hide()
         end
         if BuffDropAlert then
-            BuffDropAlert:DismissByPrefix("classAlways_")
-            BuffDropAlert:DismissByPrefix("consumableAlways_")
-            BuffDropAlert:DismissByPrefix("inventoryAlways_")
+            BuffDropAlert:DismissAll()
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
