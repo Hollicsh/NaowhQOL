@@ -386,6 +386,7 @@ function Scanner:ScanClassBuffs()
                 icon = foundIcon,
                 pass = hasBuff,
                 checkType = group.checkType,
+                exclusiveGroup = group.exclusiveGroup,
                 remaining = (not hasBuff and remaining and remaining > 0) and remaining or nil,
             }
 
@@ -397,6 +398,25 @@ function Scanner:ScanClassBuffs()
                 }
             end
         end
+    end
+
+    local exclusiveGroupPassed = {}
+    for _, result in ipairs(BWV2.scanResults.classBuffs) do
+        if result.exclusiveGroup and result.pass then
+            exclusiveGroupPassed[result.exclusiveGroup] = true
+        end
+    end
+
+    if next(exclusiveGroupPassed) then
+        local filtered = {}
+        for _, result in ipairs(BWV2.scanResults.classBuffs) do
+            if result.exclusiveGroup and not result.pass and exclusiveGroupPassed[result.exclusiveGroup] then
+                missing[result.key] = nil
+            else
+                filtered[#filtered + 1] = result
+            end
+        end
+        BWV2.scanResults.classBuffs = filtered
     end
 
     return missing

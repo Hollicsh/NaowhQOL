@@ -388,6 +388,33 @@ function BWV2:InitSavedVars()
         end
         NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 6
     end
+
+    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 7 then
+        local Categories = ns.BWV2Categories
+        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
+        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
+            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
+            local exclusiveKeys = { shamanShield = true, earth_shield = true, water_shield = true }
+            for _, group in ipairs(shamData.groups or {}) do
+                if exclusiveKeys[group.key] then
+                    group.exclusiveGroup = "shamanShields"
+                end
+            end
+        end
+        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 7
+    end
+
+    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 8 then
+        if NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
+            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
+            for _, group in ipairs(shamData.groups or {}) do
+                if group.key == "earth_shield" and group.checkType == "self" then
+                    group.checkType = "targeted"
+                end
+            end
+        end
+        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 8
+    end
 end
 
 function BWV2:GetDB()
@@ -452,6 +479,7 @@ function BWV2:BuildBuffSnapshot()
         if entry.pass and not entry.unconfigured then
             local ids = {}
             local iconCheck = nil
+            local db = self:GetDB()
             for _, grp in ipairs(Categories.CONSUMABLE_GROUPS) do
                 if grp.key == entry.key then
                     if grp.checkType == "icon" and grp.buffIconID then
@@ -467,6 +495,12 @@ function BWV2:BuildBuffSnapshot()
                     elseif grp.spellIDs then
                         for _, id in ipairs(grp.spellIDs) do
                             ids[#ids + 1] = id
+                        end
+                        local userEntries = db.userEntries and db.userEntries["consumable_" .. grp.key]
+                        if userEntries and userEntries.spellIDs then
+                            for _, id in ipairs(userEntries.spellIDs) do
+                                ids[#ids + 1] = id
+                            end
                         end
                     end
                     break
@@ -667,6 +701,13 @@ function BWV2:AddToBuffSnapshot(item, categoryKey)
                     for _, id in ipairs(grp.spellIDs) do
                         ids[#ids + 1] = id
                     end
+                    local db = self:GetDB()
+                    local userEntries = db.userEntries and db.userEntries["consumable_" .. grp.key]
+                    if userEntries and userEntries.spellIDs then
+                        for _, id in ipairs(userEntries.spellIDs) do
+                            ids[#ids + 1] = id
+                        end
+                    end
                 end
                 if #ids > 0 or iconCheck then
                     self.buffSnapshot[item.key] = {
@@ -821,6 +862,7 @@ function BWV2:CheckAlwaysOnClassBuffs()
 
     local playerSpecID = self:GetPlayerSpecID()
     local missing = {}
+    local exclusiveGroupPassed = {}
 
     for _, group in ipairs(classData.groups or {}) do
         local shouldCheck = true
@@ -960,6 +1002,10 @@ function BWV2:CheckAlwaysOnClassBuffs()
                 icon = (scanner and #(group.enchantIDs or {}) > 0 and scanner:GetEnchantIcon(group.enchantIDs[1])) or 463543
             end
 
+            if hasBuff and group.exclusiveGroup then
+                exclusiveGroupPassed[group.exclusiveGroup] = true
+            end
+
             if not hasBuff then
                 missing[#missing + 1] = {
                     key = "classAlways_" .. group.key,
@@ -967,12 +1013,23 @@ function BWV2:CheckAlwaysOnClassBuffs()
                     icon = icon or 134400,
                     category = "classBuff",
                     checkType = group.checkType,
+                    exclusiveGroup = group.exclusiveGroup,
                     spellIDs = group.spellIDs,
                     enchantIDs = group.enchantIDs,
                     minRequired = group.minRequired,
                 }
             end
         end
+    end
+
+    if next(exclusiveGroupPassed) then
+        local filtered = {}
+        for _, entry in ipairs(missing) do
+            if not (entry.exclusiveGroup and exclusiveGroupPassed[entry.exclusiveGroup]) then
+                filtered[#filtered + 1] = entry
+            end
+        end
+        missing = filtered
     end
 
     return (#missing > 0) and missing or nil
@@ -1082,6 +1139,8 @@ function BWV2:CheckAlwaysOnConsumables()
                         name = buff.name,
                         icon = icon or buff.fallbackIcon,
                         category = "consumable",
+                        spellIDs = (buff.checkType ~= "icon" and buff.checkType ~= "weaponEnchant" and #spellIDs > 0) and spellIDs or nil,
+                        iconCheck = (buff.checkType == "icon" and buff.buffIconID) or nil,
                         expiryTime = foundExpiry,
                     }
                 end

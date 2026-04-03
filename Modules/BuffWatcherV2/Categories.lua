@@ -132,16 +132,18 @@ Categories.DEFAULT_CLASS_BUFFS = {
             specFilter = {},
             minRequired = 1,
             thresholds = { dungeon = 0, raid = 0, other = 0 },
+            exclusiveGroup = "shamanShields",
         },
         {
             key = "earth_shield",
             name = "Earth Shield",
-            checkType = "self",
+            checkType = "targeted",
             spellIDs = {383684},
             specFilter = {},
             minRequired = 1,
             thresholds = { dungeon = 0, raid = 0, other = 0 },
             talentCondition = { talentID = 383684, mode = "activate" },
+            exclusiveGroup = "shamanShields",
         },
         {
             key = "water_shield",
@@ -151,6 +153,7 @@ Categories.DEFAULT_CLASS_BUFFS = {
             specFilter = {264},
             minRequired = 1,
             thresholds = { dungeon = 0, raid = 0, other = 0 },
+            exclusiveGroup = "shamanShields",
         },
     },
     PRIEST = {
