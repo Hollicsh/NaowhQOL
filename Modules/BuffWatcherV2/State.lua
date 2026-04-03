@@ -904,8 +904,8 @@ function BWV2:CheckAlwaysOnClassBuffs()
     if not db or not db.classBuffAlwaysCheck then return nil end
     if ns.ZoneUtil.IsInPvP() then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
-    local inCombat = InCombatLockdown()
-    if not inCombat and not ns.DisplayUtils.CanReadAuras() then return nil end
+    if InCombatLockdown() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
 
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]
@@ -1035,22 +1035,18 @@ function BWV2:CheckAlwaysOnClassBuffs()
                     icon = C_Spell.GetSpellTexture(spellIDs[1])
                 end
             elseif group.checkType == "weaponEnchant" then
-                if InCombatLockdown() then
-                    hasBuff = true
-                else
-                    local enchantIDs = group.enchantIDs or {}
-                    if #enchantIDs > 0 then
-                        local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
-                        if wOk then
-                            local count = 0
-                            for _, eid in ipairs(enchantIDs) do
-                                if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                                    count = count + 1
-                                end
+                local enchantIDs = group.enchantIDs or {}
+                if #enchantIDs > 0 then
+                    local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                    if wOk then
+                        local count = 0
+                        for _, eid in ipairs(enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
                             end
-                            local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
-                            hasBuff = count >= needed
                         end
+                        local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
+                        hasBuff = count >= needed
                     end
                 end
                 local scanner = ns.BWV2Scanner

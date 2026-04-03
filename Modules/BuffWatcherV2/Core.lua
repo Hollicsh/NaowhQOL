@@ -66,8 +66,8 @@ local function StartAlwaysOnWatcher()
             end
         end
 
-        if cdb.classBuffAlwaysCheck and BuffDropAlert then
-            if not inCombat and BuffDropAlert:HasAlerts() then
+        if not inCombat and cdb.classBuffAlwaysCheck and BuffDropAlert then
+            if BuffDropAlert:HasAlerts() then
                 BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
             end
             local missing = BWV2:CheckAlwaysOnClassBuffs()
@@ -706,8 +706,8 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if db.classBuffAlwaysCheck and BuffDropAlert then
-        if not inCombat and BuffDropAlert:HasAlerts() then
+    if not inCombat and db.classBuffAlwaysCheck and BuffDropAlert then
+        if BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
         end
 

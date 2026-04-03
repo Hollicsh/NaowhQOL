@@ -1,8 +1,6 @@
 # Changelog
-## [20260403.03]
+## [20260403.04]
 
-### Update
+### Fixes
 - **Buff Tracker**
-  - **Combat-safe raid buff alerts**: Raid buff and combat-safe class buff alerts can now stay visible and update during combat using Blizzard’s whitelisted aura API. Consumables, weapon enchants, and inventory alerts still hide when combat starts.
-
-_Thanks to the approach used by Buff Reminders for helping me validate a combat-safe aura whitelist._
+  - **Shadowform/Voidform false alert**: Disabled Class buff always-on checks  during combat. Self-buff substitution patterns (e.g. Shadowform being replaced by Voidform) invalidate the aura cache in a way that can't be recovered mid-fight, causing false "missing" alerts. Class buff checks resume correctly after combat ends.
