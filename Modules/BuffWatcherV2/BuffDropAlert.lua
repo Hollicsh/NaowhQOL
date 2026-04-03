@@ -365,6 +365,24 @@ function BuffDropAlert:DismissAll()
     end
 end
 
+function BuffDropAlert:DismissNonCombatSafe()
+    local anyDismissed = false
+    for key, cell in pairs(self.activeCells) do
+        local isSafe = false
+        if cell._spellIDs then
+            isSafe = BWV2:HasCombatSafeSpell(cell._spellIDs)
+        end
+        if not isSafe then
+            self.activeCells[key] = nil
+            ReleaseCell(cell)
+            anyDismissed = true
+        end
+    end
+    if anyDismissed then
+        self:Relayout()
+    end
+end
+
 function BuffDropAlert:RefreshTextFont()
     local fontPath = GetDurationFontPath()
     local fontSize = GetDurationFontSize()
@@ -392,11 +410,6 @@ function BuffDropAlert:Relayout()
     if #keys == 0 then
         parent:Hide()
         parent:EnableMouse(false)
-        return
-    end
-
-    if InCombatLockdown() then
-        parent:Hide()
         return
     end
 

@@ -52,10 +52,10 @@ local function StartAlwaysOnWatcher()
             StopAlwaysOnWatcher()
             return
         end
-        if InCombatLockdown() then return end
+        local inCombat = InCombatLockdown()
 
         if cdb.raidBuffAlwaysCheck and BuffDropAlert then
-            if BuffDropAlert:HasAlerts() then
+            if not inCombat and BuffDropAlert:HasAlerts() then
                 BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
             end
             local missing = BWV2:CheckAlwaysOnRaidBuffs()
@@ -67,7 +67,7 @@ local function StartAlwaysOnWatcher()
         end
 
         if cdb.classBuffAlwaysCheck and BuffDropAlert then
-            if BuffDropAlert:HasAlerts() then
+            if not inCombat and BuffDropAlert:HasAlerts() then
                 BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
             end
             local missing = BWV2:CheckAlwaysOnClassBuffs()
@@ -78,7 +78,7 @@ local function StartAlwaysOnWatcher()
             end
         end
 
-        if cdb.consumableAlwaysCheck and BuffDropAlert then
+        if not inCombat and cdb.consumableAlwaysCheck and BuffDropAlert then
             BuffDropAlert:DismissByPrefix("consumableAlways_")
             local missing = BWV2:CheckAlwaysOnConsumables()
             if missing then
@@ -86,7 +86,7 @@ local function StartAlwaysOnWatcher()
             end
         end
 
-        if cdb.inventoryAlwaysCheck and BuffDropAlert then
+        if not inCombat and cdb.inventoryAlwaysCheck and BuffDropAlert then
             if BuffDropAlert:HasAlerts() then
                 BuffDropAlert:CheckRebuffsForPrefix("inventoryAlways_")
             end
@@ -486,7 +486,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             ReportCard:Hide()
         end
         if BuffDropAlert then
-            BuffDropAlert:DismissAll()
+            BuffDropAlert:DismissNonCombatSafe()
         end
 
     elseif event == "PLAYER_REGEN_ENABLED" then
@@ -690,8 +690,8 @@ function Core:OnPlayerAuraChanged()
     local now = GetTime()
     local inCombat = InCombatLockdown()
 
-    if not inCombat and db.raidBuffAlwaysCheck and BuffDropAlert then
-        if BuffDropAlert:HasAlerts() then
+    if db.raidBuffAlwaysCheck and BuffDropAlert then
+        if not inCombat and BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
         end
 
@@ -706,8 +706,8 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if not inCombat and db.classBuffAlwaysCheck and BuffDropAlert then
-        if BuffDropAlert:HasAlerts() then
+    if db.classBuffAlwaysCheck and BuffDropAlert then
+        if not inCombat and BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
         end
 
@@ -733,7 +733,6 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if inCombat then return end
     if not db.buffDropReminder then return end
     if BWV2.lastScanTime == 0 then return end
 

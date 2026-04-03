@@ -441,6 +441,31 @@ function BWV2:GetThreshold()
     return db.thresholds[contentType] or 300
 end
 
+function BWV2:IsSpellCombatSafe(spellID)
+    return ns.CombatSafeSpells and ns.CombatSafeSpells[spellID] == true
+end
+
+function BWV2:HasCombatSafeSpell(spellIDs)
+    if not spellIDs then return false end
+    for _, id in ipairs(spellIDs) do
+        if self:IsSpellCombatSafe(id) then
+            return true
+        end
+    end
+    return false
+end
+
+function BWV2:GetCombatSafeSpellIDs(spellIDs)
+    if not spellIDs then return {} end
+    local safe = {}
+    for _, id in ipairs(spellIDs) do
+        if self:IsSpellCombatSafe(id) then
+            safe[#safe + 1] = id
+        end
+    end
+    return safe
+end
+
 function BWV2:BuildBuffSnapshot()
     wipe(self.buffSnapshot)
     wipe(self.buffDropReminded)
@@ -556,7 +581,8 @@ function BWV2:CheckBuffDrops()
     if not self.buffSnapshot or not next(self.buffSnapshot) then
         return nil
     end
-    if not ns.DisplayUtils.CanReadAuras() then return nil end
+    local inCombat = InCombatLockdown()
+    if not inCombat and not ns.DisplayUtils.CanReadAuras() then return nil end
     local db = self:GetDB()
     local suppressForInstance = db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance()
     local suppressForRested = db.buffDropAlertDisableRested and IsResting()
@@ -577,23 +603,30 @@ function BWV2:CheckBuffDrops()
                 else
                     threshold = self:GetThreshold()
                 end
-                for _, spellID in ipairs(data.spellIDs) do
-                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-                    if aura then
-                        local expTime = aura.expirationTime
-                        if IsSecret(expTime) then
-                            stillPresent = true
-                            break
-                        end
-                        local remaining = (expTime or 0) - GetTime()
-                        if expTime == 0 or remaining > threshold then
-                            stillPresent = true
-                            break
-                        elseif expTime ~= 0 then
-                            foundExpiry = expTime
+                local idsToCheck = inCombat and self:GetCombatSafeSpellIDs(data.spellIDs) or data.spellIDs
+                if inCombat and #idsToCheck == 0 then
+                    stillPresent = true
+                else
+                    for _, spellID in ipairs(idsToCheck) do
+                        local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                        if aura then
+                            local expTime = aura.expirationTime
+                            if IsSecret(expTime) then
+                                stillPresent = true
+                                break
+                            end
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                stillPresent = true
+                                break
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
+                            end
                         end
                     end
                 end
+            elseif inCombat then
+                stillPresent = true
             end
 
             if not stillPresent and data.iconCheck and not InCombatLockdown() then
@@ -758,8 +791,8 @@ function BWV2:CheckAlwaysOnRaidBuffs()
     if not db or not db.raidBuffAlwaysCheck then return nil end
     if ns.ZoneUtil.IsInPvP() then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
-    if InCombatLockdown() then return nil end
-    if not ns.DisplayUtils.CanReadGroupAuras() then return nil end
+    local inCombat = InCombatLockdown()
+    if not inCombat and not ns.DisplayUtils.CanReadGroupAuras() then return nil end
 
     local Categories = ns.BWV2Categories
     if not Categories then return nil end
@@ -802,44 +835,62 @@ function BWV2:CheckAlwaysOnRaidBuffs()
             end
 
             if playerKnows then
-                local covered = 0
-                local total = #units
-                for _, unit in ipairs(units) do
-                    local idx = 1
-                    local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
-                    local hasBuff = false
-                    while auraData do
-                        if IsSecret(auraData.spellId) then return nil end
-                        for _, spellID in ipairs(spellIDs) do
-                            if auraData.spellId == spellID then
-                                local expTime = auraData.expirationTime
-                                if IsSecret(expTime) then
-                                    hasBuff = true
-                                elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                    hasBuff = true
+                local safeIDs = inCombat and self:GetCombatSafeSpellIDs(spellIDs) or spellIDs
+                if inCombat and #safeIDs == 0 then
+                else
+                    local covered = 0
+                    local total = #units
+                    local idsToQuery = inCombat and safeIDs or spellIDs
+                    for _, unit in ipairs(units) do
+                        local hasBuff = false
+                        if inCombat then
+                            for _, spellID in ipairs(idsToQuery) do
+                                local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
+                                if aura then
+                                    local expTime = aura.expirationTime
+                                    if expTime == 0 or (expTime - GetTime()) > threshold then
+                                        hasBuff = true
+                                    end
+                                    break
                                 end
-                                break
+                            end
+                        else
+                            local idx = 1
+                            local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            while auraData do
+                                if IsSecret(auraData.spellId) then return nil end
+                                for _, spellID in ipairs(spellIDs) do
+                                    if auraData.spellId == spellID then
+                                        local expTime = auraData.expirationTime
+                                        if IsSecret(expTime) then
+                                            hasBuff = true
+                                        elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                            hasBuff = true
+                                        end
+                                        break
+                                    end
+                                end
+                                if hasBuff then break end
+                                idx = idx + 1
+                                auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                             end
                         end
-                        if hasBuff then break end
-                        idx = idx + 1
-                        auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                        if hasBuff then covered = covered + 1 end
                     end
-                    if hasBuff then covered = covered + 1 end
-                end
 
-                if covered < total then
-                    local icon = C_Spell.GetSpellTexture(primaryID)
-                    missing[#missing + 1] = {
-                        key = "raidAlways_" .. buff.key,
-                        name = buff.name,
-                        spellIDs = spellIDs,
-                        icon = icon,
-                        category = "raidBuff",
-                        covered = covered,
-                        total = total,
-                        isGroupCoverage = true,
-                    }
+                    if covered < total then
+                        local icon = C_Spell.GetSpellTexture(primaryID)
+                        missing[#missing + 1] = {
+                            key = "raidAlways_" .. buff.key,
+                            name = buff.name,
+                            spellIDs = spellIDs,
+                            icon = icon,
+                            category = "raidBuff",
+                            covered = covered,
+                            total = total,
+                            isGroupCoverage = true,
+                        }
+                    end
                 end
             end
         end
@@ -853,8 +904,8 @@ function BWV2:CheckAlwaysOnClassBuffs()
     if not db or not db.classBuffAlwaysCheck then return nil end
     if ns.ZoneUtil.IsInPvP() then return nil end
     if db.buffDropAlertDisableRested and IsResting() then return nil end
-    if InCombatLockdown() then return nil end
-    if not ns.DisplayUtils.CanReadAuras() then return nil end
+    local inCombat = InCombatLockdown()
+    if not inCombat and not ns.DisplayUtils.CanReadAuras() then return nil end
 
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]
@@ -984,18 +1035,22 @@ function BWV2:CheckAlwaysOnClassBuffs()
                     icon = C_Spell.GetSpellTexture(spellIDs[1])
                 end
             elseif group.checkType == "weaponEnchant" then
-                local enchantIDs = group.enchantIDs or {}
-                if #enchantIDs > 0 then
-                    local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
-                    if wOk then
-                        local count = 0
-                        for _, eid in ipairs(enchantIDs) do
-                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
-                                count = count + 1
+                if InCombatLockdown() then
+                    hasBuff = true
+                else
+                    local enchantIDs = group.enchantIDs or {}
+                    if #enchantIDs > 0 then
+                        local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                        if wOk then
+                            local count = 0
+                            for _, eid in ipairs(enchantIDs) do
+                                if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                    count = count + 1
+                                end
                             end
+                            local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
+                            hasBuff = count >= needed
                         end
-                        local needed = (group.minRequired == 0) and #enchantIDs or (group.minRequired or 1)
-                        hasBuff = count >= needed
                     end
                 end
                 local scanner = ns.BWV2Scanner

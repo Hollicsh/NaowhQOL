@@ -48,6 +48,7 @@ Data/GroupUtil.lua
 Data/DisplayUtils.lua
 Data/SettingsIO.lua
 Data/StaticPopups.lua
+Data/CombatSafeSpells.lua
 Data/LayoutUtil.lua
 Core/Init.lua
 Core/PerfMonitor.lua
