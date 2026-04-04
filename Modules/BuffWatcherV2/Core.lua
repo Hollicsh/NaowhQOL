@@ -40,11 +40,11 @@ end
 local function StartAlwaysOnWatcher()
     StopAlwaysOnWatcher()
     local db = BWV2:GetDB()
-    if not db or not (db.raidBuffAlwaysCheck or db.classBuffAlwaysCheck or db.consumableAlwaysCheck or db.inventoryAlwaysCheck) then return end
+    if not db or not db.buffDropReminder or not (db.raidBuffAlwaysCheck or db.classBuffAlwaysCheck or db.consumableAlwaysCheck or db.inventoryAlwaysCheck) then return end
 
     alwaysOnTicker = C_Timer.NewTicker(ALWAYS_ON_POLL_INTERVAL, function()
         local cdb = BWV2:GetDB()
-        if not cdb or not cdb.enabled then
+        if not cdb or not cdb.enabled or not cdb.buffDropReminder then
             StopAlwaysOnWatcher()
             return
         end
@@ -157,6 +157,7 @@ local function StartClassBuffEnchantPoller()
     local db = BWV2:GetDB()
     if not db or not db.classBuffAlwaysCheck then return end
 
+    if not db.buffDropReminder then return end
     local _, playerClass = UnitClass("player")
     local classData = db.classBuffs and db.classBuffs[playerClass]
     if not classData or not classData.enabled then return end
@@ -172,7 +173,7 @@ local function StartClassBuffEnchantPoller()
 
     classBuffEnchantTicker = C_Timer.NewTicker(WEAPON_ENCHANT_POLL_INTERVAL, function()
         local cdb = BWV2:GetDB()
-        if not cdb or not cdb.enabled or not cdb.classBuffAlwaysCheck then
+        if not cdb or not cdb.enabled or not cdb.buffDropReminder or not cdb.classBuffAlwaysCheck then
             StopClassBuffEnchantPoller()
             return
         end
@@ -468,7 +469,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "BAG_UPDATE_DELAYED" then
         local db = BWV2:GetDB()
-        if db and db.enabled and db.inventoryAlwaysCheck and BuffDropAlert and not InCombatLockdown() then
+        if db and db.enabled and db.buffDropReminder and db.inventoryAlwaysCheck and BuffDropAlert and not InCombatLockdown() then
             local now = GetTime()
             if now - lastInventoryCheck >= RAID_BUFF_THROTTLE then
                 lastInventoryCheck = now
@@ -495,10 +496,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 Core:OnPlayerAuraChanged()
                 local rdb = BWV2:GetDB()
                 if rdb and rdb.enabled then
-                    if rdb.raidBuffAlwaysCheck or rdb.classBuffAlwaysCheck or rdb.consumableAlwaysCheck or rdb.inventoryAlwaysCheck then
+                    if rdb.buffDropReminder and (rdb.raidBuffAlwaysCheck or rdb.classBuffAlwaysCheck or rdb.consumableAlwaysCheck or rdb.inventoryAlwaysCheck) then
                         StartAlwaysOnWatcher()
                     end
-                    if rdb.classBuffAlwaysCheck then
+                    if rdb.buffDropReminder and rdb.classBuffAlwaysCheck then
                         StartClassBuffEnchantPoller()
                     end
                 end
@@ -549,7 +550,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             end)
         end
 
-        if db.enabled and db.raidBuffAlwaysCheck and BuffDropAlert then
+        if db.enabled and db.buffDropReminder and db.raidBuffAlwaysCheck and BuffDropAlert then
             C_Timer.After(3, function()
                 local missing = BWV2:CheckAlwaysOnRaidBuffs()
                 if missing then
@@ -559,7 +560,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             end)
         end
 
-        if db.enabled and db.classBuffAlwaysCheck and BuffDropAlert then
+        if db.enabled and db.buffDropReminder and db.classBuffAlwaysCheck and BuffDropAlert then
             C_Timer.After(3, function()
                 local missing = BWV2:CheckAlwaysOnClassBuffs()
                 if missing then
@@ -570,7 +571,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             end)
         end
 
-        if db.enabled and db.consumableAlwaysCheck and BuffDropAlert then
+        if db.enabled and db.buffDropReminder and db.consumableAlwaysCheck and BuffDropAlert then
             C_Timer.After(3, function()
                 local missing = BWV2:CheckAlwaysOnConsumables()
                 if missing then
@@ -580,7 +581,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             end)
         end
 
-        if db.enabled and db.inventoryAlwaysCheck and BuffDropAlert then
+        if db.enabled and db.buffDropReminder and db.inventoryAlwaysCheck and BuffDropAlert then
             C_Timer.After(3, function()
                 local missing = BWV2:CheckAlwaysOnInventory()
                 if missing then
@@ -592,7 +593,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "PLAYER_ENTERING_WORLD" then
         local db = BWV2:GetDB()
-        if db and db.enabled and db.raidBuffAlwaysCheck and BuffDropAlert then
+        if db and db.enabled and db.buffDropReminder and db.raidBuffAlwaysCheck and BuffDropAlert then
             C_Timer.After(1.5, function()
                 BuffDropAlert:DismissByPrefix("raidAlways_")
                 local missing = BWV2:CheckAlwaysOnRaidBuffs()
@@ -602,7 +603,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 StartAlwaysOnWatcher()
             end)
         end
-        if db and db.enabled and db.classBuffAlwaysCheck and BuffDropAlert then
+        if db and db.enabled and db.buffDropReminder and db.classBuffAlwaysCheck and BuffDropAlert then
             C_Timer.After(1.5, function()
                 BuffDropAlert:DismissByPrefix("classAlways_")
                 local missing = BWV2:CheckAlwaysOnClassBuffs()
@@ -613,7 +614,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 StartAlwaysOnWatcher()
             end)
         end
-        if db and db.enabled and db.consumableAlwaysCheck and BuffDropAlert then
+        if db and db.enabled and db.buffDropReminder and db.consumableAlwaysCheck and BuffDropAlert then
             C_Timer.After(1.5, function()
                 BuffDropAlert:DismissByPrefix("consumableAlways_")
                 local missing = BWV2:CheckAlwaysOnConsumables()
@@ -623,7 +624,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 StartAlwaysOnWatcher()
             end)
         end
-        if db and db.enabled and db.inventoryAlwaysCheck and BuffDropAlert then
+        if db and db.enabled and db.buffDropReminder and db.inventoryAlwaysCheck and BuffDropAlert then
             C_Timer.After(1.5, function()
                 BuffDropAlert:DismissByPrefix("inventoryAlways_")
                 local missing = BWV2:CheckAlwaysOnInventory()
@@ -690,7 +691,7 @@ function Core:OnPlayerAuraChanged()
     local now = GetTime()
     local inCombat = InCombatLockdown()
 
-    if db.raidBuffAlwaysCheck and BuffDropAlert then
+    if db.buffDropReminder and db.raidBuffAlwaysCheck and BuffDropAlert then
         if not inCombat and BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("raidAlways_")
         end
@@ -706,7 +707,7 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if not inCombat and db.classBuffAlwaysCheck and BuffDropAlert then
+    if db.buffDropReminder and not inCombat and db.classBuffAlwaysCheck and BuffDropAlert then
         if BuffDropAlert:HasAlerts() then
             BuffDropAlert:CheckRebuffsForPrefix("classAlways_")
         end
@@ -722,7 +723,7 @@ function Core:OnPlayerAuraChanged()
         end
     end
 
-    if not inCombat and db.consumableAlwaysCheck and BuffDropAlert then
+    if db.buffDropReminder and not inCombat and db.consumableAlwaysCheck and BuffDropAlert then
         if now - lastConsumableCheck >= RAID_BUFF_THROTTLE then
             lastConsumableCheck = now
             BuffDropAlert:DismissByPrefix("consumableAlways_")
@@ -755,6 +756,12 @@ end
 
 function Core:StopTicker()
     StopTicker()
+end
+
+function Core:StopAllPollers()
+    StopWeaponEnchantPoller()
+    StopClassBuffEnchantPoller()
+    StopAlwaysOnWatcher()
 end
 
 function Core:GetLastScanTime()

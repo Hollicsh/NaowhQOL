@@ -1049,15 +1049,21 @@ function ns:InitBuffWatcherV2()
             end
         end
 
+        local function bdaDisabled() return not db.buffDropReminder end
+
         W:CreateCheckbox(bdaContent, {
             label = L["BWV2_BUFF_DROP_REMINDER"] or "Buff Drop Reminder",
             db = db, key = "buffDropReminder",
             x = bdaG:Col(1), y = bdaG:Row(1),
             onChange = function()
+                W:ApplyDisableStates(bdaContent)
                 if not db.buffDropReminder then
                     BWV2:ClearBuffSnapshot()
                     if ns.BWV2BuffDropAlert then
                         ns.BWV2BuffDropAlert:DismissAll()
+                    end
+                    if ns.BWV2Core then
+                        ns.BWV2Core:StopAllPollers()
                     end
                 end
             end,
@@ -1067,6 +1073,7 @@ function ns:InitBuffWatcherV2()
             label = L["BWV2_RAID_BUFF_ALWAYS_CHECK"] or "Always Monitor My Raid Buffs",
             db = db, key = "raidBuffAlwaysCheck",
             x = bdaG:Col(2), y = bdaG:Row(1),
+            disableif = bdaDisabled,
             onChange = function()
                 if not db.raidBuffAlwaysCheck then
                     if ns.BWV2BuffDropAlert then
@@ -1094,6 +1101,7 @@ function ns:InitBuffWatcherV2()
             label = L["BWV2_CLASS_BUFF_ALWAYS_CHECK"] or "Always Monitor My Class Buffs",
             db = db, key = "classBuffAlwaysCheck",
             x = bdaG:Col(1), y = bdaRow1bY,
+            disableif = bdaDisabled,
             onChange = function()
                 if not db.classBuffAlwaysCheck then
                     if ns.BWV2BuffDropAlert then
@@ -1107,6 +1115,7 @@ function ns:InitBuffWatcherV2()
             label = L["BWV2_CONSUMABLE_ALWAYS_CHECK"] or "Always Monitor My Consumables",
             db = db, key = "consumableAlwaysCheck",
             x = bdaG:Col(2), y = bdaRow1bY,
+            disableif = bdaDisabled,
             onChange = function()
                 if not db.consumableAlwaysCheck then
                     if ns.BWV2BuffDropAlert then
@@ -1133,6 +1142,7 @@ function ns:InitBuffWatcherV2()
             label = L["BWV2_INVENTORY_ALWAYS_CHECK"] or "Always Monitor My Inventory",
             db = db, key = "inventoryAlwaysCheck",
             x = bdaG:Col(1), y = bdaRow1cY,
+            disableif = bdaDisabled,
             onChange = function()
                 if not db.inventoryAlwaysCheck then
                     if ns.BWV2BuffDropAlert then
@@ -1153,12 +1163,14 @@ function ns:InitBuffWatcherV2()
             label = L["BWV2_BUFF_DROP_INSTANCE_ONLY"] or "Dungeons / Raids Only",
             db = db, key = "buffDropAlertInstanceOnly",
             x = bdaG:Col(1), y = bdaRow1dY,
+            disableif = bdaDisabled,
         })
 
         W:CreateCheckbox(bdaContent, {
             label = L["BWV2_BUFF_DROP_DISABLE_RESTED"] or "Hide in Rested Areas",
             db = db, key = "buffDropAlertDisableRested",
             x = bdaG:Col(2), y = bdaRow1dY,
+            disableif = bdaDisabled,
         })
 
         local bdaRow2Y = bdaRow1dY - 30

@@ -654,7 +654,7 @@ function BWV2:CheckBuffDrops()
                 end
             end
 
-            if not stillPresent and data.checkType == "weaponEnchant" then
+            if not stillPresent and data.checkType == "weaponEnchant" and not UnitIsDead("player") then
                 local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
                 if wOk then
                     if data.enchantIDs and #data.enchantIDs > 0 then
@@ -1153,8 +1153,14 @@ function BWV2:CheckAlwaysOnConsumables()
                         auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
                     end
                 elseif buff.checkType == "weaponEnchant" then
-                    local success = Categories:CheckWeaponBuffStatus()
-                    hasBuff = success
+                    if UnitIsDead("player") then
+                        hasBuff = true
+                    elseif db.buffDropReminder and self.buffSnapshot[buff.key] then
+                        hasBuff = true
+                    else
+                        local success = Categories:CheckWeaponBuffStatus()
+                        hasBuff = success
+                    end
                     icon = buff.fallbackIcon or 463543
                 elseif buff.itemIDs and #buff.itemIDs > 0 then
                     hasBuff = Categories:HasInventoryItem(buff.itemIDs)
