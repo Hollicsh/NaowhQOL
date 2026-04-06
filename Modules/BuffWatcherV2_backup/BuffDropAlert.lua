@@ -39,67 +39,28 @@ local function GetDurationFontSize()
     return db.buffDropTextFontSize or 11
 end
 
-local function GetOverlayFontSize()
-    local db = BWV2:GetDB()
-    local base = db.buffDropTextFontSize or 11
-    return math.max(8, base - 1)
-end
-
 BuffDropAlert.activeCells = {}
 BuffDropAlert.frame = nil
-
-local GLOW_TYPE_PIXEL = 1
-local GLOW_TYPE_AUTOCAST = 2
-local GLOW_TYPE_BORDER = 3
-local GLOW_TYPE_PROC = 4
-
-local function GetGlowColor()
-    local db = BWV2:GetDB()
-    if db.buffDropGlowUseClassColor then
-        local classColor = ns.Widgets.GetPlayerClassColor()
-        return {classColor.r, classColor.g, classColor.b, 1}
-    end
-    return {db.buffDropGlowR or 0.95, db.buffDropGlowG or 0.95, db.buffDropGlowB or 0.32, 1}
-end
 
 local function StartGlow(cell)
     if cell._hasGlow then return end
     cell._hasGlow = true
     local db = BWV2:GetDB()
-    local glowType = db.buffDropGlowType or GLOW_TYPE_PROC
-    local color = GetGlowColor()
-
-    if glowType == GLOW_TYPE_PIXEL then
-        LCG.PixelGlow_Start(cell, color,
-            db.buffDropGlowPixelLines or 8,
-            db.buffDropGlowPixelFrequency or 0.25,
-            db.buffDropGlowPixelLength or 4,
-            nil, 0, 0, nil, GLOW_KEY)
-    elseif glowType == GLOW_TYPE_AUTOCAST then
-        LCG.AutoCastGlow_Start(cell, color,
-            db.buffDropGlowAutocastParticles or 4,
-            db.buffDropGlowAutocastFrequency or 0.125,
-            db.buffDropGlowAutocastScale or 1.0,
-            0, 0, GLOW_KEY)
-    elseif glowType == GLOW_TYPE_BORDER then
-        LCG.ButtonGlow_Start(cell, color,
-            db.buffDropGlowBorderFrequency or 0.125)
+    local r, g, b
+    if db.buffDropGlowUseClassColor then
+        local classColor = ns.Widgets.GetPlayerClassColor()
+        r, g, b = classColor.r, classColor.g, classColor.b
     else
-        LCG.ProcGlow_Start(cell, {
-            color = color,
-            key = GLOW_KEY,
-            duration = db.buffDropGlowProcDuration or 1,
-            startAnim = db.buffDropGlowProcStartAnim or false,
-        })
+        r = db.buffDropGlowR or 0.95
+        g = db.buffDropGlowG or 0.95
+        b = db.buffDropGlowB or 0.32
     end
+    LCG.ProcGlow_Start(cell, { color = {r, g, b, 1}, key = GLOW_KEY, duration = 1, startAnim = false })
 end
 
 local function StopGlow(cell)
     if not cell._hasGlow then return end
     cell._hasGlow = false
-    LCG.PixelGlow_Stop(cell, GLOW_KEY)
-    LCG.AutoCastGlow_Stop(cell, GLOW_KEY)
-    pcall(LCG.ButtonGlow_Stop, cell)
     LCG.ProcGlow_Stop(cell, GLOW_KEY)
 end
 
@@ -117,11 +78,6 @@ local function AcquireCell(parent)
             cell.durationText:SetFont(GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
             cell.durationText:Hide()
             cell.durationText:SetText("")
-        end
-        if cell.overlayText then
-            cell.overlayText:SetFont(GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
-            cell.overlayText:Hide()
-            cell.overlayText:SetText("")
         end
         cell:Show()
         return cell
@@ -147,15 +103,6 @@ local function AcquireCell(parent)
     durationText:Hide()
     cell.durationText = durationText
 
-    local overlayLabel = cell:CreateFontString(nil, "OVERLAY")
-    overlayLabel:SetFont(GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
-    overlayLabel:SetPoint("CENTER", icon, "CENTER", 0, 0)
-    overlayLabel:SetJustifyH("CENTER")
-    overlayLabel:SetShadowOffset(1, -1)
-    overlayLabel:SetTextColor(1, 1, 1)
-    overlayLabel:Hide()
-    cell.overlayText = overlayLabel
-
     local close = CreateFrame("Button", nil, cell)
     close:SetSize(14, 14)
     close:SetPoint("TOPRIGHT", 4, 4)
@@ -180,13 +127,7 @@ local function AcquireCell(parent)
         self.closeBtn:Show()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine(self._alertName or "", 1, 1, 1)
-        if self._isGroupCoverage then
-            GameTooltip:AddLine("Not all group members are buffed!", 1, 0.6, 0.0)
-        elseif self._checkType == "inventory" then
-            GameTooltip:AddLine("You are out of these!", 1, 0.4, 0.0)
-        else
-            GameTooltip:AddLine("This buff is missing or expired!", 1, 0.4, 0.0)
-        end
+        GameTooltip:AddLine("This buff has expired!", 1, 0.4, 0.0)
         GameTooltip:AddLine("Right-click or click X to dismiss.", 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
@@ -211,6 +152,7 @@ local function ReleaseCell(cell)
     cell._checkType = nil
     cell._enchantIDs = nil
     cell._minRequired = nil
+    cell._isAlwaysOn = nil
     cell._isGroupCoverage = nil
     cell._expiryTime = nil
     cell._expiryAcc = nil
@@ -218,10 +160,6 @@ local function ReleaseCell(cell)
     if cell.durationText then
         cell.durationText:Hide()
         cell.durationText:SetText("")
-    end
-    if cell.overlayText then
-        cell.overlayText:Hide()
-        cell.overlayText:SetText("")
     end
     table.insert(cellPool, cell)
 end
@@ -283,41 +221,50 @@ function BuffDropAlert:GetFrame()
     return f
 end
 
-function BuffDropAlert:SyncFromState()
-    local alerts = BWV2.activeAlerts
+function BuffDropAlert:AddAlerts(droppedList)
+    if not droppedList or #droppedList == 0 then return end
+
     local parent = self:GetFrame()
 
-    if self._previewMode then return end
+    for _, data in ipairs(droppedList) do
+        local key = data.key or data.name
+        local isAlwaysOn = (key:sub(1, 11) == "raidAlways_") or (key:sub(1, 12) == "classAlways_")
+            or (key:sub(1, 18) == "consumableAlways_") or (key:sub(1, 16) == "inventoryAlways_")
+        local shouldAdd = true
 
-    local newKeys = {}
-    for key, data in pairs(alerts) do
-        if not BWV2:IsAlertDismissed(key) then
-            newKeys[key] = data
-        end
-    end
-
-    for key, cell in pairs(self.activeCells) do
-        if not newKeys[key] then
-            self.activeCells[key] = nil
-            ReleaseCell(cell)
-        end
-    end
-
-    for key, data in pairs(newKeys) do
-        local cell = self.activeCells[key]
-        if cell then
-            if data.isGroupCoverage and cell.durationText and data.covered ~= nil and data.total ~= nil then
-                cell.durationText:SetText(data.covered .. "/" .. data.total)
-                cell.durationText:Show()
+        if isAlwaysOn then
+            local baseKey = key:match("^raidAlways_(.+)$") or key:match("^classAlways_(.+)$")
+                or key:match("^consumableAlways_(.+)$") or key:match("^inventoryAlways_(.+)$")
+            if baseKey and self.activeCells[baseKey] then
+                shouldAdd = false
             end
         else
-            cell = AcquireCell(parent)
+            for _, prefix in ipairs({"raidAlways_", "classAlways_", "consumableAlways_", "inventoryAlways_"}) do
+                local alwaysKey = prefix .. key
+                if self.activeCells[alwaysKey] then
+                    self:DismissAlert(alwaysKey)
+                end
+            end
+        end
+
+        if data.isGroupCoverage and self.activeCells[key] then
+            local existingCell = self.activeCells[key]
+            if existingCell.durationText and data.covered ~= nil and data.total ~= nil then
+                existingCell.durationText:SetText(data.covered .. "/" .. data.total)
+                existingCell.durationText:Show()
+            end
+            shouldAdd = false
+        end
+
+        if shouldAdd and not self.activeCells[key] then
+            local cell = AcquireCell(parent)
             cell._alertKey = key
             cell._alertName = data.name
             cell._spellIDs = data.spellIDs
             cell._checkType = data.checkType
             cell._enchantIDs = data.enchantIDs
             cell._minRequired = data.minRequired
+            cell._isAlwaysOn = isAlwaysOn
             cell._isGroupCoverage = data.isGroupCoverage
 
             if data.icon then
@@ -325,7 +272,6 @@ function BuffDropAlert:SyncFromState()
             else
                 cell.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
             end
-
             if data.isGroupCoverage then
                 cell.icon:SetDesaturated(false)
                 cell.icon:SetVertexColor(1, 0.75, 0.25)
@@ -349,20 +295,18 @@ function BuffDropAlert:SyncFromState()
                     GameTooltip:AddLine("Not all group members are buffed!", 1, 0.6, 0.0)
                 elseif self._checkType == "inventory" then
                     GameTooltip:AddLine("You are out of these!", 1, 0.4, 0.0)
+                elseif self._isAlwaysOn then
+                    GameTooltip:AddLine("You know this buff but it's not active!", 1, 0.4, 0.0)
                 else
-                    GameTooltip:AddLine("This buff is missing or expired!", 1, 0.4, 0.0)
+                    GameTooltip:AddLine("This buff has expired!", 1, 0.4, 0.0)
                 end
                 GameTooltip:AddLine("Right-click or click X to dismiss.", 0.6, 0.6, 0.6)
                 GameTooltip:Show()
             end)
 
             self.activeCells[key] = cell
-            StartGlow(cell)
 
-            if data.overlayText and cell.overlayText then
-                cell.overlayText:SetText(data.overlayText)
-                cell.overlayText:Show()
-            end
+            StartGlow(cell)
 
             if data.isGroupCoverage and data.covered ~= nil and data.total ~= nil then
                 if cell.durationText then
@@ -401,8 +345,6 @@ function BuffDropAlert:SyncFromState()
 end
 
 function BuffDropAlert:DismissAlert(key)
-    BWV2:DismissAlert(key)
-
     local cell = self.activeCells[key]
     if not cell then return end
 
@@ -430,12 +372,6 @@ function BuffDropAlert:DismissNonCombatSafe()
         if cell._spellIDs then
             isSafe = BWV2:HasCombatSafeSpell(cell._spellIDs)
         end
-        if cell._checkType == "weaponEnchant" then
-            isSafe = true
-        end
-        if cell._checkType == "inventory" then
-            isSafe = true
-        end
         if not isSafe then
             self.activeCells[key] = nil
             ReleaseCell(cell)
@@ -447,28 +383,17 @@ function BuffDropAlert:DismissNonCombatSafe()
     end
 end
 
-function BuffDropAlert:HasAlerts()
-    return next(self.activeCells) ~= nil
-end
-
 function BuffDropAlert:RefreshTextFont()
     local fontPath = GetDurationFontPath()
     local fontSize = GetDurationFontSize()
-    local overlaySize = GetOverlayFontSize()
     for _, cell in pairs(self.activeCells) do
         if cell.durationText then
             cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
-        end
-        if cell.overlayText then
-            cell.overlayText:SetFont(fontPath, overlaySize, "OUTLINE")
         end
     end
     for _, cell in ipairs(cellPool) do
         if cell.durationText then
             cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
-        end
-        if cell.overlayText then
-            cell.overlayText:SetFont(fontPath, overlaySize, "OUTLINE")
         end
     end
 end
@@ -505,18 +430,152 @@ function BuffDropAlert:Relayout()
         self:StopMovingOrSizing()
         local point, _, _, x, y = self:GetPoint()
         if point then
-            local cdb = BWV2:GetDB()
-            cdb.buffDropPosition = { point = point, x = x, y = y }
+            local db = BWV2:GetDB()
+            db.buffDropPosition = { point = point, x = x, y = y }
         end
     end)
 
     local x = 0
+    local iconSize = GetIconSize()
     for _, key in ipairs(keys) do
         local cell = self.activeCells[key]
         cell:ClearAllPoints()
         cell:SetSize(iconSize, iconSize)
         cell:SetPoint("TOPLEFT", parent, "TOPLEFT", x, 0)
         x = x + iconSize + ICON_SPACING
+    end
+end
+
+function BuffDropAlert:CheckRebuffs()
+    local anyDismissed = false
+
+    for key, cell in pairs(self.activeCells) do
+        local snap = BWV2.buffSnapshot and BWV2.buffSnapshot[key]
+        if snap then
+            local isBack = false
+
+            if snap.spellIDs and #snap.spellIDs > 0 then
+                for _, spellID in ipairs(snap.spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        isBack = true
+                        break
+                    end
+                end
+            end
+
+            if not isBack and snap.iconCheck and not InCombatLockdown() then
+                local idx = 1
+                local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                while auraData do
+                    local icon = auraData.icon
+                    if not IsSecret(icon) and icon == snap.iconCheck then
+                        isBack = true
+                        break
+                    end
+                    idx = idx + 1
+                    auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                end
+            end
+
+            if not isBack and snap.checkType == "weaponEnchant" then
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    if snap.enchantIDs and #snap.enchantIDs > 0 then
+                        local count = 0
+                        for _, eid in ipairs(snap.enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
+                            end
+                        end
+                        local needed = (snap.minRequired == 0) and #snap.enchantIDs or (snap.minRequired or 1)
+                        isBack = count >= needed
+                    else
+                        isBack = hasMain and true or false
+                    end
+                end
+            end
+
+            if isBack then
+                self.activeCells[key] = nil
+                ReleaseCell(cell)
+                anyDismissed = true
+            end
+        end
+    end
+
+    if anyDismissed then
+        self:Relayout()
+    end
+end
+
+function BuffDropAlert:HasAlerts()
+    return next(self.activeCells) ~= nil
+end
+
+function BuffDropAlert:CheckRebuffsForPrefix(prefix)
+    local anyDismissed = false
+
+    for key, cell in pairs(self.activeCells) do
+        if key:sub(1, #prefix) == prefix and not cell._isGroupCoverage then
+            local isBack = false
+
+            if cell._checkType == "weaponEnchant" and cell._enchantIDs then
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    local count = 0
+                    for _, eid in ipairs(cell._enchantIDs) do
+                        if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                            count = count + 1
+                        end
+                    end
+                    local needed = (cell._minRequired == 0) and #cell._enchantIDs or (cell._minRequired or 1)
+                    isBack = count >= needed
+                end
+            elseif cell._spellIDs then
+                for _, spellID in ipairs(cell._spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        isBack = true
+                        break
+                    end
+                end
+                -- In combat, aura queries can return nil due to taint;
+                -- trust the out-of-combat cache if it says the buff is active
+                if not isBack and InCombatLockdown() then
+                    local baseKey = key:match("^classAlways_(.+)$")
+                    if baseKey and BWV2.classBuffSelfCache[baseKey] then
+                        isBack = true
+                    end
+                end
+            end
+
+            if isBack then
+                self.activeCells[key] = nil
+                ReleaseCell(cell)
+                anyDismissed = true
+            end
+        end
+    end
+
+    if anyDismissed then
+        self:Relayout()
+    end
+end
+
+function BuffDropAlert:DismissByPrefix(prefix)
+    local anyDismissed = false
+
+    for key, cell in pairs(self.activeCells) do
+        if key:sub(1, #prefix) == prefix then
+            self.activeCells[key] = nil
+            ReleaseCell(cell)
+            anyDismissed = true
+        end
+    end
+
+    if anyDismissed then
+        self:Relayout()
     end
 end
 

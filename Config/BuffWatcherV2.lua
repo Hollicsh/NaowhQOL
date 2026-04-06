@@ -1058,12 +1058,17 @@ function ns:InitBuffWatcherV2()
             onChange = function()
                 W:ApplyDisableStates(bdaContent)
                 if not db.buffDropReminder then
-                    BWV2:ClearBuffSnapshot()
+                    BWV2:ClearAlerts()
+                    BWV2:ClearDismissals()
                     if ns.BWV2BuffDropAlert then
                         ns.BWV2BuffDropAlert:DismissAll()
                     end
                     if ns.BWV2Core then
                         ns.BWV2Core:StopAllPollers()
+                    end
+                else
+                    if ns.BWV2Core then
+                        ns.BWV2Core:ForceRefresh()
                     end
                 end
             end,
@@ -1075,10 +1080,10 @@ function ns:InitBuffWatcherV2()
             x = bdaG:Col(2), y = bdaG:Row(1),
             disableif = bdaDisabled,
             onChange = function()
-                if not db.raidBuffAlwaysCheck then
-                    if ns.BWV2BuffDropAlert then
-                        ns.BWV2BuffDropAlert:DismissByPrefix("raidAlways_")
-                    end
+                BWV2:ClearAlerts()
+                BWV2:ClearDismissals()
+                if ns.BWV2Core then
+                    ns.BWV2Core:ForceRefresh()
                 end
             end,
         })
@@ -1103,10 +1108,10 @@ function ns:InitBuffWatcherV2()
             x = bdaG:Col(1), y = bdaRow1bY,
             disableif = bdaDisabled,
             onChange = function()
-                if not db.classBuffAlwaysCheck then
-                    if ns.BWV2BuffDropAlert then
-                        ns.BWV2BuffDropAlert:DismissByPrefix("classAlways_")
-                    end
+                BWV2:ClearAlerts()
+                BWV2:ClearDismissals()
+                if ns.BWV2Core then
+                    ns.BWV2Core:ForceRefresh()
                 end
             end,
         })
@@ -1117,10 +1122,10 @@ function ns:InitBuffWatcherV2()
             x = bdaG:Col(2), y = bdaRow1bY,
             disableif = bdaDisabled,
             onChange = function()
-                if not db.consumableAlwaysCheck then
-                    if ns.BWV2BuffDropAlert then
-                        ns.BWV2BuffDropAlert:DismissByPrefix("consumableAlways_")
-                    end
+                BWV2:ClearAlerts()
+                BWV2:ClearDismissals()
+                if ns.BWV2Core then
+                    ns.BWV2Core:ForceRefresh()
                 end
             end,
         })
@@ -1144,10 +1149,10 @@ function ns:InitBuffWatcherV2()
             x = bdaG:Col(1), y = bdaRow1cY,
             disableif = bdaDisabled,
             onChange = function()
-                if not db.inventoryAlwaysCheck then
-                    if ns.BWV2BuffDropAlert then
-                        ns.BWV2BuffDropAlert:DismissByPrefix("inventoryAlways_")
-                    end
+                BWV2:ClearAlerts()
+                BWV2:ClearDismissals()
+                if ns.BWV2Core then
+                    ns.BWV2Core:ForceRefresh()
                 end
             end,
         })
@@ -1219,7 +1224,137 @@ function ns:InitBuffWatcherV2()
             end,
         })
 
-        local bdaRow5Y = bdaRow4Y - 50
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_GLOW_USE_CLASS_COLOR"] or "Use Class Color",
+            db = db, key = "buffDropGlowUseClassColor",
+            x = bdaG:Col(2), y = bdaRow4Y,
+            onChange = function()
+                if ns.BWV2BuffDropAlert then
+                    ns.BWV2BuffDropAlert:RefreshGlowColor()
+                end
+            end,
+        })
+
+        local glowAdvancedFrames = {}
+        local function RefreshGlowAdvanced()
+            for _, f in pairs(glowAdvancedFrames) do f:Hide() end
+            local glowType = db.buffDropGlowType or 4
+            if glowAdvancedFrames[glowType] then
+                glowAdvancedFrames[glowType]:Show()
+            end
+        end
+
+        local bdaGlowTypeY = bdaRow4Y - 50
+        W:CreateDropdown(bdaContent, {
+            label = L["BWV2_GLOW_TYPE"] or "Glow Type",
+            db = db, key = "buffDropGlowType",
+            x = bdaG:Col(1), y = bdaGlowTypeY,
+            width = 180,
+            options = {
+                { text = "Pixel", value = 1 },
+                { text = "AutoCast", value = 2 },
+                { text = "Border", value = 3 },
+                { text = "Proc", value = 4 },
+            },
+            onChange = function()
+                RefreshGlowAdvanced()
+                if ns.BWV2BuffDropAlert then
+                    ns.BWV2BuffDropAlert:RefreshGlowColor()
+                end
+            end,
+        })
+
+        local advBaseY = bdaGlowTypeY - 55
+
+        local pixelFrame = CreateFrame("Frame", nil, bdaContent)
+        pixelFrame:SetSize(420, 120)
+        pixelFrame:SetPoint("TOPLEFT", 0, advBaseY)
+        glowAdvancedFrames[1] = pixelFrame
+
+        W:CreateSlider(pixelFrame, {
+            label = L["BWV2_GLOW_PIXEL_LINES"] or "Lines",
+            min = 1, max = 16, step = 1,
+            db = db, key = "buffDropGlowPixelLines",
+            x = bdaG:Col(1), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+        W:CreateSlider(pixelFrame, {
+            label = L["BWV2_GLOW_PIXEL_FREQUENCY"] or "Speed",
+            min = 0.05, max = 1.0, step = 0.05,
+            db = db, key = "buffDropGlowPixelFrequency",
+            x = bdaG:Col(2), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+        W:CreateSlider(pixelFrame, {
+            label = L["BWV2_GLOW_PIXEL_LENGTH"] or "Length",
+            min = 1, max = 10, step = 1,
+            db = db, key = "buffDropGlowPixelLength",
+            x = bdaG:Col(1), y = -50, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+
+        local autocastFrame = CreateFrame("Frame", nil, bdaContent)
+        autocastFrame:SetSize(420, 120)
+        autocastFrame:SetPoint("TOPLEFT", 0, advBaseY)
+        glowAdvancedFrames[2] = autocastFrame
+
+        W:CreateSlider(autocastFrame, {
+            label = L["BWV2_GLOW_AC_PARTICLES"] or "Particles",
+            min = 1, max = 8, step = 1,
+            db = db, key = "buffDropGlowAutocastParticles",
+            x = bdaG:Col(1), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+        W:CreateSlider(autocastFrame, {
+            label = L["BWV2_GLOW_AC_FREQUENCY"] or "Speed",
+            min = 0.05, max = 1.0, step = 0.05,
+            db = db, key = "buffDropGlowAutocastFrequency",
+            x = bdaG:Col(2), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+        W:CreateSlider(autocastFrame, {
+            label = L["BWV2_GLOW_AC_SCALE"] or "Scale",
+            min = 0.5, max = 3.0, step = 0.1,
+            db = db, key = "buffDropGlowAutocastScale",
+            x = bdaG:Col(1), y = -50, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+
+        local borderFrame = CreateFrame("Frame", nil, bdaContent)
+        borderFrame:SetSize(420, 60)
+        borderFrame:SetPoint("TOPLEFT", 0, advBaseY)
+        glowAdvancedFrames[3] = borderFrame
+
+        W:CreateSlider(borderFrame, {
+            label = L["BWV2_GLOW_BORDER_FREQUENCY"] or "Speed",
+            min = 0.05, max = 1.0, step = 0.05,
+            db = db, key = "buffDropGlowBorderFrequency",
+            x = bdaG:Col(1), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+
+        local procFrame = CreateFrame("Frame", nil, bdaContent)
+        procFrame:SetSize(420, 60)
+        procFrame:SetPoint("TOPLEFT", 0, advBaseY)
+        glowAdvancedFrames[4] = procFrame
+
+        W:CreateSlider(procFrame, {
+            label = L["BWV2_GLOW_PROC_DURATION"] or "Duration",
+            min = 0.5, max = 3.0, step = 0.1,
+            db = db, key = "buffDropGlowProcDuration",
+            x = bdaG:Col(1), y = 0, width = 180,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+        W:CreateCheckbox(procFrame, {
+            label = L["BWV2_GLOW_PROC_START_ANIM"] or "Start Animation",
+            db = db, key = "buffDropGlowProcStartAnim",
+            x = bdaG:Col(2), y = 0,
+            onChange = function() if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshGlowColor() end end,
+        })
+
+        RefreshGlowAdvanced()
+
+        local bdaRow5Y = advBaseY - 130
         W:CreateSlider(bdaContent, {
             label = L["COMMON_FONT_SIZE"],
             min = 7, max = 20, step = 1,

@@ -5,7 +5,9 @@ ns.CombatSafeSpells = {
     [1459] = true,
     [6673] = true,
     [21562] = true,
+    [369459] = true,
     [462854] = true,
+    [474754] = true,
 
     [381732] = true,
     [381741] = true,
@@ -20,6 +22,49 @@ ns.CombatSafeSpells = {
     [381756] = true,
     [381757] = true,
     [381758] = true,
+
+    [355941] = true,
+    [363502] = true,
+    [364343] = true,
+    [366155] = true,
+    [367364] = true,
+    [373267] = true,
+    [376788] = true,
+
+    [360827] = true,
+    [395152] = true,
+    [410089] = true,
+    [410263] = true,
+    [410686] = true,
+    [413984] = true,
+
+    [774] = true,
+    [8936] = true,
+    [33763] = true,
+    [48438] = true,
+    [155777] = true,
+
+    [17] = true,
+    [194384] = true,
+    [1253593] = true,
+
+    [139] = true,
+    [41635] = true,
+    [77489] = true,
+
+    [115175] = true,
+    [119611] = true,
+    [124682] = true,
+    [450769] = true,
+
+    [974] = true,
+    [383648] = true,
+    [61295] = true,
+
+    [53563] = true,
+    [156322] = true,
+    [156910] = true,
+    [1244893] = true,
 
     [2823] = true,
     [3408] = true,

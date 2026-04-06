@@ -7,14 +7,17 @@ end
 local BWV2 = {}
 ns.BWV2 = BWV2
 
+BWV2.raidResults = {}
+BWV2.missingByPlayer = {}
+BWV2.activeWatchers = {}
+BWV2.inventoryStatus = {}
 BWV2.scanInProgress = false
 BWV2.lastScanTime = 0
-BWV2.dirty = false
-BWV2.inCombat = false
-BWV2.inEncounter = false
-BWV2.inReadyCheck = false
-BWV2.inMythicPlus = false
-BWV2.isDead = false
+
+BWV2.buffSnapshot = {}
+BWV2.buffDropReminded = {}
+BWV2.classBuffSelfCache = {}
+BWV2.classBuffInstanceIDs = {}
 
 BWV2.scanResults = {
     raidBuffs = {},
@@ -22,25 +25,6 @@ BWV2.scanResults = {
     inventory = {},
     classBuffs = {},
 }
-
-BWV2.raidResults = {}
-BWV2.missingByPlayer = {}
-BWV2.inventoryStatus = {}
-BWV2.missingByCategory = {}
-
-BWV2.activeAlerts = {}
-BWV2.dismissedAlerts = {}
-
-BWV2.classBuffSelfCache = {}
-BWV2.classBuffInstanceIDs = {}
-
-function BWV2:SetDirty()
-    self.dirty = true
-end
-
-function BWV2:IsRestricted()
-    return self.inCombat or self.inMythicPlus
-end
 
 function BWV2:ResetState()
     wipe(self.raidResults)
@@ -110,48 +94,6 @@ end
 function BWV2:PlayerHasTalent(spellID)
     if not spellID then return false end
     return ns.IsPlayerSpell(spellID)
-end
-
-function BWV2:IsSpellCombatSafe(spellID)
-    return ns.CombatSafeSpells and ns.CombatSafeSpells[spellID] == true
-end
-
-function BWV2:HasCombatSafeSpell(spellIDs)
-    if not spellIDs then return false end
-    for _, id in ipairs(spellIDs) do
-        if self:IsSpellCombatSafe(id) then
-            return true
-        end
-    end
-    return false
-end
-
-function BWV2:GetCombatSafeSpellIDs(spellIDs)
-    if not spellIDs then return {} end
-    local safe = {}
-    for _, id in ipairs(spellIDs) do
-        if self:IsSpellCombatSafe(id) then
-            safe[#safe + 1] = id
-        end
-    end
-    return safe
-end
-
-function BWV2:IsAuraTrackable(spellIDs, checkType)
-    if checkType == "weaponEnchant" then return true end
-    if checkType == "inventory" then return true end
-    if checkType == "icon" then return false end
-    if not self:IsRestricted() then return true end
-    if not spellIDs then return true end
-    if type(spellIDs) == "number" then
-        return self:IsSpellCombatSafe(spellIDs)
-    end
-    for _, id in ipairs(spellIDs) do
-        if not self:IsSpellCombatSafe(id) then
-            return false
-        end
-    end
-    return true
 end
 
 function BWV2:InitSavedVars()
@@ -231,20 +173,10 @@ function BWV2:InitSavedVars()
             buffDropIconSize = 32,
             buffDropScale = 1.0,
             buffDropUnlock = false,
-            buffDropGlowType = 4,
             buffDropGlowR = 0.95,
             buffDropGlowG = 0.95,
             buffDropGlowB = 0.32,
             buffDropGlowUseClassColor = false,
-            buffDropGlowPixelLines = 8,
-            buffDropGlowPixelFrequency = 0.25,
-            buffDropGlowPixelLength = 4,
-            buffDropGlowAutocastParticles = 4,
-            buffDropGlowAutocastFrequency = 0.125,
-            buffDropGlowAutocastScale = 1.0,
-            buffDropGlowBorderFrequency = 0.125,
-            buffDropGlowProcDuration = 1,
-            buffDropGlowProcStartAnim = false,
             buffDropAlertInstanceOnly = false,
             buffDropAlertDisableRested = false,
             buffDropTextFontSize = 11,
@@ -336,9 +268,6 @@ function BWV2:InitSavedVars()
     if NaowhQOL.buffWatcherV2.buffDropUnlock == nil then
         NaowhQOL.buffWatcherV2.buffDropUnlock = false
     end
-    if NaowhQOL.buffWatcherV2.buffDropGlowType == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowType = 4
-    end
     if NaowhQOL.buffWatcherV2.buffDropGlowR == nil then
         NaowhQOL.buffWatcherV2.buffDropGlowR = 0.95
     end
@@ -350,33 +279,6 @@ function BWV2:InitSavedVars()
     end
     if NaowhQOL.buffWatcherV2.buffDropGlowUseClassColor == nil then
         NaowhQOL.buffWatcherV2.buffDropGlowUseClassColor = false
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowPixelLines == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowPixelLines = 8
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowPixelFrequency == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowPixelFrequency = 0.25
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowPixelLength == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowPixelLength = 4
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowAutocastParticles == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowAutocastParticles = 4
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowAutocastFrequency == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowAutocastFrequency = 0.125
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowAutocastScale == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowAutocastScale = 1.0
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowBorderFrequency == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowBorderFrequency = 0.125
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowProcDuration == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowProcDuration = 1
-    end
-    if NaowhQOL.buffWatcherV2.buffDropGlowProcStartAnim == nil then
-        NaowhQOL.buffWatcherV2.buffDropGlowProcStartAnim = false
     end
     if NaowhQOL.buffWatcherV2.buffDropAlertInstanceOnly == nil then
         NaowhQOL.buffWatcherV2.buffDropAlertInstanceOnly = false
@@ -513,113 +415,6 @@ function BWV2:InitSavedVars()
         end
         NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 8
     end
-
-    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 9 then
-        if NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
-            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
-            for _, group in ipairs(shamData.groups or {}) do
-                if group.key == "earth_shield" then
-                    group.spellIDs = {974}
-                    if group.talentCondition then
-                        group.talentCondition.talentID = 974
-                    end
-                end
-            end
-
-            local hasTidecaller = false
-            for _, group in ipairs(shamData.groups or {}) do
-                if group.key == "tidecallersGuard" then
-                    hasTidecaller = true
-                    break
-                end
-            end
-            if not hasTidecaller then
-                shamData.groups[#shamData.groups + 1] = {
-                    key = "tidecallersGuard",
-                    name = "Tidecaller's Guard",
-                    checkType = "weaponEnchant",
-                    enchantIDs = {7528},
-                    specFilter = {264},
-                    minRequired = 1,
-                    thresholds = { dungeon = 0, raid = 0, other = 0 },
-                    talentCondition = { talentID = 457481, mode = "activate" },
-                }
-            end
-        end
-        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 9
-    end
-
-    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 10 then
-        local Categories = ns.BWV2Categories
-        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
-        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
-            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
-            local newGroups = {}
-            for _, group in ipairs(defaults["SHAMAN"]) do
-                local copy = {}
-                for k, v in pairs(group) do
-                    if type(v) == "table" then
-                        local t = {}
-                        for k2, v2 in pairs(v) do t[k2] = v2 end
-                        copy[k] = t
-                    else
-                        copy[k] = v
-                    end
-                end
-                newGroups[#newGroups + 1] = copy
-            end
-            shamData.groups = newGroups
-        end
-        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 10
-    end
-
-    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 11 then
-        local Categories = ns.BWV2Categories
-        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
-        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
-            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
-            local newGroups = {}
-            for _, group in ipairs(defaults["SHAMAN"]) do
-                local copy = {}
-                for k, v in pairs(group) do
-                    if type(v) == "table" then
-                        local t = {}
-                        for k2, v2 in pairs(v) do t[k2] = v2 end
-                        copy[k] = t
-                    else
-                        copy[k] = v
-                    end
-                end
-                newGroups[#newGroups + 1] = copy
-            end
-            shamData.groups = newGroups
-        end
-        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 11
-    end
-
-    if (NaowhQOL.buffWatcherV2._classBuffDefaultsVersion or 0) < 12 then
-        local Categories = ns.BWV2Categories
-        local defaults = Categories and Categories.DEFAULT_CLASS_BUFFS
-        if defaults and NaowhQOL.buffWatcherV2.classBuffs and NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"] then
-            local shamData = NaowhQOL.buffWatcherV2.classBuffs["SHAMAN"]
-            local newGroups = {}
-            for _, group in ipairs(defaults["SHAMAN"]) do
-                local copy = {}
-                for k, v in pairs(group) do
-                    if type(v) == "table" then
-                        local t = {}
-                        for k2, v2 in pairs(v) do t[k2] = v2 end
-                        copy[k] = t
-                    else
-                        copy[k] = v
-                    end
-                end
-                newGroups[#newGroups + 1] = copy
-            end
-            shamData.groups = newGroups
-        end
-        NaowhQOL.buffWatcherV2._classBuffDefaultsVersion = 12
-    end
 end
 
 function BWV2:GetDB()
@@ -646,152 +441,361 @@ function BWV2:GetThreshold()
     return db.thresholds[contentType] or 300
 end
 
-function BWV2:ShouldSuppressAlerts()
-    local db = self:GetDB()
-    if ns.ZoneUtil.IsInPvP() then return true end
-    if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance() then return true end
-    if db.buffDropAlertDisableRested and IsResting() then return true end
+function BWV2:IsSpellCombatSafe(spellID)
+    return ns.CombatSafeSpells and ns.CombatSafeSpells[spellID] == true
+end
+
+function BWV2:HasCombatSafeSpell(spellIDs)
+    if not spellIDs then return false end
+    for _, id in ipairs(spellIDs) do
+        if self:IsSpellCombatSafe(id) then
+            return true
+        end
+    end
     return false
 end
 
-function BWV2:SetCombatState(combat)
-    local changed = self.inCombat ~= combat
-    self.inCombat = combat
-    if changed then
-        self:SetDirty()
+function BWV2:GetCombatSafeSpellIDs(spellIDs)
+    if not spellIDs then return {} end
+    local safe = {}
+    for _, id in ipairs(spellIDs) do
+        if self:IsSpellCombatSafe(id) then
+            safe[#safe + 1] = id
+        end
     end
+    return safe
 end
 
-function BWV2:SetEncounterState(encounter)
-    self.inEncounter = encounter
-    if encounter then
-        self.inCombat = true
-        self:SetDirty()
+function BWV2:BuildBuffSnapshot()
+    wipe(self.buffSnapshot)
+    wipe(self.buffDropReminded)
+
+    local results = self.scanResults
+    local Categories = ns.BWV2Categories
+    if not results or not Categories then return end
+
+    for _, entry in ipairs(results.raidBuffs or {}) do
+        if entry.pass then
+            for _, buff in ipairs(Categories.RAID) do
+                if buff.key == entry.key then
+                    local ids = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+                    local playerKnows = false
+                    for _, spellID in ipairs(ids) do
+                        if ns.IsPlayerSpell(spellID) then
+                            playerKnows = true
+                            break
+                        end
+                    end
+                    if playerKnows then
+                        self.buffSnapshot[entry.key] = {
+                            name = entry.name,
+                            spellIDs = ids,
+                            icon = entry.icon,
+                            category = "raidBuff",
+                        }
+                    end
+                    break
+                end
+            end
+        end
     end
-end
 
-function BWV2:SetReadyCheckState(active)
-    local changed = self.inReadyCheck ~= active
-    self.inReadyCheck = active
-    if changed then
-        self:SetDirty()
+    for _, entry in ipairs(results.consumables or {}) do
+        if entry.pass and not entry.unconfigured then
+            local ids = {}
+            local iconCheck = nil
+            local db = self:GetDB()
+            for _, grp in ipairs(Categories.CONSUMABLE_GROUPS) do
+                if grp.key == entry.key then
+                    if grp.checkType == "icon" and grp.buffIconID then
+                        iconCheck = grp.buffIconID
+                    elseif grp.checkType == "weaponEnchant" then
+                        self.buffSnapshot[entry.key] = {
+                            name = entry.name,
+                            icon = entry.icon,
+                            category = "consumable",
+                            checkType = "weaponEnchant",
+                        }
+                        break
+                    elseif grp.spellIDs then
+                        for _, id in ipairs(grp.spellIDs) do
+                            ids[#ids + 1] = id
+                        end
+                        local userEntries = db.userEntries and db.userEntries["consumable_" .. grp.key]
+                        if userEntries and userEntries.spellIDs then
+                            for _, id in ipairs(userEntries.spellIDs) do
+                                ids[#ids + 1] = id
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+            if #ids > 0 or iconCheck then
+                self.buffSnapshot[entry.key] = {
+                    name = entry.name,
+                    spellIDs = ids,
+                    icon = entry.icon,
+                    category = "consumable",
+                    iconCheck = iconCheck,
+                }
+            end
+        end
     end
-end
 
-function BWV2:SetDeadState(dead)
-    local changed = self.isDead ~= dead
-    self.isDead = dead
-    if changed then
-        self:SetDirty()
-    end
-end
-
-function BWV2:OnClassBuffAuraEvent(updateInfo)
-    if not InCombatLockdown() or not updateInfo then return end
-
-    if updateInfo.removedAuraInstanceIDs then
-        for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-            local ok, groupKey = pcall(function() return self.classBuffInstanceIDs[instanceID] end)
-            if ok and groupKey then
-                self.classBuffSelfCache[groupKey] = false
-                self.classBuffInstanceIDs[instanceID] = nil
-                self:SetDirty()
+    for _, entry in ipairs(results.classBuffs or {}) do
+        if entry.pass then
+            local _, playerClass = UnitClass("player")
+            local db = self:GetDB()
+            local classData = db.classBuffs and db.classBuffs[playerClass]
+            if classData then
+                for _, group in ipairs(classData.groups or {}) do
+                    if group.key == entry.key then
+                        if entry.checkType == "self" and group.spellIDs then
+                            self.buffSnapshot[entry.key] = {
+                                name = entry.name,
+                                spellIDs = group.spellIDs,
+                                icon = entry.icon,
+                                category = "classBuff",
+                                thresholds = group.thresholds,
+                            }
+                        elseif entry.checkType == "weaponEnchant" and group.enchantIDs then
+                            self.buffSnapshot[entry.key] = {
+                                name = entry.name,
+                                icon = entry.icon,
+                                category = "classBuff",
+                                checkType = "weaponEnchant",
+                                enchantIDs = group.enchantIDs,
+                                minRequired = group.minRequired or 1,
+                            }
+                        end
+                        break
+                    end
+                end
             end
         end
     end
 end
 
-function BWV2:CacheClassBuffState(groupKey, hasBuff, spellIDs)
-    if InCombatLockdown() then return end
-    self.classBuffSelfCache[groupKey] = hasBuff
-    if hasBuff and spellIDs then
-        for _, spellID in ipairs(spellIDs) do
-            local auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-            if auraData and auraData.auraInstanceID then
-                self.classBuffInstanceIDs[auraData.auraInstanceID] = groupKey
-            end
-        end
+function BWV2:CheckBuffDrops()
+    if not self.buffSnapshot or not next(self.buffSnapshot) then
+        return nil
     end
-end
-
-function BWV2:GetCachedClassBuffState(groupKey)
-    if not InCombatLockdown() then return nil end
-    return self.classBuffSelfCache[groupKey]
-end
-
-function BWV2:DismissAlert(key)
-    self.dismissedAlerts[key] = true
-end
-
-function BWV2:IsAlertDismissed(key)
-    return self.dismissedAlerts[key] == true
-end
-
-function BWV2:ClearDismissals()
-    wipe(self.dismissedAlerts)
-end
-
-function BWV2:ClearAlerts()
-    wipe(self.activeAlerts)
-end
-
-function BWV2:RefreshAlerts()
+    local inCombat = InCombatLockdown()
+    if not inCombat and not ns.DisplayUtils.CanReadAuras() then return nil end
     local db = self:GetDB()
-    if not db.buffDropReminder then
-        wipe(self.activeAlerts)
-        return
+    local suppressForInstance = db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance()
+    local suppressForRested = db.buffDropAlertDisableRested and IsResting()
+
+    local dropped = {}
+
+    for key, data in pairs(self.buffSnapshot) do
+        local isPersonalBuff = data.category == "raidBuff" or data.category == "classBuff"
+        if not (suppressForRested or (suppressForInstance and not isPersonalBuff)) and not self.buffDropReminded[key] then
+            local stillPresent = false
+            local foundExpiry = nil
+
+            if data.spellIDs and #data.spellIDs > 0 then
+                local contentType = self:GetCurrentContentType()
+                local threshold
+                if data.category == "classBuff" and data.thresholds then
+                    threshold = data.thresholds[contentType] or 0
+                else
+                    threshold = self:GetThreshold()
+                end
+                local idsToCheck = inCombat and self:GetCombatSafeSpellIDs(data.spellIDs) or data.spellIDs
+                if inCombat and #idsToCheck == 0 then
+                    stillPresent = true
+                else
+                    for _, spellID in ipairs(idsToCheck) do
+                        local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                        if aura then
+                            local expTime = aura.expirationTime
+                            if IsSecret(expTime) then
+                                stillPresent = true
+                                break
+                            end
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                stillPresent = true
+                                break
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
+                            end
+                        end
+                    end
+                end
+            elseif inCombat then
+                stillPresent = true
+            end
+
+            if not stillPresent and data.iconCheck and not InCombatLockdown() then
+                local threshold = self:GetThreshold()
+                local idx = 1
+                local auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                while auraData do
+                    local icon = auraData.icon
+                    if not IsSecret(icon) and icon == data.iconCheck then
+                        local expTime = auraData.expirationTime
+                        if IsSecret(expTime) then
+                            stillPresent = true
+                        else
+                            local remaining = (expTime or 0) - GetTime()
+                            if expTime == 0 or remaining > threshold then
+                                stillPresent = true
+                            elseif expTime ~= 0 then
+                                foundExpiry = expTime
+                            end
+                        end
+                        break
+                    end
+                    idx = idx + 1
+                    auraData = C_UnitAuras.GetAuraDataByIndex("player", idx, "HELPFUL")
+                end
+            end
+
+            if not stillPresent and data.checkType == "weaponEnchant" and not UnitIsDead("player") then
+                local wOk, hasMain, _, _, mainID, hasOff, _, _, offID = pcall(GetWeaponEnchantInfo)
+                if wOk then
+                    if data.enchantIDs and #data.enchantIDs > 0 then
+                        local count = 0
+                        for _, eid in ipairs(data.enchantIDs) do
+                            if (hasMain and mainID == eid) or (hasOff and offID == eid) then
+                                count = count + 1
+                            end
+                        end
+                        local needed = (data.minRequired == 0) and #data.enchantIDs or (data.minRequired or 1)
+                        stillPresent = count >= needed
+                    else
+                        stillPresent = hasMain and true or false
+                    end
+                end
+            end
+
+            if not stillPresent then
+                local entry = {}
+                for k, v in pairs(data) do entry[k] = v end
+                entry.key = key
+                if foundExpiry then
+                    entry.expiryTime = foundExpiry
+                end
+                dropped[#dropped + 1] = entry
+                self.buffDropReminded[key] = true
+            end
+        end
     end
 
-    if self:ShouldSuppressAlerts() then
-        wipe(self.activeAlerts)
-        return
-    end
+    return (#dropped > 0) and dropped or nil
+end
 
-    if self.isDead then return end
-
-    local isRestricted = self:IsRestricted()
+function BWV2:AddToBuffSnapshot(item, categoryKey)
+    if not item or not item.key then return end
     local Categories = ns.BWV2Categories
     if not Categories then return end
 
-    local threshold = self:GetThreshold()
-    local _, playerClass = UnitClass("player")
-    local playerSpecID = self:GetPlayerSpecID()
-
-    local currentAlertKeys = {}
-
-    if db.raidBuffAlwaysCheck then
-        self:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, currentAlertKeys)
-    end
-
-    if db.classBuffAlwaysCheck then
-        self:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, isRestricted, currentAlertKeys)
-    end
-
-    if db.consumableAlwaysCheck and not isRestricted then
-        self:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKeys)
-    end
-
-    if db.inventoryAlwaysCheck and not isRestricted then
-        self:RefreshInventoryAlerts(db, Categories, currentAlertKeys)
-    end
-
-    for key in pairs(self.activeAlerts) do
-        if not currentAlertKeys[key] then
-            self.activeAlerts[key] = nil
+    if categoryKey == "raidBuffs" then
+        for _, buff in ipairs(Categories.RAID) do
+            if buff.key == item.key then
+                local ids = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
+                local playerKnows = false
+                for _, spellID in ipairs(ids) do
+                    if ns.IsPlayerSpell(spellID) then
+                        playerKnows = true
+                        break
+                    end
+                end
+                if playerKnows then
+                    self.buffSnapshot[item.key] = {
+                        name = item.name,
+                        spellIDs = ids,
+                        icon = item.icon,
+                        category = "raidBuff",
+                    }
+                end
+                return
+            end
+        end
+    elseif categoryKey == "consumables" then
+        for _, grp in ipairs(Categories.CONSUMABLE_GROUPS) do
+            if grp.key == item.key then
+                local ids = {}
+                local iconCheck = nil
+                if grp.checkType == "icon" and grp.buffIconID then
+                    iconCheck = grp.buffIconID
+                elseif grp.checkType == "weaponEnchant" then
+                    self.buffSnapshot[item.key] = {
+                        name = item.name,
+                        icon = item.icon,
+                        category = "consumable",
+                        checkType = "weaponEnchant",
+                    }
+                    return
+                elseif grp.spellIDs then
+                    for _, id in ipairs(grp.spellIDs) do
+                        ids[#ids + 1] = id
+                    end
+                    local db = self:GetDB()
+                    local userEntries = db.userEntries and db.userEntries["consumable_" .. grp.key]
+                    if userEntries and userEntries.spellIDs then
+                        for _, id in ipairs(userEntries.spellIDs) do
+                            ids[#ids + 1] = id
+                        end
+                    end
+                end
+                if #ids > 0 or iconCheck then
+                    self.buffSnapshot[item.key] = {
+                        name = item.name,
+                        spellIDs = ids,
+                        icon = item.icon,
+                        category = "consumable",
+                        iconCheck = iconCheck,
+                    }
+                end
+                return
+            end
+        end
+    elseif categoryKey == "classBuffs" then
+        local _, playerClass = UnitClass("player")
+        local db = self:GetDB()
+        local classData = db.classBuffs and db.classBuffs[playerClass]
+        if classData then
+            for _, group in ipairs(classData.groups or {}) do
+                if group.key == item.key then
+                    if item.checkType == "self" and group.spellIDs then
+                        self.buffSnapshot[item.key] = {
+                            name = item.name,
+                            spellIDs = group.spellIDs,
+                            icon = item.icon,
+                            category = "classBuff",
+                            thresholds = group.thresholds,
+                        }
+                    elseif item.checkType == "weaponEnchant" and group.enchantIDs then
+                        self.buffSnapshot[item.key] = {
+                            name = item.name,
+                            icon = item.icon,
+                            category = "classBuff",
+                            checkType = "weaponEnchant",
+                            enchantIDs = group.enchantIDs,
+                            minRequired = group.minRequired or 1,
+                        }
+                    end
+                    return
+                end
+            end
         end
     end
-
-    for key in pairs(self.dismissedAlerts) do
-        if not self.activeAlerts[key] then
-            self.dismissedAlerts[key] = nil
-        end
-    end
-
-    self.dirty = false
 end
 
-function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, currentAlertKeys)
-    if not isRestricted and not ns.DisplayUtils.CanReadGroupAuras() then return end
+function BWV2:CheckAlwaysOnRaidBuffs()
+    local db = self:GetDB()
+    if not db or not db.raidBuffAlwaysCheck then return nil end
+    if ns.ZoneUtil.IsInPvP() then return nil end
+    if db.buffDropAlertDisableRested and IsResting() then return nil end
+    local inCombat = InCombatLockdown()
+    if not inCombat and not ns.DisplayUtils.CanReadGroupAuras() then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
 
     local units = {}
     local inRaid = IsInRaid()
@@ -812,7 +816,10 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
         end
     end
 
-    if #units == 0 then return end
+    if #units == 0 then return nil end
+
+    local threshold = self:GetThreshold()
+    local missing = {}
 
     for _, buff in ipairs(Categories.RAID) do
         local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
@@ -828,72 +835,84 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
             end
 
             if playerKnows then
-                local idsToQuery = spellIDs
-                local canCheck = true
-
-                if isRestricted then
-                    local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
-                    if #safeIDs == 0 then
-                        local alertKey = "raidAlways_" .. buff.key
-                        if self.activeAlerts[alertKey] then
-                            currentAlertKeys[alertKey] = true
-                        end
-                        canCheck = false
-                    else
-                        idsToQuery = safeIDs
-                    end
-                end
-
-                if canCheck then
+                local safeIDs = inCombat and self:GetCombatSafeSpellIDs(spellIDs) or spellIDs
+                if inCombat and #safeIDs == 0 then
+                else
                     local covered = 0
                     local total = #units
+                    local idsToQuery = inCombat and safeIDs or spellIDs
                     for _, unit in ipairs(units) do
                         local hasBuff = false
-                        for _, spellID in ipairs(idsToQuery) do
-                            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
-                            if aura then
-                                local expTime = aura.expirationTime
-                                if IsSecret(expTime) then
-                                    hasBuff = true
-                                elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                    hasBuff = true
+                        if inCombat then
+                            for _, spellID in ipairs(idsToQuery) do
+                                local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
+                                if aura then
+                                    local expTime = aura.expirationTime
+                                    if expTime == 0 or (expTime - GetTime()) > threshold then
+                                        hasBuff = true
+                                    end
+                                    break
                                 end
-                                break
+                            end
+                        else
+                            local idx = 1
+                            local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            while auraData do
+                                if IsSecret(auraData.spellId) then return nil end
+                                for _, spellID in ipairs(spellIDs) do
+                                    if auraData.spellId == spellID then
+                                        local expTime = auraData.expirationTime
+                                        if IsSecret(expTime) then
+                                            hasBuff = true
+                                        elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                            hasBuff = true
+                                        end
+                                        break
+                                    end
+                                end
+                                if hasBuff then break end
+                                idx = idx + 1
+                                auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
                             end
                         end
                         if hasBuff then covered = covered + 1 end
                     end
 
-                    local alertKey = "raidAlways_" .. buff.key
                     if covered < total then
                         local icon = C_Spell.GetSpellTexture(primaryID)
-                        if not self.activeAlerts[alertKey] then
-                            self.activeAlerts[alertKey] = {
-                                key = alertKey,
-                                name = buff.name,
-                                spellIDs = spellIDs,
-                                icon = icon,
-                                category = "raidBuff",
-                                covered = covered,
-                                total = total,
-                                isGroupCoverage = true,
-                            }
-                        else
-                            self.activeAlerts[alertKey].covered = covered
-                            self.activeAlerts[alertKey].total = total
-                        end
-                        currentAlertKeys[alertKey] = true
+                        missing[#missing + 1] = {
+                            key = "raidAlways_" .. buff.key,
+                            name = buff.name,
+                            spellIDs = spellIDs,
+                            icon = icon,
+                            category = "raidBuff",
+                            covered = covered,
+                            total = total,
+                            isGroupCoverage = true,
+                        }
                     end
                 end
             end
         end
     end
+
+    return (#missing > 0) and missing or nil
 end
 
-function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, isRestricted, currentAlertKeys)
-    local classData = db.classBuffs and db.classBuffs[playerClass]
-    if not classData or not classData.enabled then return end
+function BWV2:CheckAlwaysOnClassBuffs()
+    local db = self:GetDB()
+    if not db or not db.classBuffAlwaysCheck then return nil end
+    if ns.ZoneUtil.IsInPvP() then return nil end
+    if db.buffDropAlertDisableRested and IsResting() then return nil end
+    if InCombatLockdown() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
 
+    local _, playerClass = UnitClass("player")
+    local classData = db.classBuffs and db.classBuffs[playerClass]
+    if not classData or not classData.enabled then return nil end
+
+    local playerSpecID = self:GetPlayerSpecID()
+    local missing = {}
     local exclusiveGroupPassed = {}
 
     for _, group in ipairs(classData.groups or {}) do
@@ -925,155 +944,96 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
 
             if group.checkType == "self" then
                 local spellIDs = group.spellIDs or {}
-                if isRestricted then
-                    local cached = self:GetCachedClassBuffState(group.key)
-                    if cached ~= nil then
-                        hasBuff = cached
-                    else
-                        local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
-                        if #safeIDs > 0 then
-                            local contentType = self:GetCurrentContentType()
-                            local groupThreshold = (group.thresholds and group.thresholds[contentType]) or threshold
-                            local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
-                            local count = 0
-                            for _, spellID in ipairs(safeIDs) do
-                                local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-                                if aura then
-                                    local expTime = aura.expirationTime
-                                    if IsSecret(expTime) then
-                                        count = count + 1
-                                    elseif expTime == 0 or (expTime - GetTime()) > groupThreshold then
-                                        count = count + 1
-                                    end
-                                end
-                            end
-                            hasBuff = count >= needed
-                        else
+                local contentType = self:GetCurrentContentType()
+                local threshold = (group.thresholds and group.thresholds[contentType]) or self:GetThreshold()
+                local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
+                local count = 0
+                for _, spellID in ipairs(spellIDs) do
+                    local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                    if aura then
+                        local expTime = aura.expirationTime
+                        if IsSecret(expTime) then
                             hasBuff = true
+                            break
+                        end
+                        local remaining = (expTime or 0) - GetTime()
+                        if expTime == 0 or remaining > threshold then
+                            count = count + 1
                         end
                     end
-                else
-                    if not ns.DisplayUtils.CanReadAuras() then
-                        hasBuff = true
-                    else
-                        local contentType = self:GetCurrentContentType()
-                        local groupThreshold = (group.thresholds and group.thresholds[contentType]) or threshold
-                        local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
-                        local count = 0
+                end
+                hasBuff = count >= needed
+                -- Out of combat: cache state and auraInstanceID for combat tracking.
+                -- In combat: aura APIs return tainted/nil, so trust the cache
+                -- (cache is invalidated by OnClassBuffAuraEvent when removals are detected)
+                if not InCombatLockdown() then
+                    self.classBuffSelfCache[group.key] = hasBuff
+                    if hasBuff then
                         for _, spellID in ipairs(spellIDs) do
-                            local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-                            if aura then
-                                local expTime = aura.expirationTime
-                                if IsSecret(expTime) then
-                                    count = count + 1
-                                elseif expTime == 0 or (expTime - GetTime()) > groupThreshold then
-                                    count = count + 1
-                                end
+                            local auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+                            if auraData and auraData.auraInstanceID then
+                                self.classBuffInstanceIDs[auraData.auraInstanceID] = group.key
                             end
                         end
-                        hasBuff = count >= needed
-                        self:CacheClassBuffState(group.key, hasBuff, spellIDs)
+                    end
+                elseif not hasBuff and self.classBuffSelfCache[group.key] then
+                    hasBuff = true
+                end
+                if spellIDs[1] then
+                    icon = C_Spell.GetSpellTexture(spellIDs[1])
+                end
+            elseif group.checkType == "targeted" then
+                local spellIDs = group.spellIDs or {}
+                local threshold = self:GetThreshold()
+                if GetNumGroupMembers() == 0 then
+                    hasBuff = true
+                elseif InCombatLockdown() then
+                    hasBuff = true
+                elseif not ns.DisplayUtils.CanReadGroupAuras() then
+                    hasBuff = true
+                elseif #spellIDs > 0 then
+                    local inRaid = IsInRaid()
+                    local groupSize = GetNumGroupMembers()
+                    if groupSize == 0 then groupSize = 1 end
+                    for i = 1, groupSize do
+                        local unit
+                        if inRaid then
+                            unit = "raid" .. i
+                        else
+                            unit = (i == 1) and "player" or ("party" .. (i - 1))
+                        end
+                        if UnitExists(unit) then
+                            local idx = 1
+                            local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            while auraData do
+                                if IsSecret(auraData.spellId) then
+                                    hasBuff = true
+                                    break
+                                end
+                                for _, spellID in ipairs(spellIDs) do
+                                    if auraData.spellId == spellID
+                                       and auraData.sourceUnit
+                                       and UnitIsUnit(auraData.sourceUnit, "player") then
+                                        local expTime = auraData.expirationTime
+                                        if IsSecret(expTime) then
+                                            hasBuff = true
+                                        elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                            hasBuff = true
+                                        end
+                                        break
+                                    end
+                                end
+                                if hasBuff then break end
+                                idx = idx + 1
+                                auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
+                            end
+                        end
+                        if hasBuff then break end
                     end
                 end
                 if spellIDs[1] then
-                    if group.iconByRole then
-                        local role = select(5, GetSpecializationInfo(GetSpecialization() or 0)) or "DAMAGER"
-                        local roleSpellID = group.iconByRole[role] or group.iconByRole["DAMAGER"] or spellIDs[1]
-                        icon = C_Spell.GetSpellTexture(roleSpellID)
-                    else
-                        icon = C_Spell.GetSpellTexture(spellIDs[1])
-                    end
+                    icon = C_Spell.GetSpellTexture(spellIDs[1])
                 end
-
-            elseif group.checkType == "targeted" then
-                if GetNumGroupMembers() == 0 then
-                    hasBuff = true
-                elseif isRestricted then
-                    local spellIDs = group.spellIDs or {}
-                    local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
-                    if #safeIDs > 0 then
-                        local inRaid = IsInRaid()
-                        local groupSize = GetNumGroupMembers()
-                        if groupSize == 0 then groupSize = 1 end
-                        for i = 1, groupSize do
-                            local unit
-                            if inRaid then
-                                unit = "raid" .. i
-                            else
-                                unit = (i == 1) and "player" or ("party" .. (i - 1))
-                            end
-                            if UnitExists(unit) then
-                                for _, spellID in ipairs(safeIDs) do
-                                    local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
-                                    if aura then
-                                        if aura.sourceUnit and UnitIsUnit(aura.sourceUnit, "player") then
-                                            local expTime = aura.expirationTime
-                                            if IsSecret(expTime) then
-                                                hasBuff = true
-                                            elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                                hasBuff = true
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                            if hasBuff then break end
-                        end
-                    else
-                        hasBuff = true
-                    end
-                    if group.spellIDs and group.spellIDs[1] then
-                        icon = C_Spell.GetSpellTexture(group.spellIDs[1])
-                    end
-                elseif not ns.DisplayUtils.CanReadGroupAuras() then
-                    hasBuff = true
-                else
-                    local spellIDs = group.spellIDs or {}
-                    if #spellIDs > 0 then
-                        local inRaid = IsInRaid()
-                        local groupSize = GetNumGroupMembers()
-                        if groupSize == 0 then groupSize = 1 end
-                        for i = 1, groupSize do
-                            local unit
-                            if inRaid then
-                                unit = "raid" .. i
-                            else
-                                unit = (i == 1) and "player" or ("party" .. (i - 1))
-                            end
-                            if UnitExists(unit) then
-                                local idx = 1
-                                local auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
-                                while auraData do
-                                    if IsSecret(auraData.spellId) then
-                                        hasBuff = true
-                                        break
-                                    end
-                                    for _, spellID in ipairs(spellIDs) do
-                                        if auraData.spellId == spellID
-                                           and auraData.sourceUnit
-                                           and UnitIsUnit(auraData.sourceUnit, "player") then
-                                            local expTime = auraData.expirationTime
-                                            if IsSecret(expTime) then
-                                                hasBuff = true
-                                            elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                                hasBuff = true
-                                            end
-                                            break
-                                        end
-                                    end
-                                    if hasBuff then break end
-                                    idx = idx + 1
-                                    auraData = C_UnitAuras.GetAuraDataByIndex(unit, idx, "HELPFUL")
-                                end
-                            end
-                            if hasBuff then break end
-                        end
-                    end
-                    if group.spellIDs and group.spellIDs[1] then
-                        icon = C_Spell.GetSpellTexture(group.spellIDs[1])
-                    end
-                end
-
             elseif group.checkType == "weaponEnchant" then
                 local enchantIDs = group.enchantIDs or {}
                 if #enchantIDs > 0 then
@@ -1097,10 +1057,9 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                 exclusiveGroupPassed[group.exclusiveGroup] = true
             end
 
-            local alertKey = "classAlways_" .. group.key
             if not hasBuff then
-                self.activeAlerts[alertKey] = {
-                    key = alertKey,
+                missing[#missing + 1] = {
+                    key = "classAlways_" .. group.key,
                     name = group.name,
                     icon = icon or 134400,
                     category = "classBuff",
@@ -1109,25 +1068,36 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                     spellIDs = group.spellIDs,
                     enchantIDs = group.enchantIDs,
                     minRequired = group.minRequired,
-                    overlayText = group.overlayText,
                 }
-                currentAlertKeys[alertKey] = true
             end
         end
     end
 
     if next(exclusiveGroupPassed) then
-        for key, data in pairs(self.activeAlerts) do
-            if data.exclusiveGroup and exclusiveGroupPassed[data.exclusiveGroup] then
-                self.activeAlerts[key] = nil
-                currentAlertKeys[key] = nil
+        local filtered = {}
+        for _, entry in ipairs(missing) do
+            if not (entry.exclusiveGroup and exclusiveGroupPassed[entry.exclusiveGroup]) then
+                filtered[#filtered + 1] = entry
             end
         end
+        missing = filtered
     end
+
+    return (#missing > 0) and missing or nil
 end
 
-function BWV2:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKeys)
-    if not ns.DisplayUtils.CanReadAuras() then return end
+function BWV2:CheckAlwaysOnConsumables()
+    local db = self:GetDB()
+    if not db or not db.consumableAlwaysCheck then return nil end
+    if InCombatLockdown() then return nil end
+    if not ns.DisplayUtils.CanReadAuras() then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
+
+    local missing = {}
+    local threshold = self:GetThreshold()
 
     for _, buff in ipairs(Categories.CONSUMABLE_GROUPS) do
         if not Categories:IsConsumableGroupEnabled(buff.key) then
@@ -1185,6 +1155,8 @@ function BWV2:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKey
                 elseif buff.checkType == "weaponEnchant" then
                     if UnitIsDead("player") then
                         hasBuff = true
+                    elseif db.buffDropReminder and self.buffSnapshot[buff.key] then
+                        hasBuff = true
                     else
                         local success = Categories:CheckWeaponBuffStatus()
                         hasBuff = success
@@ -1218,29 +1190,38 @@ function BWV2:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKey
                     end
                 end
 
-                local alertKey = "consumableAlways_" .. buff.key
                 if not hasBuff then
-                    self.activeAlerts[alertKey] = {
-                        key = alertKey,
+                    missing[#missing + 1] = {
+                        key = "consumableAlways_" .. buff.key,
                         name = buff.name,
                         icon = icon or buff.fallbackIcon,
                         category = "consumable",
                         spellIDs = (buff.checkType ~= "icon" and buff.checkType ~= "weaponEnchant" and #spellIDs > 0) and spellIDs or nil,
                         iconCheck = (buff.checkType == "icon" and buff.buffIconID) or nil,
                         expiryTime = foundExpiry,
-                        checkType = buff.checkType,
                     }
-                    currentAlertKeys[alertKey] = true
                 end
             end
         end
     end
+
+    return (#missing > 0) and missing or nil
 end
 
-function BWV2:RefreshInventoryAlerts(db, Categories, currentAlertKeys)
+function BWV2:CheckAlwaysOnInventory()
+    local db = self:GetDB()
+    if not db or not db.inventoryAlwaysCheck then return nil end
+    if InCombatLockdown() then return nil end
+    if self:ShouldSuppressAlertsForZone() then return nil end
+
+    local Categories = ns.BWV2Categories
+    if not Categories then return nil end
+
+    local missing = {}
+
     for _, group in ipairs(Categories.INVENTORY_GROUPS) do
         if not Categories:IsInventoryGroupEnabled(group.key) then
-        elseif group.requireClass and not self:HasClassInGroup(group.requireClass) then
+        elseif group.requireClass and not BWV2:HasClassInGroup(group.requireClass) then
         else
             local itemIDs = {}
             local disabledDefaults = db.disabledDefaults and db.disabledDefaults["inventory_" .. group.key] or {}
@@ -1255,18 +1236,56 @@ function BWV2:RefreshInventoryAlerts(db, Categories, currentAlertKeys)
                     itemIDs[#itemIDs + 1] = itemID
                 end
             end
-            local alertKey = "inventoryAlways_" .. group.key
             if #itemIDs > 0 and Categories:GetInventoryItemCount(itemIDs) == 0 then
-                local _, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemIDs[1])
-                self.activeAlerts[alertKey] = {
-                    key = alertKey,
+                local _, _, _, _, _, _, _, _, _, icon = C_Item.GetItemInfo(itemIDs[1])
+                missing[#missing + 1] = {
+                    key = "inventoryAlways_" .. group.key,
                     name = group.name,
-                    icon = itemIcon or group.fallbackIcon or 134400,
+                    icon = icon or group.fallbackIcon or 134400,
                     category = "inventory",
                     checkType = "inventory",
                 }
-                currentAlertKeys[alertKey] = true
             end
         end
     end
+
+    return (#missing > 0) and missing or nil
+end
+
+function BWV2:OnClassBuffAuraEvent(updateInfo)
+    if not InCombatLockdown() or not updateInfo then return end
+
+    -- Track removals: if a tracked auraInstanceID was removed, invalidate cache
+    if updateInfo.removedAuraInstanceIDs then
+        for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
+            local ok, groupKey = pcall(function() return self.classBuffInstanceIDs[instanceID] end)
+            if ok and groupKey then
+                self.classBuffSelfCache[groupKey] = false
+                self.classBuffInstanceIDs[instanceID] = nil
+            end
+        end
+    end
+
+    -- Note: addedAuras fields are fully tainted in combat, so we cannot detect
+    -- re-application here. The cache will be corrected on PLAYER_REGEN_ENABLED
+    -- when aura APIs become readable again.
+end
+
+function BWV2:ClearBuffSnapshot()
+    wipe(self.buffSnapshot)
+    wipe(self.buffDropReminded)
+end
+
+function BWV2:ShouldSuppressAlertsForZone()
+    local db = self:GetDB()
+    if ns.ZoneUtil.IsInPvP() then
+        return true
+    end
+    if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance() then
+        return true
+    end
+    if db.buffDropAlertDisableRested and IsResting() then
+        return true
+    end
+    return false
 end
