@@ -747,7 +747,10 @@ function BWV2:RefreshAlerts()
         return
     end
 
-    if self.isDead then return end
+    if self.isDead then
+        wipe(self.activeAlerts)
+        return
+    end
 
     local isRestricted = self:IsRestricted()
     local Categories = ns.BWV2Categories
@@ -797,7 +800,8 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
     local inRaid = IsInRaid()
     local groupSize = GetNumGroupMembers()
     if groupSize == 0 then
-        units[1] = "player"
+        local _, playerClass = UnitClass("player")
+        units[1] = { unit = "player", class = playerClass }
     else
         for i = 1, groupSize do
             local unit
@@ -806,8 +810,9 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
             else
                 unit = (i == 1) and "player" or ("party" .. (i - 1))
             end
-            if UnitExists(unit) and UnitIsConnected(unit) and UnitIsVisible(unit) then
-                units[#units + 1] = unit
+            if UnitExists(unit) and not UnitIsDeadOrGhost(unit) and UnitIsConnected(unit) and UnitIsVisible(unit) then
+                local _, unitClass = UnitClass(unit)
+                units[#units + 1] = { unit = unit, class = unitClass }
             end
         end
     end
@@ -846,22 +851,25 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
 
                 if canCheck then
                     local covered = 0
-                    local total = #units
-                    for _, unit in ipairs(units) do
-                        local hasBuff = false
-                        for _, spellID in ipairs(idsToQuery) do
-                            local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
-                            if aura then
-                                local expTime = aura.expirationTime
-                                if IsSecret(expTime) then
-                                    hasBuff = true
-                                elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                    hasBuff = true
+                    local total = 0
+                    for _, unitData in ipairs(units) do
+                        if Categories:UnitBenefitsFromBuff(buff.key, unitData.class, nil) then
+                            total = total + 1
+                            local hasBuff = false
+                            for _, spellID in ipairs(idsToQuery) do
+                                local aura = C_UnitAuras.GetUnitAuraBySpellID(unitData.unit, spellID)
+                                if aura then
+                                    local expTime = aura.expirationTime
+                                    if IsSecret(expTime) then
+                                        hasBuff = true
+                                    elseif expTime == 0 or (expTime - GetTime()) > threshold then
+                                        hasBuff = true
+                                    end
+                                    break
                                 end
-                                break
                             end
+                            if hasBuff then covered = covered + 1 end
                         end
-                        if hasBuff then covered = covered + 1 end
                     end
 
                     local alertKey = "raidAlways_" .. buff.key
@@ -894,10 +902,33 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
     local classData = db.classBuffs and db.classBuffs[playerClass]
     if not classData or not classData.enabled then return end
 
+    local consumableSpellIDs = {}
+    local Categories = ns.BWV2Categories
+    if Categories and db.consumableAlwaysCheck then
+        for _, buff in ipairs(Categories.CONSUMABLE_GROUPS) do
+            for _, id in ipairs(buff.spellIDs or {}) do
+                consumableSpellIDs[id] = true
+            end
+        end
+    end
+
     local exclusiveGroupPassed = {}
 
     for _, group in ipairs(classData.groups or {}) do
         local shouldCheck = true
+
+        if shouldCheck and group.spellIDs and group.checkType == "self" then
+            local allOverlap = true
+            for _, spellID in ipairs(group.spellIDs) do
+                if not consumableSpellIDs[spellID] then
+                    allOverlap = false
+                    break
+                end
+            end
+            if allOverlap and #group.spellIDs > 0 then
+                shouldCheck = false
+            end
+        end
 
         if group.specFilter and #group.specFilter > 0 then
             local specMatch = false
@@ -1006,7 +1037,7 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                                 for _, spellID in ipairs(safeIDs) do
                                     local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
                                     if aura then
-                                        if aura.sourceUnit and UnitIsUnit(aura.sourceUnit, "player") then
+                                        if aura.sourceUnit and ns.DisplayUtils.SafeIsPlayer(aura.sourceUnit) then
                                             local expTime = aura.expirationTime
                                             if IsSecret(expTime) then
                                                 hasBuff = true
@@ -1051,7 +1082,7 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                                     for _, spellID in ipairs(spellIDs) do
                                         if auraData.spellId == spellID
                                            and auraData.sourceUnit
-                                           and UnitIsUnit(auraData.sourceUnit, "player") then
+                                           and ns.DisplayUtils.SafeIsPlayer(auraData.sourceUnit) then
                                             local expTime = auraData.expirationTime
                                             if IsSecret(expTime) then
                                                 hasBuff = true

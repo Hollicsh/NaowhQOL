@@ -261,6 +261,7 @@ local function OnPlayerAuraChanged()
     if not db.enabled then return end
     if suppressed then return end
     if not db.buffDropReminder then return end
+    if BWV2.isDead then return end
 
     local now = GetTime()
     if now - lastAuraRefresh < AURA_THROTTLE then
@@ -278,7 +279,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "READY_CHECK_CONFIRM" then
         local unit = ...
-        if unit and UnitIsUnit(unit, "player") then
+        if unit and ns.DisplayUtils.SafeIsPlayer(unit) then
             StopTicker()
             if ReportCard and ReportCard:IsShown() then
                 ReportCard:Hide()
@@ -347,6 +348,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "PLAYER_DEAD" then
         BWV2:SetDeadState(true)
+        if BuffDropAlert then BuffDropAlert:DismissAll() end
+        BWV2:ClearAlerts()
 
     elseif event == "PLAYER_UNGHOST" or event == "PLAYER_ALIVE" then
         if not UnitIsDead("player") then

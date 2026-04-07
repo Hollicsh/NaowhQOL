@@ -65,6 +65,19 @@ function ns.DisplayUtils.CanReadGroupAuras()
     return true
 end
 
+local playerGUID
+function ns.DisplayUtils.SafeIsPlayer(unit)
+    if not unit then return false end
+    local result = UnitIsUnit(unit, "player")
+    if issecretvalue and issecretvalue(result) then
+        if not playerGUID then
+            playerGUID = UnitGUID("player")
+        end
+        return UnitGUID(unit) == playerGUID
+    end
+    return result
+end
+
 ns.DisplayUtils.FRAME_BACKDROP = {
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",

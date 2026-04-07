@@ -18,7 +18,7 @@ function Scanner:GetPlayerBuffs()
     if IsInRaid() then
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
-            if UnitIsUnit(unit, "player") and BWV2.raidResults[unit] then
+            if ns.DisplayUtils.SafeIsPlayer(unit) and BWV2.raidResults[unit] then
                 return BWV2.raidResults[unit].buffs or {}
             end
         end
@@ -175,6 +175,7 @@ function Scanner:ScanRaidBuffs()
 
             for unit, data in pairs(BWV2.raidResults) do
                 if inRaid and unit == "player" then
+                elseif not Categories:UnitBenefitsFromBuff(buff.key, data.class, nil) then
                 else
                     total = total + 1
                     local spellIDs = type(buff.spellID) == "table" and buff.spellID or {buff.spellID}
@@ -237,7 +238,7 @@ function Scanner:CheckTargetedBuffSpells(spellIDs)
     for unit, data in pairs(BWV2.raidResults) do
         for _, spellID in ipairs(spellIDs) do
             local buffData = data.buffs[spellID]
-            if buffData and buffData.sourceUnit and UnitIsUnit(buffData.sourceUnit, "player") then
+            if buffData and buffData.sourceUnit and ns.DisplayUtils.SafeIsPlayer(buffData.sourceUnit) then
                 return true
             end
         end
@@ -273,10 +274,30 @@ function Scanner:ScanClassBuffs()
         return missing
     end
 
+    local consumableSpellIDs = {}
+    for _, buff in ipairs(Categories.CONSUMABLE_GROUPS) do
+        for _, id in ipairs(buff.spellIDs or {}) do
+            consumableSpellIDs[id] = true
+        end
+    end
+
     local playerBuffs = self:GetPlayerBuffs()
 
     for _, group in ipairs(classData.groups or {}) do
         local shouldCheck = true
+
+        if shouldCheck and group.spellIDs and group.checkType == "self" then
+            local allOverlap = true
+            for _, spellID in ipairs(group.spellIDs) do
+                if not consumableSpellIDs[spellID] then
+                    allOverlap = false
+                    break
+                end
+            end
+            if allOverlap and #group.spellIDs > 0 then
+                shouldCheck = false
+            end
+        end
 
         if group.specFilter and #group.specFilter > 0 then
             local specMatch = false
@@ -332,7 +353,7 @@ function Scanner:ScanClassBuffs()
                     for unit, data in pairs(BWV2.raidResults) do
                         for _, spellID in ipairs(spellIDs) do
                             local buffData = data.buffs[spellID]
-                            if buffData and buffData.sourceUnit and UnitIsUnit(buffData.sourceUnit, "player") then
+                            if buffData and buffData.sourceUnit and ns.DisplayUtils.SafeIsPlayer(buffData.sourceUnit) then
                                 foundSpellID = spellID
                                 foundIcon = buffData.icon or GetCachedSpellTexture(spellID)
                                 break
@@ -618,7 +639,8 @@ end
 
 function Scanner:ScanAndCompareUnit(unit)
     local buffs = self:ScanUnitBuffs(unit)
-    BWV2.raidResults[unit] = { buffs = buffs }
+    local _, unitClass = UnitClass(unit)
+    BWV2.raidResults[unit] = { buffs = buffs, class = unitClass }
 end
 
 function Scanner:RunCategoryScans()

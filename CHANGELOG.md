@@ -1,19 +1,12 @@
 # Changelog
-## [20260405.01]
-
-### New
-- **Buff Tracker**
-  - **Buff Drop glow styles**: Added 4 glow options for Buff Drop alerts: **Pixel**, **AutoCast**, **Border**, and **Proc**. Each style has its own settings so you can fine-tune the look.
-  - **Class color glow**: Optional toggle to color the glow using your class color.
-  - **Tidecaller's Guard tracking**: Added tracking for the Restoration Shaman imbue **Tidecaller's Guard** (requires the talent).
-
-### Improvements
-- **Buff Tracker**
-  - **More reliable alerts**: Buff Drop alerts have been rebuilt into a single unified system, reducing duplicate edge cases and keeping the display in sync more consistently.
-  - **Better combat and encounter tracking**: Expanded the list of buffs that can be safely checked during combat and boss encounters, including many healer HoTs and common group buffs like **Source of Magic** and **Symbiotic Relationship**.
-  - **Elemental Orbit support**: Shaman shield tracking now accounts for the **Elemental Orbit** talent — with it, you'll see separate alerts for Earth Shield (self) and a second shield (Water/Lightning). Without it, any single shield satisfies the check.
-  - **Updated flask list**: Added **Flask of Saving Graces** and **Vicious Thalassian Flask of Honor**.
+## [20260407.01]
 
 ### Fixes
 - **Buff Tracker**
-  - **Earth Shield tracking**: Fixed Earth Shield using the wrong spell ID for the targetted spell specifically. Existing settings are migrated automatically.
+  - **Taint error fixed**: Resolved "secret boolean value" taint errors caused by `UnitIsUnit` returning protected values. Ready checks and player detection now use a safe GUID-based fallback.
+  - **Duplicate augment rune alerts**: Fixed Ethereal Augment Rune and Void-Touched Augment Rune sometimes showing as two separate glowing icons after dying and being revived in the same cache window.
+  - **Ghost alerts after death**: Buff Drop alerts are now properly dismissed when you die, preventing stale icons from lingering on screen.
+  - **Dead players excluded from raid buff counts**: Dead or ghosted players are no longer included in the "missing buff" count, so the numbers actually reflect who needs the buff.
+  - **Accurate raid buff totals**: Raid buff counts now only include players who actually benefit from each buff. For example, Arcane Intellect shows "3/15" (casters only) instead of "3/20" (the whole raid).
+  - **Consumable and class buff overlap**: If a consumable buff and a class buff share the same spell, you'll no longer get a redundant class buff alert when the consumable already covers it.
+

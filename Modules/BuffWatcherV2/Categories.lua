@@ -15,6 +15,66 @@ Categories.RAID = {
       key = "bronze", name = "Blessing of the Bronze", class = "EVOKER" },
 }
 
+Categories.BUFF_BENEFICIARIES = {
+    intellect = {
+        MAGE = true,
+        WARLOCK = true,
+        PRIEST = true,
+        DRUID = true,
+        SHAMAN = true,
+        MONK = true,
+        EVOKER = true,
+        PALADIN = true,
+    },
+    attackPower = {
+        WARRIOR = true,
+        ROGUE = true,
+        HUNTER = true,
+        DEATHKNIGHT = true,
+        PALADIN = true,
+        MONK = true,
+        DRUID = true,
+        DEMONHUNTER = true,
+        SHAMAN = true,
+    },
+}
+
+Categories.SPEC_BENEFICIARIES = {
+    intellect = {
+        [62] = true, [63] = true, [64] = true,
+        [256] = true, [257] = true, [258] = true,
+        [265] = true, [266] = true, [267] = true,
+        [102] = true, [105] = true,
+        [262] = true, [264] = true,
+        [270] = true,
+        [65] = true,
+        [1467] = true, [1468] = true, [1473] = true,
+    },
+    attackPower = {
+        [71] = true, [72] = true, [73] = true,
+        [259] = true, [260] = true, [261] = true,
+        [253] = true, [254] = true, [255] = true,
+        [250] = true, [251] = true, [252] = true,
+        [577] = true, [581] = true,
+        [103] = true, [104] = true,
+        [263] = true,
+        [268] = true, [269] = true,
+        [66] = true, [70] = true,
+    },
+}
+
+function Categories:UnitBenefitsFromBuff(buffKey, unitClass, specID)
+    local specBeneficiaries = self.SPEC_BENEFICIARIES[buffKey]
+    local classBeneficiaries = self.BUFF_BENEFICIARIES[buffKey]
+    if specBeneficiaries and specID then
+        return specBeneficiaries[specID] or false
+    end
+    if classBeneficiaries then
+        return classBeneficiaries[unitClass] or false
+    end
+    return true
+end
+
 Categories.CLASS_INFO = {
     WARRIOR     = { name = LOCALIZED_CLASS_NAMES_MALE["WARRIOR"]     or "Warrior",      specs = {{71, "Arms"}, {72, "Fury"}, {73, "Protection"}} },
     PALADIN     = { name = LOCALIZED_CLASS_NAMES_MALE["PALADIN"]     or "Paladin",      specs = {{65, "Holy"}, {66, "Protection"}, {70, "Retribution"}} },
