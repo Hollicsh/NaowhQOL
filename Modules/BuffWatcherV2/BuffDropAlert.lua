@@ -309,6 +309,14 @@ function BuffDropAlert:SyncFromState()
             if data.isGroupCoverage and cell.durationText and data.covered ~= nil and data.total ~= nil then
                 cell.durationText:SetText(data.covered .. "/" .. data.total)
                 cell.durationText:Show()
+            elseif not data.isGroupCoverage then
+                if data.expiryTime then
+                    cell.icon:SetDesaturated(false)
+                    cell.icon:SetVertexColor(1, 1, 1)
+                else
+                    cell.icon:SetDesaturated(true)
+                    cell.icon:SetVertexColor(1, 0.4, 0.3)
+                end
             end
         else
             cell = AcquireCell(parent)
@@ -386,6 +394,8 @@ function BuffDropAlert:SyncFromState()
                         self._expiryTime = nil
                         if self.durationText then self.durationText:Hide() end
                         self:SetScript("OnUpdate", nil)
+                        self.icon:SetDesaturated(true)
+                        self.icon:SetVertexColor(1, 0.4, 0.3)
                     else
                         if self.durationText then
                             self.durationText:SetText(FormatDuration(rem))

@@ -693,7 +693,7 @@ function BWV2:OnClassBuffAuraEvent(updateInfo)
         for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
             local ok, groupKey = pcall(function() return self.classBuffInstanceIDs[instanceID] end)
             if ok and groupKey then
-                self.classBuffSelfCache[groupKey] = false
+                self.classBuffSelfCache[groupKey] = nil
                 self.classBuffInstanceIDs[instanceID] = nil
                 self:SetDirty()
             end
