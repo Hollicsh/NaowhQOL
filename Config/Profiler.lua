@@ -8,6 +8,7 @@ local COLORS = ns.COLORS
 local ColorizeText = W.Colorize
 
 local isPaused = false
+local peakData = {}
 
 local p = CreateFrame("Frame", "NaowhQOLProfilerFrame", UIParent, "BackdropTemplate")
 p:SetSize(500, 260)
@@ -122,6 +123,7 @@ local resetBtn = W:CreateButton(p, {
         ResetCPUUsage()
         UpdateAddOnCPUUsage()
         UpdateAddOnMemoryUsage()
+        wipe(peakData)
         print(ColorizeText("Addon Profiler:", COLORS.BLUE) .. " " .. ColorizeText(L["PROFILER_STATS_RESET"], COLORS.ORANGE))
     end
 })
@@ -193,6 +195,7 @@ p:SetScript("OnShow", function()
 end)
 
 p:SetScript("OnHide", function(self)
+    wipe(peakData)
     if self.manualStop then
         self.manualStop = nil
         return
@@ -236,10 +239,14 @@ p:SetScript("OnUpdate", function(self, elapsed)
             local cpu = GetAddOnCPUUsage(i) or 0
 
             if mem > 0 then
+                if cpu > (peakData[name] or 0) then
+                    peakData[name] = cpu
+                end
                 table.insert(data, {
                     n = name,
                     m = mem/1024,
                     c = cpu,
+                    p = peakData[name] or cpu,
                 })
             end
         end
@@ -265,9 +272,9 @@ p:SetScript("OnUpdate", function(self, elapsed)
                 rows[i].avg:SetText(ColorizeText(string.format("%.3f", data[i].c), avgColor))
 
                 local peakColor = COLORS.GREEN
-                if data[i].c >= 5.0 then peakColor = COLORS.RED
-                elseif data[i].c >= 1.0 then peakColor = COLORS.ORANGE end
-                rows[i].peak:SetText(ColorizeText(string.format("%.2f", data[i].c), peakColor))
+                if data[i].p >= 5.0 then peakColor = COLORS.RED
+                elseif data[i].p >= 1.0 then peakColor = COLORS.ORANGE end
+                rows[i].peak:SetText(ColorizeText(string.format("%.2f", data[i].p), peakColor))
 
                 local memColor = COLORS.GREEN
                 if data[i].m >= 50 then memColor = COLORS.RED
