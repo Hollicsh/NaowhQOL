@@ -15,6 +15,14 @@ local ICON_SPACING = 6
 local LCG = LibStub("LibCustomGlow-1.0")
 local GLOW_KEY = "NaowhQOL_BuffDrop"
 
+local function GetMissingTintColor()
+    local db = BWV2:GetDB()
+    if db.buffDropNoTint then
+        return 1, 1, 1
+    end
+    return 1, 0.4, 0.3
+end
+
 local function FormatDuration(seconds)
     if not seconds or seconds <= 0 then return "" end
     seconds = math.floor(seconds)
@@ -104,6 +112,11 @@ local function StopGlow(cell)
 end
 
 local cellPool = {}
+
+local raidTextFrame = nil
+local raidTextLabels = {}
+local RAID_TEXT_PADDING = 6
+local RAID_TEXT_LINE_SPACING = 3
 
 local function AcquireCell(parent)
     local iconSize = GetIconSize()
@@ -286,13 +299,19 @@ end
 function BuffDropAlert:SyncFromState()
     local alerts = BWV2.activeAlerts
     local parent = self:GetFrame()
+    local db = BWV2:GetDB()
 
-    if self._previewMode then return end
+    if self._previewMode then
+        self:SyncRaidTextFrame()
+        return
+    end
 
     local newKeys = {}
     for key, data in pairs(alerts) do
         if not BWV2:IsAlertDismissed(key) then
-            newKeys[key] = data
+            if not (db.buffDropRaidTextOnly and data.category == "raidBuff") then
+                newKeys[key] = data
+            end
         end
     end
 
@@ -315,7 +334,8 @@ function BuffDropAlert:SyncFromState()
                     cell.icon:SetVertexColor(1, 1, 1)
                 else
                     cell.icon:SetDesaturated(true)
-                    cell.icon:SetVertexColor(1, 0.4, 0.3)
+                    local tr, tg, tb = GetMissingTintColor()
+                    cell.icon:SetVertexColor(tr, tg, tb)
                 end
             end
         else
@@ -342,7 +362,8 @@ function BuffDropAlert:SyncFromState()
                 cell.icon:SetVertexColor(1, 1, 1)
             else
                 cell.icon:SetDesaturated(true)
-                cell.icon:SetVertexColor(1, 0.4, 0.3)
+                local tr, tg, tb = GetMissingTintColor()
+                cell.icon:SetVertexColor(tr, tg, tb)
             end
 
             cell.closeBtn:SetScript("OnClick", function()
@@ -395,7 +416,8 @@ function BuffDropAlert:SyncFromState()
                         if self.durationText then self.durationText:Hide() end
                         self:SetScript("OnUpdate", nil)
                         self.icon:SetDesaturated(true)
-                        self.icon:SetVertexColor(1, 0.4, 0.3)
+                        local tr, tg, tb = GetMissingTintColor()
+                        self.icon:SetVertexColor(tr, tg, tb)
                     else
                         if self.durationText then
                             self.durationText:SetText(FormatDuration(rem))
@@ -408,6 +430,7 @@ function BuffDropAlert:SyncFromState()
     end
 
     self:Relayout()
+    self:SyncRaidTextFrame()
 end
 
 function BuffDropAlert:DismissAlert(key)
@@ -430,6 +453,10 @@ function BuffDropAlert:DismissAll()
 
     if self.frame then
         self.frame:Hide()
+    end
+
+    if raidTextFrame then
+        raidTextFrame:Hide()
     end
 end
 
@@ -552,7 +579,8 @@ function BuffDropAlert:ShowPreview()
 
                 cell.icon:SetTexture(data.icon)
                 cell.icon:SetDesaturated(true)
-                cell.icon:SetVertexColor(1, 0.4, 0.3)
+                local tr, tg, tb = GetMissingTintColor()
+                cell.icon:SetVertexColor(tr, tg, tb)
 
                 cell.closeBtn:SetScript("OnClick", function()
                     BuffDropAlert:DismissAlert(data.key)
@@ -575,6 +603,7 @@ function BuffDropAlert:ShowPreview()
         parent.dragOverlay:Show()
     end
 
+    self:SyncRaidTextFrame()
     self:Relayout()
 end
 
@@ -600,6 +629,15 @@ function BuffDropAlert:HidePreview()
         end
     end
 
+    if raidTextFrame then
+        if raidTextFrame.unlockText then
+            raidTextFrame.unlockText:Hide()
+        end
+        if raidTextFrame.dragOverlay then
+            raidTextFrame.dragOverlay:Hide()
+        end
+    end
+
     self:Relayout()
 end
 
@@ -610,4 +648,176 @@ function BuffDropAlert:RefreshGlowColor()
             StartGlow(cell)
         end
     end
+end
+
+function BuffDropAlert:RefreshIconTint()
+    local tr, tg, tb = GetMissingTintColor()
+    for _, cell in pairs(self.activeCells) do
+        if not cell._isGroupCoverage and cell.icon:IsDesaturated() then
+            cell.icon:SetVertexColor(tr, tg, tb)
+        end
+    end
+end
+
+function BuffDropAlert:GetRaidTextFrame()
+    if raidTextFrame then return raidTextFrame end
+
+    local db = BWV2:GetDB()
+
+    local f = CreateFrame("Frame", "NaowhQOL_BuffDropRaidText", UIParent, "BackdropTemplate")
+    f:SetSize(150, 20)
+    f:SetPoint("TOP", UIParent, "TOP", 200, -180)
+    f:SetFrameStrata("HIGH")
+    f:SetClampedToScreen(true)
+    f:SetMovable(true)
+    f:EnableMouse(false)
+    f:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    f:SetBackdropColor(0, 0, 0, 0)
+    f:SetBackdropBorderColor(0, 0, 0, 0)
+
+    local unlockText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    unlockText:SetPoint("BOTTOM", f, "TOP", 0, 2)
+    unlockText:SetText(L["BWV2_RAID_TEXT_ANCHOR"])
+    unlockText:SetTextColor(1, 0.66, 0)
+    unlockText:Hide()
+    f.unlockText = unlockText
+
+    local dragOverlay = CreateFrame("Frame", nil, f)
+    dragOverlay:SetAllPoints()
+    dragOverlay:SetFrameLevel(f:GetFrameLevel() + 100)
+    dragOverlay:EnableMouse(true)
+    dragOverlay:RegisterForDrag("LeftButton")
+    dragOverlay:SetScript("OnDragStart", function()
+        f:StartMoving()
+    end)
+    dragOverlay:SetScript("OnDragStop", function()
+        f:StopMovingOrSizing()
+        local point, _, _, x, y = f:GetPoint()
+        if point then
+            local cdb = BWV2:GetDB()
+            cdb.buffDropRaidTextPosition = { point = point, x = x, y = y }
+        end
+    end)
+    dragOverlay:Hide()
+    f.dragOverlay = dragOverlay
+
+    if db.buffDropRaidTextPosition then
+        f:ClearAllPoints()
+        f:SetPoint(
+            db.buffDropRaidTextPosition.point,
+            UIParent,
+            db.buffDropRaidTextPosition.point,
+            db.buffDropRaidTextPosition.x,
+            db.buffDropRaidTextPosition.y
+        )
+    end
+
+    f:Hide()
+    raidTextFrame = f
+    return f
+end
+
+local function GetRaidTextColor()
+    local db = BWV2:GetDB()
+    if db.buffDropRaidTextUseClassColor then
+        local cc = ns.Widgets.GetPlayerClassColor()
+        return cc.r, cc.g, cc.b
+    end
+    return db.buffDropRaidTextR or 1, db.buffDropRaidTextG or 0.8, db.buffDropRaidTextB or 0.35
+end
+
+local function GetRaidTextFontPath()
+    local db = BWV2:GetDB()
+    if db.buffDropRaidTextFont then return db.buffDropRaidTextFont end
+    return BWV2:GetBuffDropFont()
+end
+
+local function GetRaidTextFontSize()
+    local db = BWV2:GetDB()
+    return db.buffDropRaidTextFontSize or 14
+end
+
+function BuffDropAlert:SyncRaidTextFrame()
+    local db = BWV2:GetDB()
+
+    if not db.buffDropRaidTextOnly then
+        if raidTextFrame then raidTextFrame:Hide() end
+        return
+    end
+
+    local parent = self:GetRaidTextFrame()
+
+    local names = {}
+
+    local missingPrefix = L["BWV2_BUFF_DROP_MISSING"] .. " "
+    if self._previewMode then
+        names = { missingPrefix .. "Arcane Intellect", missingPrefix .. "Mark of the Wild" }
+    else
+        local alerts = BWV2.activeAlerts
+        for key, data in pairs(alerts) do
+            if data.category == "raidBuff" and not BWV2:IsAlertDismissed(key) then
+                names[#names + 1] = missingPrefix .. data.name
+            end
+        end
+        table.sort(names)
+    end
+
+    for i = #names + 1, #raidTextLabels do
+        raidTextLabels[i]:Hide()
+        raidTextLabels[i]:SetText("")
+    end
+
+    if #names == 0 and not self._previewMode then
+        parent:Hide()
+        parent:EnableMouse(false)
+        return
+    end
+
+    local fontPath = GetRaidTextFontPath()
+    local fontSize = GetRaidTextFontSize()
+    local lineH = fontSize + RAID_TEXT_LINE_SPACING
+    local tr, tg, tb = GetRaidTextColor()
+
+    local maxWidth = 0
+    for i, name in ipairs(names) do
+        local label = raidTextLabels[i]
+        if not label then
+            label = parent:CreateFontString(nil, "OVERLAY")
+            raidTextLabels[i] = label
+        end
+        label:SetFont(fontPath, fontSize, "OUTLINE")
+        label:SetText(name)
+        label:SetShadowOffset(1, -1)
+        label:SetTextColor(tr, tg, tb)
+        label:ClearAllPoints()
+        label:SetPoint("TOPLEFT", parent, "TOPLEFT", RAID_TEXT_PADDING, -(RAID_TEXT_PADDING + (i - 1) * lineH))
+        label:Show()
+        local w = label:GetStringWidth()
+        if w > maxWidth then maxWidth = w end
+    end
+
+    local frameW = math.max(80, maxWidth + RAID_TEXT_PADDING * 2)
+    local frameH = #names * lineH + RAID_TEXT_PADDING * 2
+    parent:SetSize(frameW, frameH)
+    parent:SetScale(db.buffDropScale or 1.0)
+    parent:EnableMouse(true)
+    parent:Show()
+
+    if self._previewMode then
+        parent:SetBackdropColor(0, 0, 0, 0.55)
+        parent:SetBackdropBorderColor(0.25, 0.25, 0.25, 0.9)
+        if parent.unlockText then parent.unlockText:Show() end
+        if parent.dragOverlay then parent.dragOverlay:Show() end
+    else
+        parent:SetBackdropColor(0, 0, 0, 0)
+        parent:SetBackdropBorderColor(0, 0, 0, 0)
+    end
+end
+
+function BuffDropAlert:RefreshRaidTextColor()
+    self:SyncRaidTextFrame()
 end

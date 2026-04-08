@@ -759,7 +759,8 @@ function ns.Widgets:CreateColorPicker(parent, opts)
 
     local function UpdatePreview()
         local r, g, b = ns.Widgets.GetEffectiveColor(opts.db, opts.rKey, opts.gKey, opts.bKey, classColorKey)
-        preview:SetBackdropColor(r, g, b, 1)
+        local a = opts.aKey and (opts.db[opts.aKey] or 1) or 1
+        preview:SetBackdropColor(r, g, b, a)
     end
 
     UpdatePreview()
@@ -788,7 +789,7 @@ function ns.Widgets:CreateColorPicker(parent, opts)
 
     btn:SetScript("OnClick", function()
         local _, classFile = UnitClass("player")
-        ColorPickerFrame:SetupColorPickerAndShow({
+        local pickerSetup = {
             r = opts.db[opts.rKey] or 1,
             g = opts.db[opts.gKey] or 1,
             b = opts.db[opts.bKey] or 1,
@@ -796,20 +797,34 @@ function ns.Widgets:CreateColorPicker(parent, opts)
             swatchFunc = function()
                 local cr, cg, cb = ColorPickerFrame:GetColorRGB()
                 opts.db[opts.rKey], opts.db[opts.gKey], opts.db[opts.bKey] = cr, cg, cb
+                if opts.aKey then
+                    local ca = ColorPickerFrame:GetColorAlpha()
+                    opts.db[opts.aKey] = ca
+                end
                 if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
                 if not classColorKey or not opts.db[classColorKey] then
-                    preview:SetBackdropColor(cr, cg, cb, 1)
+                    local pa = opts.aKey and (opts.db[opts.aKey] or 1) or 1
+                    preview:SetBackdropColor(cr, cg, cb, pa)
                 end
                 if opts.onChange then opts.onChange(cr, cg, cb) end
             end,
             cancelFunc = function(prev)
                 opts.db[opts.rKey], opts.db[opts.gKey], opts.db[opts.bKey] = prev.r, prev.g, prev.b
+                if opts.aKey then
+                    opts.db[opts.aKey] = prev.opacity or 1
+                end
                 if not classColorKey or not opts.db[classColorKey] then
-                    preview:SetBackdropColor(prev.r, prev.g, prev.b, 1)
+                    local pa = opts.aKey and (opts.db[opts.aKey] or 1) or 1
+                    preview:SetBackdropColor(prev.r, prev.g, prev.b, pa)
                 end
                 if opts.onChange then opts.onChange(prev.r, prev.g, prev.b) end
             end,
-        })
+        }
+        if opts.aKey then
+            pickerSetup.hasOpacity = true
+            pickerSetup.opacity = opts.db[opts.aKey] or 1
+        end
+        ColorPickerFrame:SetupColorPickerAndShow(pickerSetup)
     end)
 
     if opts.disableif then

@@ -1377,7 +1377,87 @@ function ns:InitBuffWatcherV2()
             if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshTextFont() end
         end)
 
-        bdaContent:SetHeight(math.abs(bdaRow6Y) + 55)
+        local bdaRow7Y = bdaRow6Y - 55
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_BUFF_DROP_NO_TINT"],
+            db = db, key = "buffDropNoTint",
+            x = bdaG:Col(1), y = bdaRow7Y,
+            disableif = bdaDisabled,
+            tooltip = L["BWV2_BUFF_DROP_NO_TINT_DESC"],
+            onChange = function()
+                if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshIconTint() end
+            end,
+        })
+
+        W:CreateCheckbox(bdaContent, {
+            label = L["BWV2_RAID_TEXT_ONLY"],
+            db = db, key = "buffDropRaidTextOnly",
+            x = bdaG:Col(2), y = bdaRow7Y,
+            disableif = bdaDisabled,
+            tooltip = L["BWV2_RAID_TEXT_ONLY_DESC"],
+            onChange = function()
+                if ns.BWV2BuffDropAlert then
+                    if db.buffDropUnlock then
+                        ns.BWV2BuffDropAlert:ShowPreview()
+                    else
+                        ns.BWV2BuffDropAlert:SyncFromState()
+                    end
+                end
+            end,
+        })
+
+        local noTintDesc = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        noTintDesc:SetPoint("TOPLEFT", bdaG:Col(1) + 30, bdaRow7Y - 22)
+        noTintDesc:SetWidth(200)
+        noTintDesc:SetJustifyH("LEFT")
+        noTintDesc:SetText(W.Colorize(L["BWV2_BUFF_DROP_NO_TINT_DESC"], C.GRAY))
+
+        local raidTextDesc = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        raidTextDesc:SetPoint("TOPLEFT", bdaG:Col(2) + 30, bdaRow7Y - 22)
+        raidTextDesc:SetWidth(200)
+        raidTextDesc:SetJustifyH("LEFT")
+        raidTextDesc:SetText(W.Colorize(L["BWV2_RAID_TEXT_ONLY_DESC"], C.GRAY))
+
+        local function raidTextDisabled() return not db.buffDropRaidTextOnly or not db.buffDropReminder end
+
+        local bdaRow8Y = bdaRow7Y - 75 + ns.Layout.COLOR_OFFSET
+        W:CreateColorPicker(bdaContent, {
+            label = L["BWV2_RAID_TEXT_COLOR"],
+            db = db,
+            rKey = "buffDropRaidTextR", gKey = "buffDropRaidTextG", bKey = "buffDropRaidTextB",
+            classColorKey = "buffDropRaidTextUseClassColor",
+            x = bdaG:Col(2), y = bdaRow8Y,
+            disableif = raidTextDisabled,
+            onChange = function()
+                if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshRaidTextColor() end
+            end,
+        })
+
+        W:CreateSlider(bdaContent, {
+            label = L["BWV2_RAID_TEXT_FONT_SIZE"],
+            min = 8, max = 32, step = 1,
+            db = db, key = "buffDropRaidTextFontSize",
+            x = bdaG:Col(1), y = bdaRow8Y - ns.Layout.COLOR_OFFSET,
+            width = 180,
+            disableif = raidTextDisabled,
+            onChange = function(val)
+                db.buffDropRaidTextFontSize = val
+                if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshRaidTextColor() end
+            end,
+        })
+
+        local bdaRow9Y = bdaRow8Y - ns.Layout.COLOR_OFFSET - 55
+        local raidFontLabel = bdaContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        raidFontLabel:SetPoint("TOPLEFT", bdaG:Col(2), bdaRow9Y + 14)
+        raidFontLabel:SetText(W.Colorize(L["BWV2_BUFF_DROP_TEXT"], C.BLUE))
+        W:CreateFontPicker(bdaContent, bdaG:Col(2), bdaRow9Y - 10,
+            db.buffDropRaidTextFont or ns.DefaultFontPath(),
+            function(name)
+                db.buffDropRaidTextFont = name
+                if ns.BWV2BuffDropAlert then ns.BWV2BuffDropAlert:RefreshRaidTextColor() end
+            end)
+
+        bdaContent:SetHeight(math.abs(bdaRow9Y) + 55)
         bdaWrap:RecalcHeight()
 
         local threshWrap, threshContent = W:CreateCollapsibleSection(sectionContainer, {

@@ -139,6 +139,7 @@ function ns.InitMouseOptions()
         W:CreateColorPicker(appContent, {
             label = L["MOUSE_COLOR_BACKGROUND"], db = db,
             rKey = "colorR", gKey = "colorG", bKey = "colorB",
+            aKey = "colorA",
             classColorKey = "useClassColor",
             x = G:Col(2), y = G:Row(1) - 10,
             onChange = function(r, g, b)
@@ -191,6 +192,7 @@ function ns.InitMouseOptions()
         W:CreateColorPicker(appContent, {
             label = L["MOUSE_BORDER_COLOR"], db = db,
             rKey = "borderR", gKey = "borderG", bKey = "borderB",
+            aKey = "borderA",
             classColorKey = "borderUseClassColor",
             x = G:Col(2), y = G:Row(4) - 5,
             onChange = refresh,
@@ -245,6 +247,7 @@ function ns.InitMouseOptions()
         local swipeBtn, swipePreview, swipeToggle = W:CreateColorPicker(gcdContent, {
             label = L["MOUSE_COLOR_SWIPE"], db = db,
             rKey = "gcdR", gKey = "gcdG", bKey = "gcdB",
+            aKey = "gcdColorA",
             classColorKey = "gcdUseClassColor",
             x = GG:Col(1), y = GG:Row(2) - 10,
             disableif = gcdDisabled,
@@ -256,6 +259,7 @@ function ns.InitMouseOptions()
         local readyBtn, readyPreview, readyToggle = W:CreateColorPicker(gcdContent, {
             label = L["MOUSE_COLOR_READY"], db = db,
             rKey = "gcdReadyR", gKey = "gcdReadyG", bKey = "gcdReadyB",
+            aKey = "gcdReadyA",
             classColorKey = "gcdReadyUseClassColor",
             x = GG:Col(2), y = GG:Row(2) - 10,
             disableif = gcdDisabled,
@@ -308,6 +312,7 @@ function ns.InitMouseOptions()
         W:CreateColorPicker(gcdContent, {
             label = L["MOUSE_COLOR_CAST_SWIPE"] or "Cast Swipe", db = db,
             rKey = "castSwipeR", gKey = "castSwipeG", bKey = "castSwipeB",
+            aKey = "castSwipeA",
             classColorKey = "castSwipeUseClassColor",
             x = GG:Col(1), y = GG:Row(5) - 10,
             disableif = gcdDisabled,

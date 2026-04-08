@@ -248,6 +248,15 @@ function BWV2:InitSavedVars()
             buffDropAlertInstanceOnly = false,
             buffDropAlertDisableRested = false,
             buffDropTextFontSize = 11,
+            buffDropNoTint = false,
+            buffDropRaidTextOnly = false,
+            buffDropRaidTextPosition = nil,
+            buffDropRaidTextUseClassColor = true,
+            buffDropRaidTextR = 1,
+            buffDropRaidTextG = 0.8,
+            buffDropRaidTextB = 0.35,
+            buffDropRaidTextFont = nil,
+            buffDropRaidTextFontSize = 14,
             raidBuffAlwaysCheck = false,
             classBuffAlwaysCheck = false,
             consumableAlwaysCheck = false,
@@ -326,6 +335,23 @@ function BWV2:InitSavedVars()
     end
     if NaowhQOL.buffWatcherV2.inventoryAlwaysCheck == nil then
         NaowhQOL.buffWatcherV2.inventoryAlwaysCheck = false
+    end
+    if NaowhQOL.buffWatcherV2.buffDropNoTint == nil then
+        NaowhQOL.buffWatcherV2.buffDropNoTint = false
+    end
+    if NaowhQOL.buffWatcherV2.buffDropRaidTextOnly == nil then
+        NaowhQOL.buffWatcherV2.buffDropRaidTextOnly = false
+    end
+    if NaowhQOL.buffWatcherV2.buffDropRaidTextUseClassColor == nil then
+        NaowhQOL.buffWatcherV2.buffDropRaidTextUseClassColor = true
+    end
+    if NaowhQOL.buffWatcherV2.buffDropRaidTextR == nil then
+        NaowhQOL.buffWatcherV2.buffDropRaidTextR = 1
+        NaowhQOL.buffWatcherV2.buffDropRaidTextG = 0.8
+        NaowhQOL.buffWatcherV2.buffDropRaidTextB = 0.35
+    end
+    if NaowhQOL.buffWatcherV2.buffDropRaidTextFontSize == nil then
+        NaowhQOL.buffWatcherV2.buffDropRaidTextFontSize = 14
     end
     if NaowhQOL.buffWatcherV2.buffDropIconSize == nil then
         NaowhQOL.buffWatcherV2.buffDropIconSize = 32

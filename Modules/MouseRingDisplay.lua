@@ -199,7 +199,7 @@ UpdateRender = function()
             if meleeOut and db.meleeRecolorBorder ~= false then
                 br, bg, bb = 1, 0, 0
             end
-            borderRing:SetVertexColor(br, bg, bb, 1)
+            borderRing:SetVertexColor(br, bg, bb, db.borderA or 1)
             borderRing:SetAlpha(alpha)
             borderRing:Show()
         else
@@ -215,7 +215,7 @@ UpdateRender = function()
             if db.meleeRecolor and state.isOutOfMelee then
                 r, g, b = 1, 0, 0
             end
-            ring:SetVertexColor(r, g, b, 1)
+            ring:SetVertexColor(r, g, b, db.colorA or 1)
             ring:SetAlpha(alpha)
             ring:Show()
         end
@@ -230,7 +230,7 @@ UpdateRender = function()
             gcdSweepState.startTime = state.castStart
             gcdSweepState.duration  = state.castEnd - state.castStart
             gcdSweepState.modRate   = 1
-            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha * (db.castSwipeA or 1)
             gcdSweepState.active = true
             wantSweep = true
         elseif db.gcdEnabled and db.castSwipeEnabled and state.isChanneling and state.channelStart > 0 and state.castSwipeAllowed then
@@ -238,7 +238,7 @@ UpdateRender = function()
             gcdSweepState.startTime = state.channelStart
             gcdSweepState.duration  = state.channelEnd - state.channelStart
             gcdSweepState.modRate   = 1
-            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha * (db.castSwipeA or 1)
             gcdSweepState.active = true
             wantSweep = true
         elseif db.gcdEnabled and not state.gcdReady and state.gcdInfo and state.gcdSwipeAllowed then
@@ -246,7 +246,7 @@ UpdateRender = function()
             gcdSweepState.startTime = state.gcdInfo.startTime
             gcdSweepState.duration  = state.gcdInfo.duration
             gcdSweepState.modRate   = state.gcdInfo.modRate or 1
-            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha
+            gcdSweepState.r, gcdSweepState.g, gcdSweepState.b, gcdSweepState.a = r, g, b, swipeAlpha * (db.gcdColorA or 1)
             gcdSweepState.active = true
             wantSweep = true
         end
@@ -276,7 +276,8 @@ UpdateRender = function()
             if db.meleeRecolor and state.isOutOfMelee and db.meleeRecolorRing then
                 readyR, readyG, readyB = 1, 0, 0
             end
-            readyRing:SetVertexColor(readyR, readyG, readyB, 1)
+            local readyA = db.gcdReadyMatchSwipe and (db.gcdColorA or 1) or (db.gcdReadyA or 1)
+            readyRing:SetVertexColor(readyR, readyG, readyB, readyA)
             readyRing:SetAlpha(alpha)
             readyRing:Show()
         else
@@ -929,7 +930,7 @@ end
 function MouseRingDisplay:UpdateColor(r, g, b)
     local db = GetDB()
     db.colorR, db.colorG, db.colorB = r, g, b
-    if ring then ring:SetVertexColor(r, g, b, 1) end
+    if ring then ring:SetVertexColor(r, g, b, db.colorA or 1) end
 end
 
 function MouseRingDisplay:UpdateShape(shape)
