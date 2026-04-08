@@ -159,7 +159,6 @@ end
 
 local loader = CreateFrame("Frame", "NaowhQOL_CombatLogger")
 loader:RegisterEvent("PLAYER_LOGIN")
-loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 loader:RegisterEvent("CHALLENGE_MODE_START")
 
 loader:SetScript("OnEvent", function(self, event)
@@ -174,11 +173,6 @@ loader:SetScript("OnEvent", function(self, event)
         return
     end
 
-    if event == "PLAYER_ENTERING_WORLD" then
-        isLogging = LoggingCombat()
-        return
-    end
-
     if event == "PLAYER_LOGIN" then
         if not NaowhQOL.combatLogger then
             NaowhQOL.combatLogger = { enabled = true, instances = {} }
@@ -186,8 +180,6 @@ loader:SetScript("OnEvent", function(self, event)
         local db = NaowhQOL.combatLogger
         if db.enabled == nil then db.enabled = true end
         db.instances = db.instances or {}
-
-        isLogging = LoggingCombat()
 
         if db.enabled then
             CheckAdvancedLogging()
