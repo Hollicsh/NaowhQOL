@@ -43,25 +43,25 @@ function Scanner:GetPlayerBuffs()
     return buffs
 end
 
-local textureCache = {}
+local spellTextureCache = {}
+local itemIconCache = {}
+local enchantIconCache = {}
 
 local function GetCachedSpellTexture(spellID)
     if not spellID then return nil end
-    local key = "spell_" .. spellID
-    if not textureCache[key] then
-        textureCache[key] = C_Spell.GetSpellTexture(spellID)
+    if not spellTextureCache[spellID] then
+        spellTextureCache[spellID] = C_Spell.GetSpellTexture(spellID)
     end
-    return textureCache[key]
+    return spellTextureCache[spellID]
 end
 
 local function GetCachedItemIcon(itemID)
     if not itemID then return nil end
-    local key = "item_" .. itemID
-    if not textureCache[key] then
+    if not itemIconCache[itemID] then
         local _, _, _, _, _, _, _, _, _, icon = C_Item.GetItemInfo(itemID)
-        textureCache[key] = icon
+        itemIconCache[itemID] = icon
     end
-    return textureCache[key]
+    return itemIconCache[itemID]
 end
 
 local function GetSpellIcon(spellID)
@@ -75,9 +75,8 @@ end
 
 local function GetCachedEnchantIcon(enchantID)
     if not enchantID then return 463543 end
-    local key = "enchant_" .. enchantID
-    if textureCache[key] ~= nil then
-        return textureCache[key]
+    if enchantIconCache[enchantID] ~= nil then
+        return enchantIconCache[enchantID]
     end
     local icon = 463543
     local map = Categories and Categories.ENCHANT_ICON_MAP
@@ -87,7 +86,7 @@ local function GetCachedEnchantIcon(enchantID)
     else
         icon = GetSpellIcon(enchantID) or 463543
     end
-    textureCache[key] = icon
+    enchantIconCache[enchantID] = icon
     return icon
 end
 

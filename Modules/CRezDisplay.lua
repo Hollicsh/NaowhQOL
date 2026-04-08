@@ -94,16 +94,16 @@ local function UpdateRezDisplay()
     end
 end
 
-rezFrame:SetScript("OnUpdate", function(self, elapsed)
+local function RezOnUpdate(self, elapsed)
     rezUpdateElapsed = rezUpdateElapsed + elapsed
     if rezUpdateElapsed < REZ_UPDATE_INTERVAL then return end
     rezUpdateElapsed = 0
     UpdateRezDisplay()
-end)
+end
 
 function rezFrame:Refresh()
     local db = NaowhQOL.cRez
-    if not db then self:Hide() return end
+    if not db then self:SetScript("OnUpdate", nil) self:Hide() return end
 
     self:EnableMouse(db.unlock)
     ns.DisplayUtils.SetFrameUnlocked(self, db.unlock, L["CREZ_UNLOCK_LABEL"] or "Rez Timer")
@@ -119,8 +119,11 @@ function rezFrame:Refresh()
 
     if ShouldShowRezTimer() then
         self:Show()
+        rezUpdateElapsed = 0
+        self:SetScript("OnUpdate", RezOnUpdate)
         UpdateRezDisplay()
     else
+        self:SetScript("OnUpdate", nil)
         self:Hide()
     end
 end

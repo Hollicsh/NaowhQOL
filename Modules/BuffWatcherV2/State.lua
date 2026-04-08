@@ -34,6 +34,11 @@ BWV2.dismissedAlerts = {}
 BWV2.classBuffSelfCache = {}
 BWV2.classBuffInstanceIDs = {}
 
+local classAlertKeyCache = {}
+
+local raidAlertUnits = {}
+local raidAlertUnitClasses = {}
+
 function BWV2:SetDirty()
     self.dirty = true
 end
@@ -822,12 +827,14 @@ end
 function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, currentAlertKeys)
     if not isRestricted and not ns.DisplayUtils.CanReadGroupAuras() then return end
 
-    local units = {}
+    local unitCount = 0
     local inRaid = IsInRaid()
     local groupSize = GetNumGroupMembers()
     if groupSize == 0 then
         local _, playerClass = UnitClass("player")
-        units[1] = { unit = "player", class = playerClass }
+        unitCount = 1
+        raidAlertUnits[1] = "player"
+        raidAlertUnitClasses[1] = playerClass
     else
         for i = 1, groupSize do
             local unit
@@ -838,12 +845,14 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
             end
             if UnitExists(unit) and not UnitIsDeadOrGhost(unit) and UnitIsConnected(unit) and UnitIsVisible(unit) then
                 local _, unitClass = UnitClass(unit)
-                units[#units + 1] = { unit = unit, class = unitClass }
+                unitCount = unitCount + 1
+                raidAlertUnits[unitCount] = unit
+                raidAlertUnitClasses[unitCount] = unitClass
             end
         end
     end
 
-    if #units == 0 then return end
+    if unitCount == 0 then return end
 
     for _, buff in ipairs(Categories.RAID) do
         local primaryID = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
@@ -865,9 +874,8 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
                 if isRestricted then
                     local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
                     if #safeIDs == 0 then
-                        local alertKey = "raidAlways_" .. buff.key
-                        if self.activeAlerts[alertKey] then
-                            currentAlertKeys[alertKey] = true
+                        if self.activeAlerts[buff.alertKey] then
+                            currentAlertKeys[buff.alertKey] = true
                         end
                         canCheck = false
                     else
@@ -878,12 +886,12 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
                 if canCheck then
                     local covered = 0
                     local total = 0
-                    for _, unitData in ipairs(units) do
-                        if Categories:UnitBenefitsFromBuff(buff.key, unitData.class, nil) then
+                    for ui = 1, unitCount do
+                        if Categories:UnitBenefitsFromBuff(buff.key, raidAlertUnitClasses[ui], nil) then
                             total = total + 1
                             local hasBuff = false
                             for _, spellID in ipairs(idsToQuery) do
-                                local aura = C_UnitAuras.GetUnitAuraBySpellID(unitData.unit, spellID)
+                                local aura = C_UnitAuras.GetUnitAuraBySpellID(raidAlertUnits[ui], spellID)
                                 if aura then
                                     local expTime = aura.expirationTime
                                     if IsSecret(expTime) then
@@ -898,12 +906,11 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
                         end
                     end
 
-                    local alertKey = "raidAlways_" .. buff.key
                     if covered < total then
                         local icon = C_Spell.GetSpellTexture(primaryID)
-                        if not self.activeAlerts[alertKey] then
-                            self.activeAlerts[alertKey] = {
-                                key = alertKey,
+                        if not self.activeAlerts[buff.alertKey] then
+                            self.activeAlerts[buff.alertKey] = {
+                                key = buff.alertKey,
                                 name = buff.name,
                                 spellIDs = spellIDs,
                                 icon = icon,
@@ -913,10 +920,10 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
                                 isGroupCoverage = true,
                             }
                         else
-                            self.activeAlerts[alertKey].covered = covered
-                            self.activeAlerts[alertKey].total = total
+                            self.activeAlerts[buff.alertKey].covered = covered
+                            self.activeAlerts[buff.alertKey].total = total
                         end
-                        currentAlertKeys[alertKey] = true
+                        currentAlertKeys[buff.alertKey] = true
                     end
                 end
             end
@@ -1154,7 +1161,11 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                 exclusiveGroupPassed[group.exclusiveGroup] = true
             end
 
-            local alertKey = "classAlways_" .. group.key
+            local alertKey = classAlertKeyCache[group.key]
+            if not alertKey then
+                alertKey = "classAlways_" .. group.key
+                classAlertKeyCache[group.key] = alertKey
+            end
             if not hasBuff then
                 self.activeAlerts[alertKey] = {
                     key = alertKey,
@@ -1275,10 +1286,9 @@ function BWV2:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKey
                     end
                 end
 
-                local alertKey = "consumableAlways_" .. buff.key
                 if not hasBuff then
-                    self.activeAlerts[alertKey] = {
-                        key = alertKey,
+                    self.activeAlerts[buff.alertKey] = {
+                        key = buff.alertKey,
                         name = buff.name,
                         icon = icon or buff.fallbackIcon,
                         category = "consumable",
@@ -1287,7 +1297,7 @@ function BWV2:RefreshConsumableAlerts(db, Categories, threshold, currentAlertKey
                         expiryTime = foundExpiry,
                         checkType = buff.checkType,
                     }
-                    currentAlertKeys[alertKey] = true
+                    currentAlertKeys[buff.alertKey] = true
                 end
             end
         end
@@ -1312,7 +1322,7 @@ function BWV2:RefreshInventoryAlerts(db, Categories, currentAlertKeys)
                     itemIDs[#itemIDs + 1] = itemID
                 end
             end
-            local alertKey = "inventoryAlways_" .. group.key
+            local alertKey = group.alertKey
             if #itemIDs > 0 and Categories:GetInventoryItemCount(itemIDs) == 0 then
                 local _, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemIDs[1])
                 self.activeAlerts[alertKey] = {

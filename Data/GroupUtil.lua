@@ -91,15 +91,11 @@ local function RefreshVisible()
 end
 
 function ns.GroupUtil.GetGroupClasses()
-    local copy = {}
-    for k, v in pairs(cachedClasses) do copy[k] = v end
-    return copy
+    return cachedClasses
 end
 
 function ns.GroupUtil.GetGroupClassesVisible()
-    local copy = {}
-    for k, v in pairs(cachedVisibleClasses) do copy[k] = v end
-    return copy
+    return cachedVisibleClasses
 end
 
 function ns.GroupUtil.HasClass(classFile)

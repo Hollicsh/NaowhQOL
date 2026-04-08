@@ -6,13 +6,13 @@ ns.BWV2Categories = Categories
 local BWV2 = ns.BWV2
 
 Categories.RAID = {
-    { spellID = {1459, 432778}, key = "intellect", name = "Arcane Intellect", class = "MAGE" },
-    { spellID = 6673, key = "attackPower", name = "Battle Shout", class = "WARRIOR" },
-    { spellID = {1126, 432661}, key = "versatility", name = "Mark of the Wild", class = "DRUID" },
-    { spellID = 21562, key = "stamina", name = "Power Word: Fortitude", class = "PRIEST" },
-    { spellID = 462854, key = "skyfury", name = "Skyfury", class = "SHAMAN" },
+    { spellID = {1459, 432778}, key = "intellect", name = "Arcane Intellect", class = "MAGE", alertKey = "raidAlways_intellect" },
+    { spellID = 6673, key = "attackPower", name = "Battle Shout", class = "WARRIOR", alertKey = "raidAlways_attackPower" },
+    { spellID = {1126, 432661}, key = "versatility", name = "Mark of the Wild", class = "DRUID", alertKey = "raidAlways_versatility" },
+    { spellID = 21562, key = "stamina", name = "Power Word: Fortitude", class = "PRIEST", alertKey = "raidAlways_stamina" },
+    { spellID = 462854, key = "skyfury", name = "Skyfury", class = "SHAMAN", alertKey = "raidAlways_skyfury" },
     { spellID = {381732, 381741, 381746, 381748, 381749, 381750, 381751, 381752, 381753, 381754, 381756, 381757, 381758},
-      key = "bronze", name = "Blessing of the Bronze", class = "EVOKER" },
+      key = "bronze", name = "Blessing of the Bronze", class = "EVOKER", alertKey = "raidAlways_bronze" },
 }
 
 Categories.BUFF_BENEFICIARIES = {
@@ -303,6 +303,7 @@ Categories.DEFAULT_CLASS_BUFFS = {
 Categories.CONSUMABLE_GROUPS = {
     {
         key = "flask",
+        alertKey = "consumableAlways_flask",
         name = "Flask",
         exclusive = true,
         spellIDs = {
@@ -322,6 +323,7 @@ Categories.CONSUMABLE_GROUPS = {
     },
     {
         key = "food",
+        alertKey = "consumableAlways_food",
         name = "Food",
         exclusive = true,
         checkType = "icon",
@@ -331,6 +333,7 @@ Categories.CONSUMABLE_GROUPS = {
     },
     {
         key = "rune",
+        alertKey = "consumableAlways_rune",
         name = "Augment Rune",
         exclusive = true,
         spellIDs = {
@@ -345,6 +348,7 @@ Categories.CONSUMABLE_GROUPS = {
     },
     {
         key = "weaponBuff",
+        alertKey = "consumableAlways_weaponBuff",
         name = "Weapon Buff",
         exclusive = true,
         checkType = "weaponEnchant",
@@ -363,30 +367,35 @@ Categories.CONSUMABLE_GROUPS = {
 Categories.INVENTORY_GROUPS = {
     {
         key = "dpsPotion",
+        alertKey = "inventoryAlways_dpsPotion",
         name = "DPS Potion",
         itemIDs = {241308},
         fallbackIcon = 7548911,
     },
     {
         key = "healthPotion",
+        alertKey = "inventoryAlways_healthPotion",
         name = "Health Potion",
         itemIDs = {241305},
         fallbackIcon = 7548909,
     },
     {
         key = "healthstone",
+        alertKey = "inventoryAlways_healthstone",
         name = "Healthstone",
         itemIDs = {5512, 224464},
         requireClass = "WARLOCK",
     },
     {
         key = "gatewayControl",
+        alertKey = "inventoryAlways_gatewayControl",
         name = "Gateway Control Shard",
         itemIDs = {188152},
         requireClass = "WARLOCK",
     },
     {
         key = "manaBun",
+        alertKey = "inventoryAlways_manaBun",
         name = "Mana Bun",
         itemIDs = {113509},
     },

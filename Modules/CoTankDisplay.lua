@@ -3,6 +3,7 @@ local L = ns.L
 local W = ns.Widgets
 
 local currentOtherTank = nil
+local currentOtherTankClass = nil
 local isPlayerTank = false
 
 local frame = CreateFrame("Button", "NaowhQOL_CoTankFrame", UIParent, "SecureUnitButtonTemplate, BackdropTemplate")
@@ -85,9 +86,8 @@ local function UpdateHealth()
     healthBar:SetValue(UnitHealth(currentOtherTank))
 
     if db.useClassColor then
-        local _, class = UnitClass(currentOtherTank)
-        if class then
-            local color = RAID_CLASS_COLORS[class]
+        if currentOtherTankClass then
+            local color = RAID_CLASS_COLORS[currentOtherTankClass]
             if color then
                 healthBar:SetStatusBarColor(color.r, color.g, color.b)
             end
@@ -105,9 +105,8 @@ local function UpdateHealth()
             nameText:SetText(name)
             nameText:SetFont(ns.Media.ResolveFont(db.font), db.nameFontSize or 12, "OUTLINE")
             if db.nameColorUseClassColor then
-                local _, class = UnitClass(currentOtherTank)
-                if class then
-                    local color = RAID_CLASS_COLORS[class]
+                if currentOtherTankClass then
+                    local color = RAID_CLASS_COLORS[currentOtherTankClass]
                     if color then
                         nameText:SetTextColor(color.r, color.g, color.b)
                     end
@@ -217,6 +216,12 @@ eventFrame:SetScript("OnEvent", ns.PerfMonitor:Wrap("CoTank", function(self, eve
        or event == "ROLE_CHANGED_INFORM" or event == "PLAYER_ENTERING_WORLD" then
         isPlayerTank = IsPlayerTankSpec()
         currentOtherTank = FindOtherTank()
+        if currentOtherTank then
+            local _, cls = UnitClass(currentOtherTank)
+            currentOtherTankClass = cls
+        else
+            currentOtherTankClass = nil
+        end
         UpdateDisplay()
         return
     end
@@ -229,6 +234,12 @@ eventFrame:SetScript("OnEvent", ns.PerfMonitor:Wrap("CoTank", function(self, eve
 
     if event == "PLAYER_REGEN_ENABLED" then
         currentOtherTank = FindOtherTank()
+        if currentOtherTank then
+            local _, cls = UnitClass(currentOtherTank)
+            currentOtherTankClass = cls
+        else
+            currentOtherTankClass = nil
+        end
         frame:SetAttribute("unit", currentOtherTank)
         UpdateDisplay()
         return
@@ -239,14 +250,19 @@ local updateFrame = CreateFrame("Frame")
 local updateElapsed = 0
 local UPDATE_INTERVAL = 0.1
 
-updateFrame:SetScript("OnUpdate", function(self, elapsed)
-    if not frame:IsShown() then return end
-
+local function CoTankOnUpdate(self, elapsed)
     updateElapsed = updateElapsed + elapsed
     if updateElapsed < UPDATE_INTERVAL then return end
     updateElapsed = 0
-
     UpdateHealth()
+end
+
+frame:HookScript("OnShow", function()
+    updateElapsed = 0
+    updateFrame:SetScript("OnUpdate", CoTankOnUpdate)
+end)
+frame:HookScript("OnHide", function()
+    updateFrame:SetScript("OnUpdate", nil)
 end)
 
 ns.CoTankDisplay = frame
