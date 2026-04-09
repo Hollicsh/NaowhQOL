@@ -277,8 +277,7 @@ UpdateRender = function()
                 readyR, readyG, readyB = 1, 0, 0
             end
             local readyA = db.gcdReadyMatchSwipe and (db.gcdColorA or 1) or (db.gcdReadyA or 1)
-            readyRing:SetVertexColor(readyR, readyG, readyB, readyA)
-            readyRing:SetAlpha(alpha)
+            readyRing:SetVertexColor(readyR, readyG, readyB, readyA * alpha)
             readyRing:Show()
         else
             readyRing:Hide()

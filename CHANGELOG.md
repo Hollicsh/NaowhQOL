@@ -1,5 +1,8 @@
 # Changelog
-## [20260408.03]
+## [20260409.01]
+
+### Fixed
+- **Alpha Coloring on Ready Color**- Mouse ring alpha coloring was still the old RGB despite having the RGBA color picker, updated so ready ring now matches RGBA of both its own color or if set to match swipe color
 
 ### Performance
 - **CRez Timer**: The timer update loop now only runs while the rez timer is actually visible, reducing background CPU usage when the feature is not in use. 
