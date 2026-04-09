@@ -76,6 +76,7 @@ local pendingCdmShow = false
 local pendingCdmHide = false
 local pendingBcmShow = false
 local pendingBcmHide = false
+local isCasting = false
 
 local function IsEnabled()
     return NaowhQOL.dragonriding and NaowhQOL.dragonriding.enabled
@@ -514,6 +515,13 @@ local OnUpdate = ns.PerfMonitor:Wrap("Dragonriding", function(self, dt)
         return
     end
 
+    if isCasting then
+        mainFrame:SetAlpha(0)
+        mainFrame:Hide()
+        if speedTextFrame then speedTextFrame:Hide() end
+        return
+    end
+
     local charges, maxCharges, startTime, duration, isThrill, isGroundSkim = GetVigorInfo()
 
     if Get("hideWhenGroundedFull") and not IsGliding() and charges >= maxCharges then
@@ -810,6 +818,8 @@ eventFrame:RegisterEvent("PLAYER_LOGOUT")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
+eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "player")
 
 eventFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
@@ -872,6 +882,16 @@ eventFrame:SetScript("OnEvent", function(self, event)
                 end
             end)
         end
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_START" then
+        isCasting = true
+        return
+    end
+
+    if event == "UNIT_SPELLCAST_STOP" then
+        isCasting = false
         return
     end
 

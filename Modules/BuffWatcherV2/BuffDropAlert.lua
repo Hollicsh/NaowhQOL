@@ -325,9 +325,17 @@ function BuffDropAlert:SyncFromState()
     for key, data in pairs(newKeys) do
         local cell = self.activeCells[key]
         if cell then
-            if data.isGroupCoverage and cell.durationText and data.covered ~= nil and data.total ~= nil then
-                cell.durationText:SetText(data.covered .. "/" .. data.total)
-                cell.durationText:Show()
+            if data.isGroupCoverage then
+                if cell.durationText and data.covered ~= nil and data.total ~= nil then
+                    cell.durationText:SetText(data.covered .. "/" .. data.total)
+                    cell.durationText:Show()
+                end
+                cell.icon:SetDesaturated(false)
+                if db.buffDropNoTint then
+                    cell.icon:SetVertexColor(1, 1, 1)
+                else
+                    cell.icon:SetVertexColor(1, 0.4, 0.3, 0.7)
+                end
             elseif not data.isGroupCoverage then
                 if data.expiryTime then
                     cell.icon:SetDesaturated(false)
@@ -356,7 +364,11 @@ function BuffDropAlert:SyncFromState()
 
             if data.isGroupCoverage then
                 cell.icon:SetDesaturated(false)
-                cell.icon:SetVertexColor(1, 0.75, 0.25)
+                if db.buffDropNoTint then
+                    cell.icon:SetVertexColor(1, 1, 1)
+                else
+                    cell.icon:SetVertexColor(1, 0.4, 0.3, 0.7)
+                end
             elseif data.expiryTime then
                 cell.icon:SetDesaturated(false)
                 cell.icon:SetVertexColor(1, 1, 1)
