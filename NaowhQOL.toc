@@ -24,7 +24,6 @@ Libs/LibSharedMedia-3.0/lib.xml
 Libs/LibRangeCheck-3.0/LibRangeCheck-3.0.lua
 Libs/LibCustomGlow-1.0/LibCustomGlow-1.0.lua
 Libs/AceDB-3.0/AceDB-3.0.xml
-Libs/LibEditModeDrawer/LibEditModeDrawer.lua
 Version.lua
 Core.lua
 Core/Localization.lua
@@ -114,4 +113,3 @@ Config/General.lua
 Config/Modules.lua
 Config/ImportExport.lua
 Config/SlashCommands.lua
-Modules/EditModeDrawer.lua
