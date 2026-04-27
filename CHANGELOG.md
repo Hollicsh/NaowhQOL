@@ -1,5 +1,6 @@
 # Changelog
-## [20260409.03]
+## [20260427.01]
 
 ### Fixed
-- **PR Fel Guard triggering Pet Missing** - fixed mistype in FELGUARD naming to properly detect felguard is summoned when client is in prBR locale
+- **Pet Tracker error in combat/dungeons** - fixed a Lua error that occurred when checking your pet's type while in a dungeon or combat, caused by the game protecting certain string values from being read by addons
+### TOC version bump

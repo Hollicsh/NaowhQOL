@@ -1,4 +1,4 @@
-## Interface: 120001, 120000, 110207
+## Interface: 120005
 ## Title: |cff0091edNaowh|r|cffffa300QOL|r
 ## Notes: Quality of Life improvements
 ## Notes-ruRU: Высокопроизводительный аддон для World of Warcraft, улучшающий качество игры и ориентированный на оптимизацию и стабильность

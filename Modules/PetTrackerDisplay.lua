@@ -2,6 +2,10 @@ local addonName, ns = ...
 local L = ns.L
 local W = ns.Widgets
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
 local isMounted = false
 local isInVehicle = false
 local isDead = false
@@ -125,7 +129,7 @@ local function IsWrongPet()
     if cls == "WARLOCK" and specIdx == DEMONOLOGY_SPEC then
         if ns.IsPlayerSpell(FELGUARD_SPELL) then
             local petFamily = UnitCreatureFamily("pet")
-            if petFamily then
+            if petFamily and not IsSecret(petFamily) then
                 local lowerFamily = petFamily:lower()
 
                 local locale = GetLocale()
