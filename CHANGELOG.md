@@ -1,5 +1,5 @@
 # Changelog
-## [20260427.02]
+## [20260427.01]
 
 ### Removed
 - **LibEditModeDrawer** - removed the library and its integration module as the library is no longer maintained/available upstream
