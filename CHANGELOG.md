@@ -1,9 +1,9 @@
 # Changelog
-## [20260427.01]
+## [20260429.01]
 
-### Removed
-- **LibEditModeDrawer** - removed the library and its integration module as the library is no longer maintained/available upstream
+### Added
+- **Co-Tank Frame - Anchor to any frame** - you can now type any frame name in the new Anchor section to attach the Co-Tank frame to it (e.g. `PlayerFrame`, `TargetFrame`, or any custom frame). Dragging the frame will reset it back to the screen. X and Y offset sliders let you fine-tune the position without needing to drag.
 
 ### Fixed
-- **Pet Tracker error in combat/dungeons** - fixed a Lua error that occurred when checking your pet's type while in a dungeon or combat, caused by the game protecting certain string values from being read by addons
-### TOC version bump
+- **Dragonriding - Hide CDM resource bar while mounted** - updated to use ACDM's new `resourceBars`/`resourceUnifiedHosts` tables since `Ayije_CDM_ResourcesContainer` was removed from ACDM
+

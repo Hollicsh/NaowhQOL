@@ -921,6 +921,12 @@ ns:RegisterLocale("enUS", {
     COTANK_NAME_COLOR = "Name Color",
     COTANK_PREVIEW_NAME = "TankName",
 
+    COTANK_SECTION_ANCHOR = "ANCHOR",
+    COTANK_ANCHOR_FRAME = "Anchor Frame",
+    COTANK_ANCHOR_FRAME_HINT = "Type any frame name (e.g. PlayerFrame). Dragging the frame resets this to UIParent.",
+    COTANK_OFFSET_X = "X Offset",
+    COTANK_OFFSET_Y = "Y Offset",
+
     EQUIPMENTREMINDER_ENABLE               = "Enable Equipment Reminder",
     EQUIPMENTREMINDER_SECTION_TRIGGERS     = "TRIGGERS",
     EQUIPMENTREMINDER_TRIGGER_DESC         = "Choose when to show the equipment reminder",

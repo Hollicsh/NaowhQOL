@@ -139,10 +139,13 @@ local function UpdateDisplay()
         frame:SetSize(db.width or 150, db.height or 20)
     end
 
-    if not frame.posInitialized then
+    if not frame.posInitialized or frame.lastAnchorFrame ~= (db.anchorFrame or "UIParent") then
+        local anchorFrameName = db.anchorFrame or "UIParent"
+        local anchorParent = (_G[anchorFrameName] and type(_G[anchorFrameName]) == "table" and _G[anchorFrameName].GetObjectType) and _G[anchorFrameName] or UIParent
         frame:ClearAllPoints()
-        frame:SetPoint(db.point or "CENTER", UIParent, db.point or "CENTER", db.x or 200, db.y or 0)
+        frame:SetPoint(db.point or "CENTER", anchorParent, db.point or "CENTER", db.x or 200, db.y or 0)
         frame.posInitialized = true
+        frame.lastAnchorFrame = anchorFrameName
     end
 
     healthBg:SetAlpha(db.bgAlpha or 0.6)
@@ -158,6 +161,8 @@ local function UpdateDisplay()
             healthBar:SetValue(75)
             healthBar:SetMinMaxValues(0, 100)
             healthBar:SetStatusBarColor(0, 0.8, 0.2)
+            if frame.unlockLabel then frame.unlockLabel:Hide() end
+            frame:SetBackdrop(nil)
             if db.showName then
                 local previewName = L["COTANK_PREVIEW_NAME"] or "TankName"
                 if db.nameFormat == "abbreviated" and db.nameLength then
@@ -201,7 +206,13 @@ eventFrame:SetScript("OnEvent", ns.PerfMonitor:Wrap("CoTank", function(self, eve
         local db = NaowhQOL.coTank
         if not db then return end
 
-        W.MakeDraggable(frame, { db = db })
+        W.MakeDraggable(frame, {
+            db = db,
+            onDragStop = function()
+                db.anchorFrame = "UIParent"
+                frame.lastAnchorFrame = "UIParent"
+            end,
+        })
 
         isPlayerTank = IsPlayerTankSpec()
         UpdateDisplay()
@@ -254,6 +265,8 @@ local function CoTankOnUpdate(self, elapsed)
     updateElapsed = updateElapsed + elapsed
     if updateElapsed < UPDATE_INTERVAL then return end
     updateElapsed = 0
+    local db = NaowhQOL.coTank
+    if db and db.unlock and not currentOtherTank then return end
     UpdateHealth()
 end
 

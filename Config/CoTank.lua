@@ -177,7 +177,68 @@ function ns:InitCoTank()
         nameContent:SetHeight(NG:Height(4))
         nameWrap:RecalcHeight()
 
-        local allSections = { healthWrap, nameWrap }
+        local anchorWrap, anchorContent = W:CreateCollapsibleSection(settingsContainer, {
+            text = L["COTANK_SECTION_ANCHOR"] or "ANCHOR",
+            startOpen = false,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+        })
+
+        local AA = ns.Layout:New(2)
+
+        W:CreateTextInput(anchorContent, {
+            label = L["COTANK_ANCHOR_FRAME"] or "Anchor Frame",
+            db = db, key = "anchorFrame",
+            default = "UIParent",
+            x = AA:Col(1), y = -10,
+            width = 180,
+            maxLetters = 64,
+            onChange = function(val)
+                db.anchorFrame = (val == "" and "UIParent" or val)
+                local display = ns.CoTankDisplay
+                if display then
+                    display.lastAnchorFrame = nil
+                    display.posInitialized = false
+                end
+                refreshDisplay()
+            end,
+        })
+
+        local anchorHint = anchorContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        anchorHint:SetPoint("TOPLEFT", anchorContent, "TOPLEFT", AA:Col(1), -46)
+        anchorHint:SetText(W.Colorize(L["COTANK_ANCHOR_FRAME_HINT"] or "Type any frame name (e.g. PlayerFrame). Dragging the frame resets this to UIParent.", ns.COLORS.GRAY))
+        anchorHint:SetWidth(460)
+        anchorHint:SetJustifyH("LEFT")
+
+        W:CreateSlider(anchorContent, {
+            label = L["COTANK_OFFSET_X"] or "X Offset",
+            min = -2000, max = 2000, step = 1,
+            x = AA:Col(1), y = -90,
+            db = db, key = "x",
+            onChange = function(val)
+                db.x = val
+                local display = ns.CoTankDisplay
+                if display then display.posInitialized = false end
+                refreshDisplay()
+            end
+        })
+
+        W:CreateSlider(anchorContent, {
+            label = L["COTANK_OFFSET_Y"] or "Y Offset",
+            min = -2000, max = 2000, step = 1,
+            x = AA:Col(2), y = -90,
+            db = db, key = "y",
+            onChange = function(val)
+                db.y = val
+                local display = ns.CoTankDisplay
+                if display then display.posInitialized = false end
+                refreshDisplay()
+            end
+        })
+
+        anchorContent:SetHeight(AA:Height(2) + 55)
+        anchorWrap:RecalcHeight()
+
+        local allSections = { healthWrap, nameWrap, anchorWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(allSections) do

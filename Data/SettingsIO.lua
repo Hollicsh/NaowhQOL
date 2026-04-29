@@ -212,7 +212,7 @@ local TYPE_SCHEMAS = {
     },
     coTank = {
         enabled = "boolean", unlock = "boolean", font = "string",
-        point = "string", x = "number", y = "number",
+        point = "string", x = "number", y = "number", anchorFrame = "string",
         width = "number", height = "number",
         healthColorR = "number", healthColorG = "number", healthColorB = "number",
         useClassColor = "boolean", bgAlpha = "number",

@@ -260,7 +260,7 @@ local PET_TRACKER_DEFAULTS = {
 
 local CO_TANK_DEFAULTS = {
     enabled = false, unlock = false, font = NAOWH_FONT,
-    point = "CENTER", x = 200, y = 0,
+    point = "CENTER", x = 200, y = 0, anchorFrame = "UIParent",
     width = 150, height = 20,
     healthColorR = 0, healthColorG = 0.8, healthColorB = 0.2,
     useClassColor = true,

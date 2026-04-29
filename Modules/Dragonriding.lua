@@ -458,7 +458,19 @@ end
 
 local function SetResourceBarAlpha(alpha)
     if C_AddOns.IsAddOnLoaded("Ayije_CDM") then
-        if Ayije_CDM_ResourcesContainer then Ayije_CDM_ResourcesContainer:SetAlpha(alpha) end
+        local cdm = _G["Ayije_CDM"]
+        if cdm then
+            if cdm.resourceBars then
+                for _, bar in pairs(cdm.resourceBars) do
+                    if bar then bar:SetAlpha(alpha) end
+                end
+            end
+            if cdm.resourceUnifiedHosts then
+                for _, entry in pairs(cdm.resourceUnifiedHosts) do
+                    if entry and entry.host then entry.host:SetAlpha(alpha) end
+                end
+            end
+        end
     elseif C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
         if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(alpha) end
         if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(alpha) end
