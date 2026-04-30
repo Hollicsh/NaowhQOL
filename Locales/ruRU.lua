@@ -921,6 +921,12 @@ ns:RegisterLocale("ruRU", {
     COTANK_NAME_COLOR = "Цвет имени",
     COTANK_PREVIEW_NAME = "ИмяТанка",
 
+	COTANK_SECTION_ANCHOR = "КРЕПЛЕНИЕ",
+    COTANK_ANCHOR_FRAME = "Фрейм крепления",
+    COTANK_ANCHOR_FRAME_HINT = "Введите любое имя фрейма (например, PlayerFrame). Перетаскивание фрейма сбрасывает его до значения UIParent.",
+    COTANK_OFFSET_X = "Смещение по оси X",
+    COTANK_OFFSET_Y = "Смещение по оси Y",
+
     EQUIPMENTREMINDER_ENABLE               = "Включить напоминание об экипировке",
     EQUIPMENTREMINDER_SECTION_TRIGGERS     = "ТРИГГЕРЫ",
     EQUIPMENTREMINDER_TRIGGER_DESC         = "Выберите, когда показывать напоминание об экипировке",
