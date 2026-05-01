@@ -88,7 +88,8 @@ function rangeFrame:UpdateDisplay()
     end
 
     local fontPath = ns.Media.ResolveFont(db.rangeFont)
-    local fontSize = math.max(10, math.min(72, math.floor(rangeFrame:GetHeight() * 0.55)))
+    local frameH = rangeFrame.isResizing and rangeFrame:GetHeight() or (db.rangeHeight or 40)
+    local fontSize = math.max(10, math.min(72, math.floor(frameH * 0.55)))
     local ok = rangeLabel:SetFont(fontPath, fontSize, "OUTLINE")
     if not ok then
         rangeLabel:SetFont(ns.DefaultFontPath(), fontSize, "OUTLINE")
@@ -184,7 +185,9 @@ loader:SetScript("OnEvent", function(self, event)
         })
 
         rangeFrame.initialized = false
-        rangeFrame:UpdateDisplay()
+        C_Timer.After(0, function()
+            rangeFrame:UpdateDisplay()
+        end)
 
         ns.SettingsIO:RegisterRefresh("rangeCheck", function()
             rangeFrame:UpdateDisplay()
