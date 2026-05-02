@@ -38,6 +38,10 @@ function ns.ZoneUtil.IsInInstance()
     return currentZone.instanceType ~= "none"
 end
 
+function ns.ZoneUtil.IsInDungeonOrRaid()
+    return currentZone.instanceType == "party" or currentZone.instanceType == "raid"
+end
+
 function ns.ZoneUtil.IsInMythicPlus()
     return currentZone.instanceType == "party" and currentZone.difficulty == 8
 end

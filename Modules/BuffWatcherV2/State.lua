@@ -680,7 +680,7 @@ end
 function BWV2:ShouldSuppressAlerts()
     local db = self:GetDB()
     if ns.ZoneUtil.IsInPvP() then return true end
-    if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInInstance() then return true end
+    if db.buffDropAlertInstanceOnly and not ns.ZoneUtil.IsInDungeonOrRaid() then return true end
     if db.buffDropAlertDisableRested and IsResting() then return true end
     return false
 end

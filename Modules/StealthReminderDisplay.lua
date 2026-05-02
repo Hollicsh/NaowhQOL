@@ -323,7 +323,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Stealth/Stance", function(self,
         inCombat = UnitAffectingCombat("player")
         currentFormIndex = GetShapeshiftForm()
         isResting = IsResting()
-        inInstance = ns.ZoneUtil and ns.ZoneUtil.IsInInstance() or false
+        inInstance = ns.ZoneUtil and ns.ZoneUtil.IsInDungeonOrRaid() or false
 
         db.width = db.width or 200
         db.height = db.height or 40
