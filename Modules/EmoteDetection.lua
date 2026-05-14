@@ -136,6 +136,7 @@ local inInstance = false
 
 local lastEmoteTime = 0
 local autoEmoteLookup = {}
+local pendingAutoEmote = nil
 
 local function RebuildAutoEmoteLookup()
     wipe(autoEmoteLookup)
@@ -145,6 +146,38 @@ local function RebuildAutoEmoteLookup()
         if entry.enabled ~= false and entry.spellId and entry.emoteText then
             autoEmoteLookup[entry.spellId] = entry.emoteText
         end
+    end
+end
+
+local function CombatBlocksAutoEmoteChat()
+    return UnitAffectingCombat("player") or InCombatLockdown()
+end
+
+local function FlushPendingAutoEmote(isRetry)
+    if not pendingAutoEmote then return end
+    local db = NaowhQOL.emoteDetection
+    if not db or not db.autoEmoteEnabled then
+        pendingAutoEmote = nil
+        return
+    end
+    if not inInstance or (ns.ZoneUtil and ns.ZoneUtil.IsInMythicPlus()) then
+        pendingAutoEmote = nil
+        return
+    end
+    if CombatBlocksAutoEmoteChat() then
+        if not isRetry then
+            C_Timer.After(0.05, function() FlushPendingAutoEmote(true) end)
+        end
+        return
+    end
+
+    local emoteText = pendingAutoEmote
+    pendingAutoEmote = nil
+    local ok = pcall(function()
+        C_ChatInfo.SendChatMessage(emoteText, "EMOTE")
+    end)
+    if ok then
+        lastEmoteTime = GetTime()
     end
 end
 
@@ -161,10 +194,16 @@ local function OnPlayerCastStart(spellId)
 
     local emoteText = autoEmoteLookup[spellId]
     if emoteText then
-        pcall(function()
+        if CombatBlocksAutoEmoteChat() then
+            pendingAutoEmote = emoteText
+            return
+        end
+        local ok = pcall(function()
             C_ChatInfo.SendChatMessage(emoteText, "EMOTE")
         end)
-        lastEmoteTime = now
+        if ok then
+            lastEmoteTime = now
+        end
     end
 end
 
@@ -228,6 +267,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Emote Detection", function(self
 
     if event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
+        C_Timer.After(0, FlushPendingAutoEmote)
         return
     end
 

@@ -837,7 +837,7 @@ function gatewayFrame:UpdateDisplay()
     UpdateEventRegistration()
 end
 
-local function HideMovementDisplay()
+local function HideMovementDisplay(restartBuffAuraPolling)
     local db = NaowhQOL.movementAlert
     if db and not db.unlock then
         movementFrame:Hide()
@@ -852,6 +852,21 @@ local function HideMovementDisplay()
     end
     activeSlotCount = 0
     CancelMovementCountdown()
+    if restartBuffAuraPolling and db and db.enabled then
+        local pollMs = math.max(50, db.pollRate or 100)
+        movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
+    end
+end
+
+local function MovementShouldPollBuffAuras()
+    local db = NaowhQOL.movementAlert
+    if not db or db.unlock then return false end
+    for _, entry in ipairs(cachedMovementSpells) do
+        if entry.checkType == "buffActive" then
+            return inCombat or InCombatLockdown()
+        end
+    end
+    return false
 end
 
 local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
@@ -1094,7 +1109,7 @@ CheckMovementCooldown = function()
         movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
     else
         activeSlotCount = 0
-        HideMovementDisplay()
+        HideMovementDisplay(MovementShouldPollBuffAuras())
     end
 end
 

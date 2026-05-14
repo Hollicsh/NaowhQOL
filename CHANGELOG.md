@@ -1,7 +1,6 @@
 # Changelog
-## [20260501.01]
+## [20260514.01]
 
 ### Bug Fixes
-  - Range Check: Fixed font reverting to NaowhAsia.ttf on first login by deferring display initialization until all PLAYER_LOGIN handlers (including LSM font registrations) have completed
-  - Range Check: Fixed font size reverting to default on first login by reading from the saved frame height instead of the unlaid-out frame
-  - Buff Watcher / Stealth Reminder: "Dungeons / Raids Only" option no longer activates in Delves (which use scenario instance type); now correctly restricts to party dungeons and raids only
+  - Emote Detection: Spell-based auto emotes no longer try to post while you are in combat (the client blocks that and error addons could flood you with "action blocked" / `SendChatMessage` reports, sometimes shown as a cryptic `UNKNOWN()`). The emote is queued and sent after you leave combat instead.
+  - Movement Cooldown Alert: Buff-based rows (for example Warlock Burning Rush) keep polling briefly while you are in combat even when nothing is shown yet, so the alert can appear reliably if aura updates lag behind spell events in combat.
