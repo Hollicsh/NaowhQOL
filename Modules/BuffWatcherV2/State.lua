@@ -990,31 +990,21 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
             if group.checkType == "self" then
                 local spellIDs = group.spellIDs or {}
                 if isRestricted then
-                    local cached = self:GetCachedClassBuffState(group.key)
-                    if cached ~= nil then
-                        hasBuff = cached
-                    else
-                        local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
-                        if #safeIDs > 0 then
-                            local contentType = self:GetCurrentContentType()
-                            local groupThreshold = (group.thresholds and group.thresholds[contentType]) or threshold
-                            local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
-                            local count = 0
-                            for _, spellID in ipairs(safeIDs) do
-                                local aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-                                if aura then
-                                    local expTime = aura.expirationTime
-                                    if IsSecret(expTime) then
-                                        count = count + 1
-                                    elseif expTime == 0 or (expTime - GetTime()) > groupThreshold then
-                                        count = count + 1
-                                    end
-                                end
+                    local safeIDs = self:GetCombatSafeSpellIDs(spellIDs)
+                    if #safeIDs > 0 then
+                        local contentType = self:GetCurrentContentType()
+                        local groupThreshold = (group.thresholds and group.thresholds[contentType]) or threshold
+                        local needed = (group.minRequired == 0) and #spellIDs or (group.minRequired or 1)
+                        local count = 0
+                        for _, spellID in ipairs(safeIDs) do
+                            local aura = ns.DisplayUtils.GetHelpfulAura("player", spellID)
+                            if aura and ns.DisplayUtils.AuraMeetsThreshold(aura, groupThreshold) then
+                                count = count + 1
                             end
-                            hasBuff = count >= needed
-                        else
-                            hasBuff = true
                         end
+                        hasBuff = count >= needed
+                    else
+                        hasBuff = true
                     end
                 else
                     if not ns.DisplayUtils.CanReadAuras() then
@@ -1068,16 +1058,9 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                             end
                             if UnitExists(unit) then
                                 for _, spellID in ipairs(safeIDs) do
-                                    local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
-                                    if aura then
-                                        if aura.sourceUnit and ns.DisplayUtils.SafeIsPlayer(aura.sourceUnit) then
-                                            local expTime = aura.expirationTime
-                                            if IsSecret(expTime) then
-                                                hasBuff = true
-                                            elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                                hasBuff = true
-                                            end
-                                        end
+                                    if ns.DisplayUtils.UnitHasHelpfulAuraFromPlayer(unit, spellID, threshold) then
+                                        hasBuff = true
+                                        break
                                     end
                                 end
                             end
@@ -1114,14 +1097,9 @@ function BWV2:RefreshClassBuffAlerts(db, playerClass, playerSpecID, threshold, i
                                     end
                                     for _, spellID in ipairs(spellIDs) do
                                         if auraData.spellId == spellID
-                                           and auraData.sourceUnit
-                                           and ns.DisplayUtils.SafeIsPlayer(auraData.sourceUnit) then
-                                            local expTime = auraData.expirationTime
-                                            if IsSecret(expTime) then
-                                                hasBuff = true
-                                            elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                                hasBuff = true
-                                            end
+                                           and ns.DisplayUtils.IsAuraFromPlayer(auraData, unit)
+                                           and ns.DisplayUtils.AuraMeetsThreshold(auraData, threshold) then
+                                            hasBuff = true
                                             break
                                         end
                                     end

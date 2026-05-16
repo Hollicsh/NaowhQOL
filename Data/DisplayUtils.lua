@@ -65,6 +65,65 @@ function ns.DisplayUtils.CanReadGroupAuras()
     return true
 end
 
+local function IsSecret(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
+--- True when aura is from the player (handles missing/secret sourceUnit in instances).
+function ns.DisplayUtils.IsAuraFromPlayer(aura, targetUnit)
+    if not aura then return false end
+    if aura.sourceUnit then
+        return ns.DisplayUtils.SafeIsPlayer(aura.sourceUnit)
+    end
+    if targetUnit == "player" or (targetUnit and ns.DisplayUtils.SafeIsPlayer(targetUnit)) then
+        return true
+    end
+    if targetUnit and UnitExists(targetUnit) and (UnitInParty(targetUnit) or UnitInRaid(targetUnit)) then
+        return true
+    end
+    return false
+end
+
+function ns.DisplayUtils.AuraMeetsThreshold(aura, threshold)
+    if not aura then return false end
+    threshold = threshold or 0
+    local expTime = aura.expirationTime
+    if IsSecret(expTime) then
+        return true
+    end
+    return expTime == 0 or (expTime - GetTime()) > threshold
+end
+
+function ns.DisplayUtils.GetHelpfulAura(unit, spellID)
+    if not unit or not spellID or not UnitExists(unit) then return nil end
+
+    local aura
+    if C_UnitAuras.GetUnitAuraBySpellID then
+        aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellID)
+    end
+    if not aura and unit == "player" then
+        aura = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+    end
+    if not aura and C_UnitAuras.GetAuraDataBySpellName then
+        local info = C_Spell.GetSpellInfo(spellID)
+        if info and info.name then
+            aura = C_UnitAuras.GetAuraDataBySpellName(unit, info.name, "HELPFUL")
+        end
+    end
+    return aura
+end
+
+function ns.DisplayUtils.PlayerHasHelpfulAura(spellID)
+    return ns.DisplayUtils.GetHelpfulAura("player", spellID) ~= nil
+end
+
+function ns.DisplayUtils.UnitHasHelpfulAuraFromPlayer(unit, spellID, threshold)
+    local aura = ns.DisplayUtils.GetHelpfulAura(unit, spellID)
+    if not aura then return false end
+    if not ns.DisplayUtils.IsAuraFromPlayer(aura, unit) then return false end
+    return ns.DisplayUtils.AuraMeetsThreshold(aura, threshold)
+end
+
 local playerGUID
 function ns.DisplayUtils.SafeIsPlayer(unit)
     if not unit then return false end

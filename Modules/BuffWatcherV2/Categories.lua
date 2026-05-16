@@ -234,7 +234,7 @@ Categories.DEFAULT_CLASS_BUFFS = {
             name = "Earth Shield",
             overlayText = "NO\nES",
             checkType = "targeted",
-            spellIDs = {974},
+            spellIDs = {974, 383648},
             specFilter = {},
             minRequired = 1,
             thresholds = { dungeon = 0, raid = 0, other = 0 },
@@ -546,16 +546,10 @@ function Categories:UnitHasBuffFromList(unit, spellIDs, threshold)
     threshold = threshold or 0
 
     for _, spellID in ipairs(spellIDs) do
-        local auraData = C_UnitAuras.GetAuraDataBySpellName(unit, spellID, "HELPFUL")
-        if not auraData then
-            auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
-        end
-
-        if auraData then
+        local auraData = ns.DisplayUtils.GetHelpfulAura(unit, spellID)
+        if auraData and ns.DisplayUtils.AuraMeetsThreshold(auraData, threshold) then
             local remaining = (auraData.expirationTime or 0) - now
-            if auraData.expirationTime == 0 or remaining > threshold then
-                return true, remaining, auraData.sourceUnit
-            end
+            return true, remaining, auraData.sourceUnit
         end
     end
 

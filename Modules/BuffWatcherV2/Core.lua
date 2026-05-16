@@ -96,6 +96,10 @@ local function DoRefresh()
     end
 end
 
+local function MarkGroupAurasDirty()
+    BWV2:SetDirty()
+end
+
 local function StartRefreshTicker()
     StopRefreshTicker()
     local db = BWV2:GetDB()
@@ -113,7 +117,7 @@ local function StartRefreshTicker()
             StopRefreshTicker()
             return
         end
-        if BWV2.dirty then
+        if BWV2.dirty or (BWV2:IsRestricted() and (cdb.raidBuffAlwaysCheck or cdb.classBuffAlwaysCheck)) then
             DoRefresh()
         end
     end)
@@ -291,7 +295,16 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if unit == "player" then
             BWV2:OnClassBuffAuraEvent(updateInfo)
             OnPlayerAuraChanged()
+        elseif unit and (unit:find("^party") or unit:find("^raid")) then
+            local db = BWV2:GetDB()
+            if db and db.enabled and db.buffDropReminder
+                and (db.classBuffAlwaysCheck or db.raidBuffAlwaysCheck) then
+                MarkGroupAurasDirty()
+            end
         end
+
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        MarkGroupAurasDirty()
 
     elseif event == "UNIT_INVENTORY_CHANGED" then
         local unit = ...
@@ -311,6 +324,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 
     elseif event == "PLAYER_REGEN_DISABLED" then
         BWV2:SetCombatState(true)
+        wipe(BWV2.classBuffSelfCache)
         StopTicker()
         if ReportCard and ReportCard:IsShown() then
             ReportCard:Hide()
@@ -318,6 +332,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         if BuffDropAlert then
             BuffDropAlert:DismissNonCombatSafe()
         end
+        DoRefresh()
 
     elseif event == "PLAYER_REGEN_ENABLED" then
         BWV2:SetCombatState(BWV2.inEncounter)
@@ -354,6 +369,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_UNGHOST" or event == "PLAYER_ALIVE" then
         if not UnitIsDead("player") then
             BWV2:SetDeadState(false)
+            wipe(BWV2.classBuffSelfCache)
             C_Timer.After(0.5, function()
                 DoRefresh()
             end)

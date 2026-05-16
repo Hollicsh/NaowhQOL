@@ -3,4 +3,5 @@
 
 ### Bug Fixes
   - Emote Detection: Spell-based auto emotes no longer try to post while you are in combat (the client blocks that and error addons could flood you with "action blocked" / `SendChatMessage` reports, sometimes shown as a cryptic `UNKNOWN()`). The emote is queued and sent after you leave combat instead.
-  - Movement Cooldown Alert: Buff-based rows (for example Warlock Burning Rush) keep polling briefly while you are in combat even when nothing is shown yet, so the alert can appear reliably if aura updates lag behind spell events in combat.
+  - Movement Cooldown Alert: Burning Rush and other buff-active rows now use combat-safe aura lookups (`GetUnitAuraBySpellID` / spell name fallback) and keep polling in combat and Mythic+, so the alert no longer disappears the moment combat starts.
+  - Buff Watcher: Shaman Earth Shield reminder no longer sticks on "NO ES" after wipes or in instances when ES is active — targeted checks accept auras when Blizzard omits `sourceUnit`, both ES spell IDs are matched, and always-on alerts refresh during combat/M+.

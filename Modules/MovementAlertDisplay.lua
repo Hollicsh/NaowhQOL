@@ -858,15 +858,19 @@ local function HideMovementDisplay(restartBuffAuraPolling)
     end
 end
 
-local function MovementShouldPollBuffAuras()
-    local db = NaowhQOL.movementAlert
-    if not db or db.unlock then return false end
+local function MovementHasBuffActiveTracking()
     for _, entry in ipairs(cachedMovementSpells) do
-        if entry.checkType == "buffActive" then
-            return inCombat or InCombatLockdown()
-        end
+        if entry.checkType == "buffActive" then return true end
     end
     return false
+end
+
+local function MovementShouldPollBuffAuras()
+    local db = NaowhQOL.movementAlert
+    if not db or not db.enabled or db.unlock then return false end
+    if not MovementHasBuffActiveTracking() then return false end
+    return inCombat or InCombatLockdown()
+        or (ns.ZoneUtil and ns.ZoneUtil.IsInMythicPlus())
 end
 
 local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
@@ -1062,8 +1066,7 @@ CheckMovementCooldown = function()
 
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.checkType == "buffActive" then
-            local aura = C_UnitAuras.GetPlayerAuraBySpellID(entry.spellId)
-            if aura then
+            if ns.DisplayUtils.PlayerHasHelpfulAura(entry.spellId) then
                 if ShowBuffActiveSlot(count + 1, entry) then
                     count = count + 1
                 end
@@ -1386,6 +1389,10 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
         CheckMovementCooldown()
+        if MovementShouldPollBuffAuras() and not movementCountdownTimer then
+            local pollMs = math.max(50, (NaowhQOL.movementAlert and NaowhQOL.movementAlert.pollRate) or 100)
+            movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
+        end
         CheckGatewayUsable()
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false

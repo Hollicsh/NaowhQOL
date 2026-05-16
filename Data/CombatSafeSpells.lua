@@ -59,6 +59,7 @@ ns.CombatSafeSpells = {
 
     [974] = true,
     [383648] = true,
+    [111400] = true,
     [61295] = true,
 
     [53563] = true,
