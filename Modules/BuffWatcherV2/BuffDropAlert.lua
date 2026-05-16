@@ -53,6 +53,30 @@ local function GetOverlayFontSize()
     return math.max(8, base - 1)
 end
 
+--- WoW errors if SetText runs before a successful SetFont (common with custom LSM fonts).
+local function ApplyFontStringFont(fontString, fontPath, fontSize, flags)
+    if not fontString then return false end
+    flags = flags or "OUTLINE"
+    fontSize = fontSize or 11
+    fontPath = fontPath or ns.DefaultFontPath()
+    if fontString:SetFont(fontPath, fontSize, flags) then
+        return true
+    end
+    fontString:SetFontObject(GameFontNormal)
+    if fontString:GetFont() then
+        return true
+    end
+    return fontString:SetFont("Fonts\\FRIZQT__.TTF", fontSize, flags)
+end
+
+local function SafeSetText(fontString, text, fontPath, fontSize, flags)
+    if not fontString then return end
+    if not fontString:GetFont() then
+        ApplyFontStringFont(fontString, fontPath, fontSize, flags)
+    end
+    fontString:SetText(text or "")
+end
+
 BuffDropAlert.activeCells = {}
 BuffDropAlert.frame = nil
 
@@ -127,14 +151,14 @@ local function AcquireCell(parent)
         cell.icon:ClearAllPoints()
         cell.icon:SetAllPoints()
         if cell.durationText then
-            cell.durationText:SetFont(GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+            ApplyFontStringFont(cell.durationText, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
             cell.durationText:Hide()
-            cell.durationText:SetText("")
+            SafeSetText(cell.durationText, "", GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
         end
         if cell.overlayText then
-            cell.overlayText:SetFont(GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
+            ApplyFontStringFont(cell.overlayText, GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
             cell.overlayText:Hide()
-            cell.overlayText:SetText("")
+            SafeSetText(cell.overlayText, "", GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
         end
         cell:Show()
         return cell
@@ -152,16 +176,16 @@ local function AcquireCell(parent)
     icon:AddMaskTexture(iconMask)
     cell.icon = icon
 
-    local durationText = cell:CreateFontString(nil, "OVERLAY")
-    durationText:SetFont(GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+    local durationText = cell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    ApplyFontStringFont(durationText, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
     durationText:SetPoint("CENTER", icon, "CENTER", 0, 0)
     durationText:SetJustifyH("CENTER")
     durationText:SetShadowOffset(1, -1)
     durationText:Hide()
     cell.durationText = durationText
 
-    local overlayLabel = cell:CreateFontString(nil, "OVERLAY")
-    overlayLabel:SetFont(GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
+    local overlayLabel = cell:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    ApplyFontStringFont(overlayLabel, GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
     overlayLabel:SetPoint("CENTER", icon, "CENTER", 0, 0)
     overlayLabel:SetJustifyH("CENTER")
     overlayLabel:SetShadowOffset(1, -1)
@@ -230,11 +254,11 @@ local function ReleaseCell(cell)
     cell:SetScript("OnUpdate", nil)
     if cell.durationText then
         cell.durationText:Hide()
-        cell.durationText:SetText("")
+        SafeSetText(cell.durationText, "", GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
     end
     if cell.overlayText then
         cell.overlayText:Hide()
-        cell.overlayText:SetText("")
+        SafeSetText(cell.overlayText, "", GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
     end
     table.insert(cellPool, cell)
 end
@@ -327,7 +351,7 @@ function BuffDropAlert:SyncFromState()
         if cell then
             if data.isGroupCoverage then
                 if cell.durationText and data.covered ~= nil and data.total ~= nil then
-                    cell.durationText:SetText(data.covered .. "/" .. data.total)
+                    SafeSetText(cell.durationText, data.covered .. "/" .. data.total, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
                     cell.durationText:Show()
                 end
                 cell.icon:SetDesaturated(false)
@@ -401,13 +425,15 @@ function BuffDropAlert:SyncFromState()
             StartGlow(cell)
 
             if data.overlayText and cell.overlayText then
-                cell.overlayText:SetText(data.overlayText)
+                ApplyFontStringFont(cell.overlayText, GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
+                SafeSetText(cell.overlayText, data.overlayText, GetDurationFontPath(), GetOverlayFontSize(), "OUTLINE")
                 cell.overlayText:Show()
             end
 
             if data.isGroupCoverage and data.covered ~= nil and data.total ~= nil then
                 if cell.durationText then
-                    cell.durationText:SetText(data.covered .. "/" .. data.total)
+                    ApplyFontStringFont(cell.durationText, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+                    SafeSetText(cell.durationText, data.covered .. "/" .. data.total, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
                     cell.durationText:Show()
                 end
             elseif data.expiryTime and data.expiryTime > GetTime() then
@@ -415,7 +441,8 @@ function BuffDropAlert:SyncFromState()
                 cell._expiryAcc = 0
                 local remaining = data.expiryTime - GetTime()
                 if cell.durationText and remaining > 0 then
-                    cell.durationText:SetText(FormatDuration(remaining))
+                    ApplyFontStringFont(cell.durationText, GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
+                    SafeSetText(cell.durationText, FormatDuration(remaining), GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
                     cell.durationText:Show()
                 end
                 cell:SetScript("OnUpdate", function(self, elapsed)
@@ -432,7 +459,7 @@ function BuffDropAlert:SyncFromState()
                         self.icon:SetVertexColor(tr, tg, tb)
                     else
                         if self.durationText then
-                            self.durationText:SetText(FormatDuration(rem))
+                            SafeSetText(self.durationText, FormatDuration(rem), GetDurationFontPath(), GetDurationFontSize(), "OUTLINE")
                             self.durationText:Show()
                         end
                     end
@@ -506,18 +533,18 @@ function BuffDropAlert:RefreshTextFont()
     local overlaySize = GetOverlayFontSize()
     for _, cell in pairs(self.activeCells) do
         if cell.durationText then
-            cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
+            ApplyFontStringFont(cell.durationText, fontPath, fontSize, "OUTLINE")
         end
         if cell.overlayText then
-            cell.overlayText:SetFont(fontPath, overlaySize, "OUTLINE")
+            ApplyFontStringFont(cell.overlayText, fontPath, overlaySize, "OUTLINE")
         end
     end
     for _, cell in ipairs(cellPool) do
         if cell.durationText then
-            cell.durationText:SetFont(fontPath, fontSize, "OUTLINE")
+            ApplyFontStringFont(cell.durationText, fontPath, fontSize, "OUTLINE")
         end
         if cell.overlayText then
-            cell.overlayText:SetFont(fontPath, overlaySize, "OUTLINE")
+            ApplyFontStringFont(cell.overlayText, fontPath, overlaySize, "OUTLINE")
         end
     end
 end
@@ -779,8 +806,9 @@ function BuffDropAlert:SyncRaidTextFrame()
     end
 
     for i = #names + 1, #raidTextLabels do
-        raidTextLabels[i]:Hide()
-        raidTextLabels[i]:SetText("")
+        if raidTextLabels[i] then
+            raidTextLabels[i]:Hide()
+        end
     end
 
     if #names == 0 and not self._previewMode then
@@ -798,11 +826,11 @@ function BuffDropAlert:SyncRaidTextFrame()
     for i, name in ipairs(names) do
         local label = raidTextLabels[i]
         if not label then
-            label = parent:CreateFontString(nil, "OVERLAY")
+            label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             raidTextLabels[i] = label
         end
-        label:SetFont(fontPath, fontSize, "OUTLINE")
-        label:SetText(name)
+        ApplyFontStringFont(label, fontPath, fontSize, "OUTLINE")
+        SafeSetText(label, name, fontPath, fontSize, "OUTLINE")
         label:SetShadowOffset(1, -1)
         label:SetTextColor(tr, tg, tb)
         label:ClearAllPoints()
