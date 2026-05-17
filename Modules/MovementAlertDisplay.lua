@@ -44,6 +44,10 @@ local BUFF_ACTIVE_SPELLS = {
     [111400] = "Burning Rush Active!",
 }
 
+--- Burning Rush Reminder pattern: track auraInstanceID from UNIT_AURA payloads (works in combat).
+local buffActiveState = {}
+local expectingBuffAura = {}
+
 local SPELL_ALIAS_GROUPS = {
     {102401, 16979, 102417, 252216},
     {106898, 77761},
@@ -505,6 +509,7 @@ local function CacheMovementSpells(fullReset)
         wipe(spellWasCast)
         wipe(spellCastTime)
         wipe(chargeRechargeStart)
+        ClearBuffActiveTracking()
         cacheResetTime = GetTime()
     end
 
@@ -626,6 +631,109 @@ local function StartRechargeTimer(entry, delay)
         end
         if CheckMovementCooldown then CheckMovementCooldown() end
     end)
+end
+
+local function BuffActiveKey(entry)
+    return entry.spellId
+end
+
+local function IsBuffActiveTrackedSpell(castSpellId)
+    if BUFF_ACTIVE_SPELLS[castSpellId] then return castSpellId end
+    local mapped = trackedSpellSet[castSpellId]
+    if mapped and BUFF_ACTIVE_SPELLS[mapped] then return mapped end
+    return nil
+end
+
+local function SetBuffActiveState(spellId, active, instanceID)
+    buffActiveState[spellId] = { active = active, instanceID = instanceID }
+end
+
+local function ClearBuffActiveTracking()
+    wipe(buffActiveState)
+    wipe(expectingBuffAura)
+end
+
+local function IsBuffActiveDisplayed(entry)
+    local key = BuffActiveKey(entry)
+    local state = buffActiveState[key]
+    if state and state.active then return true end
+    if not inCombat and not InCombatLockdown() then
+        return ns.DisplayUtils.PlayerHasHelpfulAura(entry.spellId)
+    end
+    return false
+end
+
+local function SyncBuffActiveOnCombatStart()
+    for _, entry in ipairs(cachedMovementSpells) do
+        if entry.checkType == "buffActive" then
+            local key = BuffActiveKey(entry)
+            local aura = C_UnitAuras.GetPlayerAuraBySpellID(key)
+            if aura and aura.auraInstanceID then
+                SetBuffActiveState(key, true, aura.auraInstanceID)
+            end
+        end
+    end
+end
+
+local function OnBuffActiveSpellCast(castSpellId)
+    local key = IsBuffActiveTrackedSpell(castSpellId)
+    if not key then return end
+    local state = buffActiveState[key]
+    if state and state.active then
+        expectingBuffAura[key] = nil
+    else
+        expectingBuffAura[key] = true
+    end
+end
+
+local function OnPlayerBuffActiveAuraUpdate(updateInfo)
+    if not updateInfo then return end
+
+    if updateInfo.removedAuraInstanceIDs then
+        for _, entry in ipairs(cachedMovementSpells) do
+            if entry.checkType == "buffActive" then
+                local key = BuffActiveKey(entry)
+                local state = buffActiveState[key]
+                if state and state.instanceID then
+                    for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
+                        if instanceID == state.instanceID then
+                            SetBuffActiveState(key, false, nil)
+                            expectingBuffAura[key] = nil
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if updateInfo.addedAuras then
+        for _, entry in ipairs(cachedMovementSpells) do
+            if entry.checkType == "buffActive" then
+                local key = BuffActiveKey(entry)
+                if expectingBuffAura[key] then
+                    for _, aura in ipairs(updateInfo.addedAuras) do
+                        local matches = false
+                        if aura.spellId and not IsSecret(aura.spellId) then
+                            matches = (aura.spellId == key)
+                        else
+                            matches = true
+                        end
+                        if matches and aura.auraInstanceID then
+                            SetBuffActiveState(key, true, aura.auraInstanceID)
+                            expectingBuffAura[key] = nil
+                            break
+                        end
+                    end
+                end
+                for _, aura in ipairs(updateInfo.addedAuras) do
+                    if aura.spellId and not IsSecret(aura.spellId) and aura.spellId == key and aura.auraInstanceID then
+                        SetBuffActiveState(key, true, aura.auraInstanceID)
+                    end
+                end
+            end
+        end
+    end
 end
 
 local function OnTrackedSpellCast(spellId)
@@ -883,9 +991,20 @@ local function MovementHasBuffActiveTracking()
     return false
 end
 
+local function MovementHasActiveBuffActive()
+    for _, entry in ipairs(cachedMovementSpells) do
+        if entry.checkType == "buffActive" then
+            local state = buffActiveState[BuffActiveKey(entry)]
+            if state and state.active then return true end
+        end
+    end
+    return false
+end
+
 local function MovementShouldPollBuffAuras()
     local db = NaowhQOL.movementAlert
     if not db or not db.enabled or db.unlock then return false end
+    if MovementHasActiveBuffActive() then return true end
     if not MovementHasBuffActiveTracking() then return false end
     return inCombat or InCombatLockdown()
 end
@@ -1083,7 +1202,7 @@ CheckMovementCooldown = function()
 
     for _, entry in ipairs(cachedMovementSpells) do
         if entry.checkType == "buffActive" then
-            if ns.DisplayUtils.PlayerHasHelpfulAura(entry.spellId) then
+            if IsBuffActiveDisplayed(entry) then
                 if ShowBuffActiveSlot(count + 1, entry) then
                     count = count + 1
                 end
@@ -1236,6 +1355,7 @@ loader:RegisterEvent("PLAYER_REGEN_ENABLED")
 loader:RegisterEvent("PLAYER_LOGOUT")
 loader:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 loader:RegisterEvent("PLAYER_ENTERING_WORLD")
+loader:RegisterEvent("PLAYER_DEAD")
 
 local movementEventsRegistered = false
 local timeSpiralEventsRegistered = false
@@ -1407,10 +1527,14 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     elseif event == "PLAYER_ENTERING_WORLD" then
         inCombat = UnitAffectingCombat("player")
         CacheMovementSpells(true)
+        if inCombat then
+            SyncBuffActiveOnCombatStart()
+        end
         CheckMovementCooldown()
         CheckGatewayUsable()
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
+        SyncBuffActiveOnCombatStart()
         CheckMovementCooldown()
         if MovementShouldPollBuffAuras() and not movementCountdownTimer then
             local pollMs = math.max(50, (NaowhQOL.movementAlert and NaowhQOL.movementAlert.pollRate) or 100)
@@ -1437,11 +1561,24 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         CacheMovementSpells()
         CheckMovementCooldown()
         CheckGatewayUsable()
-    elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" or event == "UNIT_AURA" then
+    elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" then
         UpdateCachedCharges()
         CheckMovementCooldown()
+    elseif event == "UNIT_AURA" then
+        local unit, updateInfo = ...
+        if unit == "player" then
+            OnPlayerBuffActiveAuraUpdate(updateInfo)
+        end
+        UpdateCachedCharges()
+        CheckMovementCooldown()
+    elseif event == "PLAYER_DEAD" then
+        ClearBuffActiveTracking()
+        CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local _, _, spellId = ...
+        local unit, _, spellId = ...
+        if unit == "player" then
+            OnBuffActiveSpellCast(spellId)
+        end
         for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
             if spellId == mod.trigger and ns.IsPlayerSpell(mod.talent) then
                 for _, entry in ipairs(cachedMovementSpells) do
