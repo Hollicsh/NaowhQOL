@@ -40,11 +40,9 @@ local MOVEMENT_ABILITIES = {
     WARRIOR = {[71] = {6544}, [72] = {6544}, [73] = {6544}},
 }
 
---- Toggle movement spells (e.g. Burning Rush): track on cast, not aura (aura APIs fail in combat).
-local CAST_TOGGLE_SPELLS = {
+local BUFF_ACTIVE_SPELLS = {
     [111400] = "Burning Rush Active!",
 }
-local castToggleActive = {}
 
 local SPELL_ALIAS_GROUPS = {
     {102401, 16979, 102417, 252216},
@@ -109,7 +107,7 @@ local function RebuildMobilitySpellLookup()
         for key, value in pairs(classData) do
             if type(key) == "number" and type(value) == "table" then
                 for _, spellId in ipairs(value) do
-                    if not CAST_TOGGLE_SPELLS[spellId] then
+                    if not BUFF_ACTIVE_SPELLS[spellId] then
                         allMobilitySpells[spellId] = true
                     end
                 end
@@ -119,7 +117,7 @@ local function RebuildMobilitySpellLookup()
     local db = NaowhQOL and NaowhQOL.movementAlert
     if db and db.spellOverrides then
         for spellId, override in pairs(db.spellOverrides) do
-            if override.enabled ~= false and not CAST_TOGGLE_SPELLS[spellId] then
+            if override.enabled ~= false and not BUFF_ACTIVE_SPELLS[spellId] then
                 allMobilitySpells[spellId] = true
             end
         end
@@ -330,11 +328,25 @@ local function SafeGetBaseDuration(spellId)
     return 0
 end
 
+local function ResolvePlayerSpecId()
+    local spec = GetSpecialization()
+    if not spec then return nil end
+    local specId = select(1, GetSpecializationInfo(spec))
+    if specId and specId > 0 then return specId end
+    local numSpecs = GetNumSpecializations and GetNumSpecializations() or 0
+    for i = 1, numSpecs do
+        if i == spec then
+            local id = select(1, GetSpecializationInfo(i))
+            if id and id > 0 then return id end
+        end
+    end
+    return nil
+end
+
 local function GetPlayerMovementSpells()
     local class = select(2, UnitClass("player"))
-    local spec = GetSpecialization()
-    if not spec then return {} end
-    local specId = select(1, GetSpecializationInfo(spec))
+    local specId = ResolvePlayerSpecId()
+    if not specId then return {} end
 
     local db = NaowhQOL and NaowhQOL.movementAlert
     local overrides = db and db.spellOverrides or {}
@@ -389,15 +401,14 @@ local function GetPlayerMovementSpells()
                             rechDur = GetEffectiveChargeDuration(displayId, rechDur)
                         end
                         if spellInfo then
-                            local defaultCustom = CAST_TOGGLE_SPELLS[displayId] or CAST_TOGGLE_SPELLS[spellId]
+                            local defaultCustom = BUFF_ACTIVE_SPELLS[displayId] or BUFF_ACTIVE_SPELLS[spellId]
                             if defaultCustom then
                                 table.insert(result, {
                                     spellId = displayId,
-                                    baseSpellId = baseId,
                                     spellName = spellInfo.name,
                                     spellIcon = spellInfo.iconID,
                                     customText = override and override.customText ~= "" and override.customText or defaultCustom,
-                                    checkType = "castToggle",
+                                    checkType = "buffActive",
                                 })
                             else
                             local rawBaseDur = SafeGetBaseDuration(displayId)
@@ -488,19 +499,22 @@ end
 
 local function CacheMovementSpells(fullReset)
     local class = select(2, UnitClass("player"))
-    local spec = GetSpecialization()
-    local specId = spec and select(1, GetSpecializationInfo(spec)) or nil
+    local specId = ResolvePlayerSpecId()
 
     if fullReset then
         wipe(spellWasCast)
         wipe(spellCastTime)
         wipe(chargeRechargeStart)
-        wipe(castToggleActive)
         cacheResetTime = GetTime()
     end
 
     local prevSpells = cachedMovementSpells
-    cachedMovementSpells = GetPlayerMovementSpells()
+    local newSpells = GetPlayerMovementSpells()
+    if #newSpells == 0 and prevSpells and #prevSpells > 0 and not specId then
+        cachedMovementSpells = prevSpells
+    else
+        cachedMovementSpells = newSpells
+    end
 
     if not fullReset and prevSpells and #prevSpells > 0 then
         for _, newEntry in ipairs(cachedMovementSpells) do
@@ -585,9 +599,6 @@ local function CacheMovementSpells(fullReset)
     end
 
     UpdateCachedCharges()
-    if fullReset and not inCombat and not InCombatLockdown() then
-        SyncCastToggleFromAuras()
-    end
 end
 
 local function CancelAllRechargeTimers()
@@ -615,41 +626,6 @@ local function StartRechargeTimer(entry, delay)
         end
         if CheckMovementCooldown then CheckMovementCooldown() end
     end)
-end
-
-local function CastToggleKey(entry)
-    return entry.baseSpellId or entry.spellId
-end
-
-local function CastToggleMatchesSpell(entry, castSpellId)
-    if not castSpellId or not entry or entry.checkType ~= "castToggle" then return false end
-    local key = CastToggleKey(entry)
-    if castSpellId == entry.spellId or castSpellId == key then return true end
-    local mapped = trackedSpellSet[castSpellId]
-    return mapped == entry.spellId or mapped == key
-end
-
-local function SyncCastToggleFromAuras()
-    if inCombat or InCombatLockdown() then return end
-    for _, entry in ipairs(cachedMovementSpells) do
-        if entry.checkType == "castToggle" then
-            local key = CastToggleKey(entry)
-            local hasAura = ns.DisplayUtils.PlayerHasHelpfulAura(entry.spellId)
-                or (entry.baseSpellId and ns.DisplayUtils.PlayerHasHelpfulAura(entry.baseSpellId))
-            castToggleActive[key] = hasAura and true or false
-        end
-    end
-end
-
-local function OnCastToggleSpell(castSpellId)
-    for _, entry in ipairs(cachedMovementSpells) do
-        if CastToggleMatchesSpell(entry, castSpellId) then
-            local key = CastToggleKey(entry)
-            castToggleActive[key] = not castToggleActive[key]
-            return true
-        end
-    end
-    return false
 end
 
 local function OnTrackedSpellCast(spellId)
@@ -900,19 +876,18 @@ local function HideMovementDisplay(restartBuffAuraPolling)
     end
 end
 
-local function MovementHasActiveCastToggle()
+local function MovementHasBuffActiveTracking()
     for _, entry in ipairs(cachedMovementSpells) do
-        if entry.checkType == "castToggle" and castToggleActive[CastToggleKey(entry)] then
-            return true
-        end
+        if entry.checkType == "buffActive" then return true end
     end
     return false
 end
 
-local function MovementShouldPollCastToggle()
+local function MovementShouldPollBuffAuras()
     local db = NaowhQOL.movementAlert
     if not db or not db.enabled or db.unlock then return false end
-    return MovementHasActiveCastToggle()
+    if not MovementHasBuffActiveTracking() then return false end
+    return inCombat or InCombatLockdown()
 end
 
 local function ShowMovementSlot(index, cdInfo, spellEntry, duration)
@@ -1107,11 +1082,8 @@ CheckMovementCooldown = function()
     local count = 0
 
     for _, entry in ipairs(cachedMovementSpells) do
-        if entry.checkType == "castToggle" then
-            local key = CastToggleKey(entry)
-            if UnitIsDeadOrGhost("player") then
-                castToggleActive[key] = false
-            elseif castToggleActive[key] then
+        if entry.checkType == "buffActive" then
+            if ns.DisplayUtils.PlayerHasHelpfulAura(entry.spellId) then
                 if ShowBuffActiveSlot(count + 1, entry) then
                     count = count + 1
                 end
@@ -1157,7 +1129,7 @@ CheckMovementCooldown = function()
         movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
     else
         activeSlotCount = 0
-        HideMovementDisplay(MovementShouldPollCastToggle())
+        HideMovementDisplay(MovementShouldPollBuffAuras())
     end
 end
 
@@ -1394,6 +1366,12 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         C_Timer.After(0.2, function()
             UpdateEventRegistration()
         end)
+        C_Timer.After(0.5, function()
+            if ResolvePlayerSpecId() then
+                CacheMovementSpells(true)
+                CheckMovementCooldown()
+            end
+        end)
 
         ns.SettingsIO:RegisterRefresh("movementAlert", function()
             RebuildMobilitySpellLookup()
@@ -1434,7 +1412,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
         CheckMovementCooldown()
-        if MovementShouldPollCastToggle() and not movementCountdownTimer then
+        if MovementShouldPollBuffAuras() and not movementCountdownTimer then
             local pollMs = math.max(50, (NaowhQOL.movementAlert and NaowhQOL.movementAlert.pollRate) or 100)
             movementCountdownTimer = C_Timer.NewTimer(pollMs / 1000, CheckMovementCooldown)
         end
@@ -1457,19 +1435,13 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
             end
         end
         CacheMovementSpells()
-        if not InCombatLockdown() then
-            SyncCastToggleFromAuras()
-        end
         CheckMovementCooldown()
         CheckGatewayUsable()
     elseif event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_USABLE" or event == "SPELL_UPDATE_CHARGES" or event == "UNIT_AURA" then
         UpdateCachedCharges()
         CheckMovementCooldown()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local unit, _, spellId = ...
-        if unit == "player" and OnCastToggleSpell(spellId) then
-            CheckMovementCooldown()
-        end
+        local _, _, spellId = ...
         for _, mod in ipairs(TALENT_CD_REDUCTIONS) do
             if spellId == mod.trigger and ns.IsPlayerSpell(mod.talent) then
                 for _, entry in ipairs(cachedMovementSpells) do
@@ -1541,7 +1513,6 @@ ns.MovementAlertDisplay = movementFrame
 ns.TimeSpiralDisplay = timeSpiralFrame
 ns.GatewayShardDisplay = gatewayFrame
 ns.MOVEMENT_ABILITIES = MOVEMENT_ABILITIES
-ns.CAST_TOGGLE_SPELLS = CAST_TOGGLE_SPELLS
-ns.BUFF_ACTIVE_SPELLS = CAST_TOGGLE_SPELLS
+ns.BUFF_ACTIVE_SPELLS = BUFF_ACTIVE_SPELLS
 ns.RebuildMobilitySpellLookup = RebuildMobilitySpellLookup
 ns.CacheMovementSpells = CacheMovementSpells
