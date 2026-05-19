@@ -794,7 +794,7 @@ function BWV2:RefreshAlerts()
     local currentAlertKeys = {}
 
     if db.raidBuffAlwaysCheck then
-        self:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, currentAlertKeys)
+        self:RefreshRaidBuffAlerts(Categories, isRestricted, currentAlertKeys)
     end
 
     if db.classBuffAlwaysCheck then
@@ -824,7 +824,7 @@ function BWV2:RefreshAlerts()
     self.dirty = false
 end
 
-function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, currentAlertKeys)
+function BWV2:RefreshRaidBuffAlerts(Categories, isRestricted, currentAlertKeys)
     if not isRestricted and not ns.DisplayUtils.CanReadGroupAuras() then return end
 
     local unitCount = 0
@@ -891,14 +891,8 @@ function BWV2:RefreshRaidBuffAlerts(Categories, threshold, isRestricted, current
                             total = total + 1
                             local hasBuff = false
                             for _, spellID in ipairs(idsToQuery) do
-                                local aura = C_UnitAuras.GetUnitAuraBySpellID(raidAlertUnits[ui], spellID)
-                                if aura then
-                                    local expTime = aura.expirationTime
-                                    if IsSecret(expTime) then
-                                        hasBuff = true
-                                    elseif expTime == 0 or (expTime - GetTime()) > threshold then
-                                        hasBuff = true
-                                    end
+                                if C_UnitAuras.GetUnitAuraBySpellID(raidAlertUnits[ui], spellID) then
+                                    hasBuff = true
                                     break
                                 end
                             end

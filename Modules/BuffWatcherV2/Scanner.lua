@@ -157,7 +157,6 @@ end
 
 function Scanner:ScanRaidBuffs()
     local missing = {}
-    local threshold = BWV2:GetThreshold()
 
     wipe(BWV2.scanResults.raidBuffs)
 
@@ -181,11 +180,8 @@ function Scanner:ScanRaidBuffs()
 
                     for _, spellID in ipairs(spellIDs) do
                         if data.buffs[spellID] then
-                            local remaining = (data.buffs[spellID].expiry or 0) - GetTime()
-                            if data.buffs[spellID].expiry == 0 or remaining > threshold then
-                                covered = covered + 1
-                                break
-                            end
+                            covered = covered + 1
+                            break
                         end
                     end
                 end
