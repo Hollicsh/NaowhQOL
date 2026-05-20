@@ -59,14 +59,16 @@ local function ApplyFontStringFont(fontString, fontPath, fontSize, flags)
     flags = flags or "OUTLINE"
     fontSize = fontSize or 11
     fontPath = fontPath or ns.DefaultFontPath()
-    if fontString:SetFont(fontPath, fontSize, flags) then
+    local ok, applied = pcall(fontString.SetFont, fontString, fontPath, fontSize, flags)
+    if ok and applied then
         return true
     end
     fontString:SetFontObject(GameFontNormal)
     if fontString:GetFont() then
         return true
     end
-    return fontString:SetFont("Fonts\\FRIZQT__.TTF", fontSize, flags)
+    ok, applied = pcall(fontString.SetFont, fontString, "Fonts\\FRIZQT__.TTF", fontSize, flags)
+    return ok and applied
 end
 
 local function SafeSetText(fontString, text, fontPath, fontSize, flags)
@@ -771,7 +773,7 @@ end
 
 local function GetRaidTextFontPath()
     local db = BWV2:GetDB()
-    if db.buffDropRaidTextFont then return db.buffDropRaidTextFont end
+    if db.buffDropRaidTextFont then return ns.Media.ResolveFont(db.buffDropRaidTextFont) end
     return BWV2:GetBuffDropFont()
 end
 

@@ -1,7 +1,6 @@
 # Changelog
-## [20260519.01]
+## [20260520.01]
 
-### Changes
+### Fixes
 **Buffwatcher**
-- Scanner:ScanRaidBuffs() — Ready-check / report card scans treat a raid buff as present if any eligible member has the aura, regardless of remaining time. Duration thresholds still apply to consumables and class buffs.
-- RefreshRaidBuffAlerts() — “Always Monitor My Raid Buffs” uses the same rule: alert only when the buff is missing on a covered player/party/raid member, not when it’s low duration.
+- Buff Drop Alert text now handles missing or unavailable fonts safely, preventing Lua errors after updates while keeping the alert readable with a fallback font.
