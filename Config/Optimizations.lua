@@ -152,6 +152,21 @@ local OPTIMAL_FPS_CVARS = {
         category = "detail",
     },
 
+    { cvar = "RAIDsettingsEnabled", optimal = "1", name = "Separate Raid Settings", desc = "Enabled", category = "raid" },
+    { cvar = "raidGraphicsShadowQuality", optimal = "0", name = "Raid Shadow Quality", desc = "Low", category = "raid" },
+    { cvar = "raidGraphicsLiquidDetail", optimal = "0", name = "Raid Liquid Detail", desc = "Low", category = "raid" },
+    { cvar = "raidGraphicsParticleDensity", optimal = "3", name = "Raid Particle Density", desc = "Good", category = "raid" },
+    { cvar = "raidGraphicsSSAO", optimal = "0", name = "Raid SSAO", desc = "Disabled", category = "raid" },
+    { cvar = "raidGraphicsDepthEffects", optimal = "0", name = "Raid Depth Effects", desc = "Disabled", category = "raid" },
+    { cvar = "raidGraphicsComputeEffects", optimal = "0", name = "Raid Compute Effects", desc = "Disabled", category = "raid" },
+    { cvar = "raidGraphicsOutlineMode", optimal = "2", name = "Raid Outline Mode", desc = "High", category = "raid" },
+    { cvar = "raidGraphicsTextureResolution", optimal = "2", name = "Raid Texture Resolution", desc = "High", category = "raid" },
+    { cvar = "raidGraphicsSpellDensity", optimal = "0", name = "Raid Spell Density", desc = "Essential", category = "raid" },
+    { cvar = "raidGraphicsProjectedTextures", optimal = "1", name = "Raid Projected Textures", desc = "Enabled", category = "raid" },
+    { cvar = "raidGraphicsViewDistance", optimal = "0", name = "Raid View Distance", desc = "Level 1", category = "raid" },
+    { cvar = "raidGraphicsEnvironmentDetail", optimal = "0", name = "Raid Environment Detail", desc = "Level 1", category = "raid" },
+    { cvar = "raidGraphicsGroundClutter", optimal = "0", name = "Raid Ground Clutter", desc = "Level 1", category = "raid" },
+
     {
         cvar = "GxMaxFrameLatency",
         optimal = "2",
@@ -202,6 +217,20 @@ local OPTIMAL_FPS_CVARS = {
     },
 
     {
+        cvar = "useMaxFPS",
+        optimal = "1",
+        name = "FPS Cap Toggle",
+        desc = "Enabled",
+        category = "fps",
+    },
+    {
+        cvar = "maxFPS",
+        optimal = "200",
+        name = "Max FPS",
+        desc = "200 FPS",
+        category = "fps",
+    },
+    {
         cvar = "useTargetFPS",
         optimal = "0",
         name = "Target FPS",
@@ -225,6 +254,13 @@ local OPTIMAL_FPS_CVARS = {
         desc = "Default 30 FPS when out of focus",
         category = "fps",
     },
+    {
+        cvar = "maxFPSLoading",
+        optimal = "30",
+        name = "Loading Screen FPS",
+        desc = "30 FPS",
+        category = "fps",
+    },
 
     {
         cvar = "ResampleSharpness",
@@ -235,6 +271,13 @@ local OPTIMAL_FPS_CVARS = {
         category = "post",
     },
     {
+        cvar = "ResampleAlwaysSharpen",
+        optimal = "1",
+        name = "Always Sharpen",
+        desc = "Enabled",
+        category = "post",
+    },
+    {
         cvar = "cameraShake",
         optimal = "0",
         name = "Camera Shake",
@@ -242,16 +285,44 @@ local OPTIMAL_FPS_CVARS = {
         desc = "Disabled",
         category = "post",
     },
+    { cvar = "ffxDeath", optimal = "0", name = "Death Effect", desc = "Disabled", category = "cosmetic" },
+    { cvar = "ffxGlow", optimal = "0", name = "Glow Effect", desc = "Disabled", category = "cosmetic" },
+    { cvar = "ffxNether", optimal = "0", name = "Nether Effect", desc = "Disabled", category = "cosmetic" },
+    { cvar = "ffxVenari", optimal = "0", name = "Venari Effect", desc = "Disabled", category = "cosmetic" },
+    { cvar = "ffxLingeringVenari", optimal = "0", name = "Lingering Venari Effect", desc = "Disabled", category = "cosmetic" },
+    { cvar = "overrideScreenFlash", optimal = "1", name = "Override Screen Flash", desc = "Enabled", category = "cosmetic" },
+    { cvar = "ShakeStrengthCamera", optimal = "0", name = "Camera Shake Strength", desc = "Disabled", category = "cosmetic" },
+    { cvar = "ShakeStrengthUI", optimal = "0", name = "UI Shake Strength", desc = "Disabled", category = "cosmetic" },
+    { cvar = "advancedCombatLogging", optimal = "1", name = "Advanced Combat Logging", desc = "Enabled", category = "network" },
+    { cvar = "disableServerNagle", optimal = "1", name = "Disable Server Nagle", desc = "Lower latency", category = "network" },
+    { cvar = "AutoPushSpellToActionBar", optimal = "0", name = "Auto Push Spells", desc = "Disabled", category = "cvar" },
+    { cvar = "cameraDistanceMaxZoomFactor", optimal = "2.6", name = "Max Camera Zoom", desc = "2.6x", category = "cvar" },
+    { cvar = "nameplateShowFriendlyClassColor", optimal = "1", name = "Friendly Class Colors", desc = "Enabled", category = "cvar" },
+    { cvar = "UnitNameFriendlyPlayerName", optimal = "1", name = "Friendly Player Names", desc = "Show names", category = "cvar" },
 }
 
 local CATEGORY_INFO = {
     render   = { name = "Render & Display",       nameKey = "OPT_CAT_RENDER",    order = 1 },
     graphics = { name = "Graphics Quality",        nameKey = "OPT_CAT_GRAPHICS",  order = 2 },
     detail   = { name = "View Distance & Detail",  nameKey = "OPT_CAT_DETAIL",    order = 3 },
-    advanced = { name = "Advanced Settings",       nameKey = "OPT_CAT_ADVANCED",  order = 4 },
-    fps      = { name = "FPS Limits",              nameKey = "OPT_CAT_FPS",       order = 5 },
-    post     = { name = "Post Processing",         nameKey = "OPT_CAT_POST",      order = 6 },
+    raid     = { name = "Raid & M+ Graphics",      order = 4 },
+    advanced = { name = "Advanced Settings",       nameKey = "OPT_CAT_ADVANCED",  order = 5 },
+    fps      = { name = "FPS Limits",              nameKey = "OPT_CAT_FPS",       order = 6 },
+    post     = { name = "Post Processing",         nameKey = "OPT_CAT_POST",      order = 7 },
+    cosmetic = { name = "Cosmetic Effects",        order = 8 },
+    network  = { name = "Network & Logging",       order = 9 },
+    cvar     = { name = "CVars",                   order = 10 },
 }
+
+local function LocalizedOrFallback(key, fallback)
+    if key then
+        local value = L[key]
+        if value and value ~= key then
+            return value
+        end
+    end
+    return fallback
+end
 
 local SetCVar = SetCVar
 local GetCVar = GetCVar
@@ -450,12 +521,15 @@ function ns:GetCVarStatus(cvar, optimal)
         local levelOptimal = (tonumber(optimal) or 0) + 1
         displayValue = string_format(L["OPT_QL_LEVEL"], levelCurrent)
         displayOptimal = string_format(L["OPT_QL_LEVEL"], levelOptimal)
-    elseif cvar == "maxFPSBk" or cvar == "targetFPS" then
+    elseif cvar == "maxFPSBk" or cvar == "targetFPS" or cvar == "maxFPSLoading" then
         displayValue = current .. " FPS"
         displayOptimal = optimal .. " FPS"
     elseif cvar == "useTargetFPS" or cvar == "VSync" or
            cvar == "ffxVRS" or cvar == "graphicsProjectedTextures" or
-           cvar == "useMaxFPSBk" then
+           cvar == "useMaxFPSBk" or cvar == "useMaxFPS" or
+           cvar == "RAIDsettingsEnabled" or cvar == "raidGraphicsProjectedTextures" or
+           cvar == "ResampleAlwaysSharpen" or cvar == "advancedCombatLogging" or
+           cvar == "disableServerNagle" or cvar == "overrideScreenFlash" then
         displayValue = (current == "1" or current == "true") and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
         displayOptimal = (optimal == "1" or optimal == "true") and L["COMMON_ENABLED"] or L["COMMON_DISABLED"]
     elseif cvar == "GxMaxFrameLatency" then
@@ -619,6 +693,15 @@ local function PlaceSlider(slider, parent, x, y)
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     return slider
+end
+
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
 end
 
 local function CreateCVarRow(parent, setting, yOffset)
@@ -807,8 +890,9 @@ function ns:InitOptOptions()
             L["OPT_TT_FPS_PERFECT"],
             " ", L["OPT_TT_FPS_RELOAD"]
         })
+        CreateNote(presetsContent, L["OPT_PRESETS_NOTE"], 10, -92, 560)
 
-        presetsContent:SetHeight(87)
+        presetsContent:SetHeight(165)
         presetsWrap:RecalcHeight()
         table.insert(allSections, presetsWrap)
 
@@ -831,8 +915,9 @@ function ns:InitOptOptions()
             local settings = settingsByCategory[category]
 
             if settings and #settings > 0 then
+                local categoryInfo = CATEGORY_INFO[category]
                 local catWrap, catContent = W:CreateCollapsibleSection(sectionContainer, {
-                    text = L[CATEGORY_INFO[category].nameKey] or CATEGORY_INFO[category].name,
+                    text = LocalizedOrFallback(categoryInfo.nameKey, categoryInfo.name),
                     startOpen = false,
                     onCollapse = function() if RelayoutSections then RelayoutSections() end end,
                 })

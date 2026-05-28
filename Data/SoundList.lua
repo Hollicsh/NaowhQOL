@@ -91,6 +91,9 @@ local function GetSourceFromPath(path)
     if type(path) == "number" then
         return "SharedMedia"
     end
+    if type(path) ~= "string" then
+        return "SharedMedia"
+    end
     local addon = path:match("Interface\\AddOns\\([^\\]+)")
     if addon then
         return addon
@@ -143,25 +146,19 @@ function ns.SoundList.Rebuild()
         local soundTable = LSM:HashTable("sound")
         if soundTable then
             for name, pathOrID in pairs(soundTable) do
-                local isNumeric = type(pathOrID) == "number"
-                local skipKey = isNumeric and pathOrID or pathOrID
-
-                if not seenName[name] and not (isNumeric and seenID[pathOrID]) and not (not isNumeric and seenPath[pathOrID]) then
+                local valueType = type(pathOrID)
+                if (valueType == "string" or valueType == "number") and not seenName[name] and not seenPath[pathOrID] and not seenID[pathOrID] then
                     local source = GetSourceFromPath(pathOrID)
                     local color = GetColorForSource(source)
                     merged[#merged + 1] = {
                         name = name,
-                        id = isNumeric and pathOrID or nil,
-                        path = isNumeric and nil or pathOrID,
+                        id = nil,
+                        path = pathOrID,
                         source = source,
                         color = color,
                     }
                     seenName[name] = true
-                    if isNumeric then
-                        seenID[pathOrID] = true
-                    else
-                        seenPath[pathOrID] = true
-                    end
+                    seenPath[pathOrID] = true
                     sourcesFound[source] = true
                 end
             end
@@ -213,7 +210,7 @@ end
 function ns.SoundList.GetName(idOrPath)
     ns.SoundList.Rebuild()
     if type(idOrPath) == "number" then
-        return ns.SoundList._nameByID[idOrPath] or ("Unknown (" .. tostring(idOrPath) .. ")")
+        return ns.SoundList._nameByID[idOrPath] or ns.SoundList._nameByPath[idOrPath] or ("Unknown (" .. tostring(idOrPath) .. ")")
     else
         return ns.SoundList._nameByPath[idOrPath] or ("Unknown")
     end
@@ -225,9 +222,9 @@ function ns.SoundList.GetEntry(soundData)
     if type(soundData) == "string" then
         return ns.SoundList._entryByName[soundData]
     elseif type(soundData) == "number" then
-        return ns.SoundList._entryByID[soundData]
+        return ns.SoundList._entryByID[soundData] or ns.SoundList._entryByPath[soundData]
     elseif soundData.id then
-        return ns.SoundList._entryByID[soundData.id]
+        return ns.SoundList._entryByID[soundData.id] or ns.SoundList._entryByPath[soundData.id]
     elseif soundData.path then
         return ns.SoundList._entryByPath[soundData.path]
     end
@@ -241,13 +238,41 @@ end
 
 local FALLBACK_SOUND_ID = 8959
 
+local function PlayEntry(entry)
+    if not entry then return false end
+
+    if entry.id then
+        PlaySound(entry.id, "Master")
+        return true
+    elseif entry.path then
+        local willPlay = PlaySoundFile(entry.path, "Master")
+        if not willPlay then
+            PlaySound(FALLBACK_SOUND_ID, "Master")
+            return false
+        end
+        return true
+    end
+
+    return false
+end
+
 function ns.SoundList.Play(soundData)
     if not soundData then return false end
+
+    local entry = ns.SoundList.GetEntry(soundData)
+    if entry then
+        return PlayEntry(entry)
+    end
 
     if type(soundData) == "string" then
         if ns.Media and ns.Media.ResolveSound then
             local resolved = ns.Media.ResolveSound(soundData)
             if resolved then
+                entry = ns.SoundList.GetEntry(resolved)
+                if entry then
+                    return PlayEntry(entry)
+                end
+
                 if type(resolved) == "number" then
                     PlaySound(resolved, "Master")
                     return true
@@ -289,10 +314,10 @@ function ns.SoundList.GetNameFromLegacy(soundData)
     ns.SoundList.Rebuild()
 
     if type(soundData) == "number" then
-        return ns.SoundList._nameByID[soundData]
+        return ns.SoundList._nameByID[soundData] or ns.SoundList._nameByPath[soundData]
     elseif type(soundData) == "table" then
         if soundData.id and type(soundData.id) == "number" then
-            return ns.SoundList._nameByID[soundData.id]
+            return ns.SoundList._nameByID[soundData.id] or ns.SoundList._nameByPath[soundData.id]
         elseif soundData.path then
             return ns.SoundList._nameByPath[soundData.path]
         end

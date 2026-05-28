@@ -65,6 +65,20 @@ local meleeSpellId = nil
 local meleeSupported = false
 local meleeHpalEnabled = false
 
+local DISPEL_CURSOR_SPELLS = {
+    DRUID = { 88423, 2782 },
+    EVOKER = { 360823, 365585 },
+    MAGE = { 475 },
+    MONK = { 115450, 218164 },
+    PALADIN = { 4987, 213644 },
+    PRIEST = { 527, 213634 },
+    SHAMAN = { 77130, 51886 },
+}
+
+local PET_DISPEL_CURSOR_SPELLS = {
+    WARLOCK = { 89808 },
+}
+
 local function HasAttackableTarget()
     if not UnitExists("target") then return false end
     if not UnitCanAttack("player", "target") then return false end
@@ -75,6 +89,7 @@ end
 local container, ring, borderRing, readyRing, centerDot
 local gcdSweep = {}
 local trailContainer, trailPoints = nil, {}
+local dispelCursorFrame, dispelCursorSpellId
 
 local TWO_PI = math.pi * 2
 local PI     = math.pi
@@ -163,6 +178,132 @@ local function SetupTexture(tex, shape)
         tex:SetSnapToPixelGrid(false)
         tex:SetTexelSnappingBias(0)
     end
+end
+
+local function IsSpellKnown(spellID, bank)
+    if not C_SpellBook or not C_SpellBook.IsSpellInSpellBook then return false end
+    local ok, known = pcall(C_SpellBook.IsSpellInSpellBook, spellID, bank)
+    return ok and known == true
+end
+
+local function FindDispelCursorSpell()
+    dispelCursorSpellId = nil
+    local _, classFile = UnitClass("player")
+    local spells = classFile and DISPEL_CURSOR_SPELLS[classFile]
+    if spells then
+        for _, spellID in ipairs(spells) do
+            if IsSpellKnown(spellID) then
+                dispelCursorSpellId = spellID
+                return dispelCursorSpellId
+            end
+        end
+    end
+
+    local petSpells = classFile and PET_DISPEL_CURSOR_SPELLS[classFile]
+    if petSpells and Enum and Enum.SpellBookSpellBank then
+        for _, spellID in ipairs(petSpells) do
+            if IsSpellKnown(spellID, Enum.SpellBookSpellBank.Pet) then
+                dispelCursorSpellId = spellID
+                return dispelCursorSpellId
+            end
+        end
+    end
+
+    return nil
+end
+
+local function StopDispelCursor()
+    if dispelCursorFrame then
+        dispelCursorFrame:SetScript("OnUpdate", nil)
+        if dispelCursorFrame.cooldown then
+            if dispelCursorFrame.cooldown.Clear then
+                dispelCursorFrame.cooldown:Clear()
+            else
+                dispelCursorFrame.cooldown:SetCooldown(0, 0)
+            end
+        end
+        dispelCursorFrame:Hide()
+    end
+end
+
+local function ApplyDispelCursorStyle()
+    if not dispelCursorFrame or not dispelCursorFrame.text then return end
+    local db = GetDB()
+    local fontSize = db.dispelCursorFontSize or 18
+    dispelCursorFrame.text:SetFont(ns.DefaultFontPath(), fontSize, "OUTLINE")
+    dispelCursorFrame.text:SetTextColor(db.dispelCursorR or 1, db.dispelCursorG or 1, db.dispelCursorB or 1, db.dispelCursorA or 1)
+end
+
+local function DispelCursorOnUpdate(frame)
+    local db = GetDB()
+    if not db.dispelCursorEnabled or not dispelCursorSpellId then
+        StopDispelCursor()
+        return
+    end
+    local x, y = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    frame.text:ClearAllPoints()
+    frame.text:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
+        (x / scale) + (db.dispelCursorOffsetX or 12),
+        (y / scale) + (db.dispelCursorOffsetY or 18))
+end
+
+local function CreateDispelCursor()
+    if dispelCursorFrame then return end
+
+    local frame = CreateFrame("Frame", "NaowhQOL_MouseRingDispelCursor", UIParent)
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetSize(1, 1)
+    frame:Hide()
+
+    local cooldown = CreateFrame("Cooldown", nil, frame, "CooldownFrameTemplate")
+    cooldown:SetSize(1, 1)
+    cooldown:SetDrawSwipe(false)
+    cooldown:SetDrawEdge(false)
+    cooldown:SetDrawBling(false)
+    cooldown:SetHideCountdownNumbers(false)
+
+    local text
+    for _, region in ipairs({ cooldown:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "FontString" then
+            text = region
+            break
+        end
+    end
+    if not text then
+        text = cooldown:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    end
+
+    frame.cooldown = cooldown
+    frame.text = text
+    dispelCursorFrame = frame
+    ApplyDispelCursorStyle()
+end
+
+local function UpdateDispelCursor()
+    local db = GetDB()
+    if not db.enabled or not db.dispelCursorEnabled then
+        StopDispelCursor()
+        return
+    end
+    CreateDispelCursor()
+    ApplyDispelCursorStyle()
+    FindDispelCursorSpell()
+    if not dispelCursorSpellId or not C_Spell or not C_Spell.GetSpellCooldownDuration
+        or not dispelCursorFrame.cooldown.SetCooldownFromDurationObject then
+        StopDispelCursor()
+        return
+    end
+
+    local ok, duration = pcall(C_Spell.GetSpellCooldownDuration, dispelCursorSpellId)
+    if not ok or not duration then
+        StopDispelCursor()
+        return
+    end
+
+    dispelCursorFrame.cooldown:SetCooldownFromDurationObject(duration, false)
+    dispelCursorFrame:Show()
+    dispelCursorFrame:SetScript("OnUpdate", DispelCursorOnUpdate)
 end
 
 UpdateRender = function()
@@ -712,6 +853,8 @@ events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+events:RegisterEvent("SPELLS_CHANGED")
+events:RegisterEvent("UI_SCALE_CHANGED")
 events:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
 events:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "player")
 events:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", "player")
@@ -721,6 +864,7 @@ events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_STOP", "player")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("PLAYER_LEAVING_WORLD")
 events:RegisterUnitEvent("PLAYER_FLAGS_CHANGED", "player")
+events:RegisterUnitEvent("UNIT_PET", "player")
 
 events:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
@@ -744,6 +888,7 @@ events:SetScript("OnEvent", function(self, event, unit)
         CacheMeleeSpell()
         UpdateRender()
         EvaluateMeleeTick()
+        UpdateDispelCursor()
 
         ns.SettingsIO:RegisterRefresh("mouseRing", function()
             CreateRing()
@@ -752,6 +897,7 @@ events:SetScript("OnEvent", function(self, event, unit)
             CacheMeleeSpell()
             UpdateRender()
             EvaluateMeleeTick()
+            UpdateDispelCursor()
         end)
 
     elseif event == "PLAYER_FLAGS_CHANGED" then
@@ -778,6 +924,10 @@ events:SetScript("OnEvent", function(self, event, unit)
 
     elseif event == "PLAYER_LEAVING_WORLD" then
         StopMeleeTick()
+        StopDispelCursor()
+
+    elseif event == "SPELLS_CHANGED" or event == "UNIT_PET" or event == "UI_SCALE_CHANGED" then
+        UpdateDispelCursor()
 
     elseif event == "UNIT_SPELLCAST_START" then
         local _, _, _, startTime, endTime = UnitCastingInfo("player")
@@ -849,6 +999,7 @@ events:SetScript("OnEvent", function(self, event, unit)
 
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         local db = GetDB()
+        UpdateDispelCursor()
         if not db.gcdEnabled then return end
 
         local info = C_Spell.GetSpellCooldown(GCD_SPELL)
@@ -959,6 +1110,10 @@ end
 function MouseRingDisplay:RefreshVisibility()
     RefreshCombatState()
     UpdateRender()
+end
+
+function MouseRingDisplay:RefreshDispelCursor()
+    UpdateDispelCursor()
 end
 
 MouseRingDisplay.StopMeleeSound = StopMeleeSound

@@ -5,6 +5,15 @@ local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
 
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
+end
+
 function ns:InitMovementAlert()
     local p = ns.MainFrame.Content
     local db = NaowhQOL.movementAlert
@@ -23,7 +32,7 @@ function ns:InitMovementAlert()
         local function refreshAll() refreshMovement(); refreshTimeSpiral() end
 
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        killArea:SetSize(460, 90)
+        killArea:SetSize(460, 120)
         killArea:SetPoint("TOPLEFT", 10, -75)
         killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -52,6 +61,7 @@ function ns:InitMovementAlert()
             onChange = refreshMovement
         })
         combatOnlyCB:SetShown(db.enabled)
+        CreateNote(killArea, L["MOVEMENT_ALERT_NOTE"], 15, -88, 420)
 
         if not db.disabledClasses then db.disabledClasses = {} end
 
@@ -458,7 +468,7 @@ function ns:InitMovementAlert()
         RebuildSpellRows()
 
         local tsKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        tsKillArea:SetSize(460, 62)
+        tsKillArea:SetSize(460, 92)
         tsKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         tsKillArea:SetBackdropColor(0.53, 1, 0, 0.08)
 
@@ -477,6 +487,7 @@ function ns:InitMovementAlert()
             onChange = refreshTimeSpiral
         })
         tsUnlockCB:SetShown(db.tsEnabled)
+        CreateNote(tsKillArea, L["TIME_SPIRAL_NOTE"], 15, -64, 420)
 
         local tsSections = CreateFrame("Frame", nil, sc)
         tsSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
@@ -556,7 +567,7 @@ function ns:InitMovementAlert()
         local function refreshGateway() if gatewayDisplay then gatewayDisplay:UpdateDisplay() end end
 
         local gwKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        gwKillArea:SetSize(460, 90)
+        gwKillArea:SetSize(460, 120)
         gwKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         gwKillArea:SetBackdropColor(0.5, 0, 0.8, 0.08)
 
@@ -584,6 +595,7 @@ function ns:InitMovementAlert()
             onChange = refreshGateway
         })
         gwCombatOnlyCB:SetShown(db.gwEnabled)
+        CreateNote(gwKillArea, L["GATEWAY_SHARD_NOTE"], 15, -88, 420)
 
         local gwSections = CreateFrame("Frame", nil, sc)
         gwSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
@@ -723,7 +735,7 @@ function ns:InitMovementAlert()
             gwSections:SetHeight(math.max(gwH, 1))
 
             local classFilterH = db.enabled and classFilterFrame:GetHeight() or 0
-            local totalH = 75 + 90 + classFilterH + 10 + movementH + 20 + 62 + 10 + tsH + 20 + 90 + 10 + gwH + 40
+            local totalH = 75 + 120 + classFilterH + 10 + movementH + 20 + 92 + 10 + tsH + 20 + 120 + 10 + gwH + 40
             sc:SetHeight(math.max(totalH, 800))
         end
 

@@ -12,6 +12,15 @@ local function PlaceSlider(slider, parent, x, y)
     return slider
 end
 
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
+end
+
 function ns:InitCRez()
     local p = ns.MainFrame.Content
     local db = NaowhQOL.cRez
@@ -30,7 +39,7 @@ function ns:InitCRez()
         local RelayoutAll
 
         local rezKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        rezKillArea:SetSize(460, 62)
+        rezKillArea:SetSize(460, 92)
         rezKillArea:SetPoint("TOPLEFT", 10, -75)
         rezKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         rezKillArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -58,6 +67,7 @@ function ns:InitCRez()
             template = "ChatConfigCheckButtonTemplate",
         })
         deathWarnCB:SetShown(db.enabled)
+        CreateNote(rezKillArea, L["CREZ_NOTE"], 15, -64, 420)
 
         local rezSections = CreateFrame("Frame", nil, sc)
         rezSections:SetPoint("TOPLEFT", rezKillArea, "BOTTOMLEFT", 0, -10)
@@ -153,7 +163,7 @@ function ns:InitCRez()
             end
             rezSections:SetHeight(math.max(rezH, 1))
 
-            local totalH = 75 + 62 + 10 + rezH + 40
+            local totalH = 75 + 92 + 10 + rezH + 40
             sc:SetHeight(math.max(totalH, 800))
         end
 

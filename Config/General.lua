@@ -10,6 +10,10 @@ local MODULE_REGISTRY = {
     { db = "combatAlert",     unlockKeys = {"unlock"},                       tab = "combat_alert" },
     { db = "combatLogger",    unlockKeys = {},                               tab = "combat_logger" },
     { db = "gcdTracker",      unlockKeys = {"unlock"},                       tab = "gcd_tracker" },
+    { db = "spellAlerts",     unlockKeys = {},                               tab = "alerts" },
+    { db = "globalCopy",      unlockKeys = {},                               tab = "misc" },
+    { db = "dispelGlow",      unlockKeys = {},                               tab = "alerts" },
+    { db = "potionReady",     unlockKeys = {"unlock"},                       tab = "alerts" },
     { db = "mouseRing",       unlockKeys = {},                               tab = "mouse_ring" },
     { db = "crosshair",       unlockKeys = {},                               tab = "crosshair" },
     { db = "focusCastBar",    unlockKeys = {"unlock"},                       tab = "focus_castbar" },
@@ -45,6 +49,7 @@ local FONT_MODULES = {
     { db = "misc",            key = "durabilityFont" },
     { db = "cRez",            key = "font" },
     { db = "coTank",          key = "font" },
+    { db = "potionReady",     key = "font" },
 }
 
 local MODULE_DISPLAY_NAMES = {
@@ -52,6 +57,10 @@ local MODULE_DISPLAY_NAMES = {
     combatAlert     = "Combat Alert",
     combatLogger    = "Combat Logger",
     gcdTracker      = "GCD Tracker",
+    spellAlerts     = "Spell Alerts",
+    globalCopy      = "Global Copy",
+    dispelGlow      = "Dispel Glow",
+    potionReady     = "Potion Ready",
     mouseRing       = "Mouse Ring",
     crosshair       = "Crosshair",
     focusCastBar    = "Focus Cast Bar",
@@ -77,6 +86,10 @@ local MODULE_KEYWORDS = {
     combatAlert     = { "Display Text", "Audio Mode", "Enter Combat", "Leave Combat", "TTS Voice", "TTS Rate", "Text-to-Speech" },
     combatLogger    = { "Reset All Instances", "Saved Instances", "Combat Logger Status" },
     gcdTracker      = { "Duration", "Spacing", "Fade Start", "Scroll Direction", "Stack Overlapping Casts", "Thickness", "Timeline", "Timeline Color", "Show in Dungeons", "Show in Raids", "Show in Arenas", "Show in Battlegrounds", "Show in World", "Downtime Summary", "Combat Only", "Spell Blocklist" },
+    spellAlerts     = { "Spell activation overlays", "Spec-specific spell alerts", "Blizzard spell alert proc glow" },
+    globalCopy      = { "Copy spell IDs", "Copy item IDs", "Copy tooltip text", "ncopy", "naocopy" },
+    dispelGlow      = { "Dispellable debuffs", "Raid frame glow", "Party frame glow", "Magic", "Curse", "Disease", "Poison" },
+    potionReady     = { "Potion ready", "Combat potion", "Potion sound", "Potion glow", "Potion text" },
     mouseRing       = { "Visible Outside Combat", "Hide on RMB", "Ring Shape", "Ring Size", "Combat Opacity", "OOC Opacity", "GCD Swipe", "Hide Background Ring", "GCD Only Mode", "Swipe Color", "Ready Color", "Cast Progress Swipe", "Mouse Trail", "Trail Duration", "Trail Color" },
     crosshair       = { "Combat Only", "Hide While Mounted", "Shape Presets", "Arm Length", "Thickness", "Center Gap", "Dot Size", "Center Dot", "Primary Color", "Opacity", "Dual Color Mode", "Border Thickness", "Circle Ring", "Circle Size", "Offset", "Melee Range Indicator", "Recolor Border", "Recolor Arms", "Recolor Dot", "Recolor Circle", "Out of Range Color", "Sound Alert", "Range Check Spell ID" },
     focusCastBar    = { "Bar Color", "Interrupt Ready", "Non-Interruptible", "Background Opacity", "Bar Style", "Spell Icon", "Icon Position", "Spell Name", "Time Remaining", "Empower Stage Markers", "Hide Casts from Friendly Units", "Shield Icon", "Recolor Uninterruptible", "Hide When Interrupt on CD", "Interrupt Cooldown Tick", "Play Sound on Cast Start", "Text-to-Speech", "TTS" },
@@ -92,7 +105,7 @@ local MODULE_KEYWORDS = {
     equipmentReminder = { "Show on Instance Entry", "Show on Ready Check", "Auto-Hide Delay", "Enchant Checker", "Use All Specs", "Capture Current Enchants", "Expected Enchant", "Main Hand", "Off Hand" },
     cRez            = { "Death as Warning", "Timer Text", "Stack Count" },
     buffWatcherV2   = { "Scan on Login", "Print to Chat", "Classic Display", "Scan Now", "Auto-Close Delay", "Duration Thresholds", "Dungeon Threshold", "Raid Threshold", "Raid Buffs", "Consumables", "Inventory Check", "Class Buffs", "Add Group", "Restore Defaults", "Report Card", "Buff Drop Alert", "Buff Drop Reminder", "Always Monitor My Raid Buffs", "Always Monitor My Class Buffs", "Always Monitor My Consumables", "Always Monitor My Inventory" },
-    misc            = { "Faster Auto Loot", "Suppress Loot Warnings", "Easy Item Destroy", "Auto Insert Keystone", "AH Current Expansion", "Hide Alerts", "Hide Talking Head", "Hide Event Toasts", "Hide Zone Text", "Skip Queue Confirmation", "Hide Minimap Icon", "Don't Release", "Death Release Protection", "Auto Repair", "Use Guild Funds", "Durability Warning", "Warning Threshold", "Auto Accept Quests", "Auto Turn-in Quests", "Auto Select Gossip Quests", "Quest Automation" },
+    misc            = { "Faster Auto Loot", "Suppress Loot Warnings", "Easy Item Destroy", "Auto Insert Keystone", "AH Current Expansion", "Hide Alerts", "Hide Talking Head", "Hide Event Toasts", "Hide Zone Text", "Skip Queue Confirmation", "Hide Minimap Icon", "Global Copy", "Copy spell IDs", "Copy item IDs", "Copy tooltip text", "Don't Release", "Death Release Protection", "Auto Repair", "Use Guild Funds", "Durability Warning", "Warning Threshold", "Auto Accept Quests", "Auto Turn-in Quests", "Auto Select Gossip Quests", "Quest Automation" },
     optimizations   = { "Optimal FPS Settings", "Ultra Settings", "Revert Settings", "Render Scale", "VSync", "Multisampling", "Low Latency Mode", "Anti-Aliasing", "Shadow Quality", "Liquid Detail", "Particle Density", "SSAO", "Depth Effects", "Compute Effects", "Outline Mode", "Texture Resolution", "Spell Density", "Projected Textures", "View Distance", "Environment Detail", "Ground Clutter", "Triple Buffering", "Texture Filtering", "Ray Traced Shadows", "Resample Quality", "Graphics API", "Physics Integration", "Target FPS", "Background FPS", "Resample Sharpness", "Camera Shake", "Spell Queue Window", "Addon Profiler" },
 }
 ns.MODULE_KEYWORDS = MODULE_KEYWORDS

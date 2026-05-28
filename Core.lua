@@ -104,6 +104,45 @@ local GCD_TRACKER_DEFAULTS = {
     downtimeSummaryEnabled = false,
 }
 
+local SPELL_ALERTS_DEFAULTS = {
+    enabled = false,
+    enabledSpecs = {},
+}
+
+local GLOBAL_COPY_DEFAULTS = {
+    enabled = false,
+    tooltipIds = true,
+    modifier = "CTRL",
+    key = "C",
+}
+
+local DISPEL_GLOW_DEFAULTS = {
+    enabled = false,
+    useDispelColor = true,
+    colorR = 0, colorG = 1, colorB = 0, alpha = 1,
+    glowEnabled = true,
+    glowType = "pixel",
+    glowLines = 8,
+    glowFrequency = 0.25,
+    glowLength = 6,
+    glowThickness = 2,
+    glowScale = 1,
+    glowDuration = 1,
+}
+
+local POTION_READY_DEFAULTS = {
+    enabled = false, unlock = false, font = NAOWH_FONT,
+    text = "Potion ready", fontSize = 24,
+    colorR = 0, colorG = 1, colorB = 0, alpha = 1,
+    point = "CENTER", x = 0, y = 180, width = 240, height = 60,
+    combatOnly = true, instanceOnly = false, disableOnHealer = false,
+    soundEnabled = false, soundID = "Raid Warning",
+    glowEnabled = true, glowType = "pixel",
+    glowR = 0, glowG = 1, glowB = 0,
+    glowLines = 8, glowFrequency = 0.25, glowLength = 8,
+    glowThickness = 2, glowScale = 1, glowDuration = 1,
+}
+
 local STEALTH_REMINDER_DEFAULTS = {
     enabled = false, unlock = false, font = NAOWH_FONT,
     stealthR = 0, stealthG = 1, stealthB = 0, warningR = 1, warningG = 0, warningB = 0,
@@ -233,6 +272,10 @@ local MOUSE_RING_DEFAULTS = {
     meleeRecolor = false,
     meleeRecolorBorder = true, meleeRecolorRing = false,
     meleeSoundEnabled = false, meleeSoundID = "Raid Warning", meleeSoundInterval = 3,
+    dispelCursorEnabled = false,
+    dispelCursorFontSize = 18,
+    dispelCursorOffsetX = 12, dispelCursorOffsetY = 18,
+    dispelCursorR = 1, dispelCursorG = 1, dispelCursorB = 1, dispelCursorA = 1,
     hideWhenUnfocused = false,
 }
 
@@ -281,6 +324,10 @@ ns.ModuleDefaults = {
     dragonriding = DRAGONRIDING_DEFAULTS,
     buffTracker = BUFF_TRACKER_DEFAULTS,
     gcdTracker = GCD_TRACKER_DEFAULTS,
+    spellAlerts = SPELL_ALERTS_DEFAULTS,
+    globalCopy = GLOBAL_COPY_DEFAULTS,
+    dispelGlow = DISPEL_GLOW_DEFAULTS,
+    potionReady = POTION_READY_DEFAULTS,
     stealthReminder = STEALTH_REMINDER_DEFAULTS,
     movementAlert = MOVEMENT_ALERT_DEFAULTS,
     rangeCheck = RANGE_CHECK_DEFAULTS,
@@ -317,6 +364,10 @@ local aceDBDefaults = {
         dragonriding = DRAGONRIDING_DEFAULTS,
         buffTracker = BUFF_TRACKER_DEFAULTS,
         gcdTracker = GCD_TRACKER_DEFAULTS,
+        spellAlerts = SPELL_ALERTS_DEFAULTS,
+        globalCopy = GLOBAL_COPY_DEFAULTS,
+        dispelGlow = DISPEL_GLOW_DEFAULTS,
+        potionReady = POTION_READY_DEFAULTS,
         stealthReminder = STEALTH_REMINDER_DEFAULTS,
         movementAlert = MOVEMENT_ALERT_DEFAULTS,
         rangeCheck = RANGE_CHECK_DEFAULTS,
@@ -606,7 +657,7 @@ local function MigrateFromLegacy(legacyCharData)
 
     local keysToCheck = {
         "combatTimer", "combatAlert", "crosshair", "dragonriding",
-        "misc", "gcdTracker", "stealthReminder", "focusCastBar",
+        "misc", "gcdTracker", "spellAlerts", "globalCopy", "dispelGlow", "potionReady", "stealthReminder", "focusCastBar",
         "emoteDetection", "rangeCheck", "mouseRing", "cRez", "petTracker",
         "coTank", "slashCommands", "profiles", "specProfiles", "buffWatcherV2"
     }
@@ -769,6 +820,7 @@ local function InitializeDB()
         ns.Media.MigrateDB(NaowhQOL.focusCastBar,    {"font"},                  {"barStyle"},   {"sound"})
         ns.Media.MigrateDB(NaowhQOL.petTracker,      {"font"},                  nil,            nil)
         ns.Media.MigrateDB(NaowhQOL.crosshair,       nil,                       nil,            {"meleeSoundID"})
+        ns.Media.MigrateDB(NaowhQOL.potionReady,     {"font"},                  nil,            {"soundID"})
     end
 
     CleanupSlashCommands()

@@ -155,7 +155,29 @@ end
 
 local function IsValidTimeSpiralProc(spellId)
     local now = GetTime()
-    if not allMobilitySpells[spellId] then return false end
+    local class = select(2, UnitClass("player"))
+    local specIndex = GetSpecialization and GetSpecialization()
+    local specId = specIndex and select(1, GetSpecializationInfo(specIndex))
+    local classData = MOVEMENT_ABILITIES[class]
+    local specSpells = classData and specId and classData[specId]
+    local matched = false
+    if specSpells then
+        for _, id in ipairs(specSpells) do
+            if id == spellId then
+                matched = true
+                break
+            end
+            if C_Spell.GetOverrideSpell then
+                local okOvr, oid = pcall(C_Spell.GetOverrideSpell, id)
+                if okOvr and oid and oid == spellId then
+                    matched = true
+                    break
+                end
+            end
+        end
+    end
+    if not matched and allMobilitySpells[spellId] then matched = true end
+    if not matched then return false end
     if now < glowCooldown then return false end
     if (now - procDebounce) < 0.12 then return false end
     return true
@@ -271,6 +293,7 @@ timeSpiralText:SetPoint("CENTER")
 
 local timeSpiralResizeHandle
 local timeSpiralActiveTime = nil
+local timeSpiralActiveSpells = {}
 
 local GATEWAY_SHARD_ITEM_ID = 188152
 
@@ -1506,6 +1529,7 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 
     if event == "PLAYER_LOGOUT" then
         timeSpiralActiveTime = nil
+        wipe(timeSpiralActiveSpells)
         CancelMovementCountdown()
         CancelTimeSpiralCountdown()
         CancelAllRechargeTimers()
@@ -1526,6 +1550,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         RefreshCastFilters()
     elseif event == "PLAYER_ENTERING_WORLD" then
         inCombat = UnitAffectingCombat("player")
+        wipe(timeSpiralActiveSpells)
+        timeSpiralActiveTime = nil
         CacheMovementSpells(true)
         if inCombat then
             SyncBuffActiveOnCombatStart()
@@ -1627,9 +1653,18 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
         local spellId = ...
         if db.tsEnabled and IsValidTimeSpiralProc(spellId) then
             RecordProc()
+            timeSpiralActiveSpells[spellId] = true
             timeSpiralActiveTime = GetTime()
             PlayTimeSpiralAlert(db)
             StartTimeSpiralCountdown()
+        end
+    elseif event == "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE" then
+        local spellId = ...
+        if spellId then timeSpiralActiveSpells[spellId] = nil end
+        if not next(timeSpiralActiveSpells) then
+            timeSpiralActiveTime = nil
+            CancelTimeSpiralCountdown()
+            if not db.tsUnlock then timeSpiralFrame:Hide() end
         end
     end
 

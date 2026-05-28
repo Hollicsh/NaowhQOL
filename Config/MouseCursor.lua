@@ -5,6 +5,15 @@ local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
 
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
+end
+
 local ringShapes = {
     { text = L["MOUSE_SHAPE_CIRCLE"],       value = "ring.tga" },
     { text = L["MOUSE_SHAPE_THIN"],         value = "thin_ring.tga" },
@@ -63,7 +72,7 @@ function ns.InitMouseOptions()
         local sectionContainer = CreateFrame("Frame", nil, sc)
 
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        killArea:SetSize(460, 111)
+        killArea:SetSize(460, 145)
         killArea:SetPoint("TOPLEFT", 10, -75)
         killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -75,6 +84,10 @@ function ns.InitMouseOptions()
             isMaster = true,
             onChange = function(enabled)
                 W:SetSectionContainerEnabled(sectionContainer, enabled)
+                if display then
+                    display:RefreshVisibility()
+                    if display.RefreshDispelCursor then display:RefreshDispelCursor() end
+                end
             end,
         })
 
@@ -110,6 +123,7 @@ function ns.InitMouseOptions()
             end
         })
         hideUnfocusedCB:SetShown(db.enabled)
+        CreateNote(killArea, L["MOUSE_NOTE"], 15, -113, 420)
 
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
@@ -334,7 +348,70 @@ function ns.InitMouseOptions()
         gcdContent:SetHeight(GG:Height(5))
         gcdWrap:RecalcHeight()
 
-    local trailShapes = {
+        local dispelWrap, dispelContent = W:CreateCollapsibleSection(sectionContainer, {
+            text = L["MOUSE_SECTION_DISPEL_CURSOR"],
+            startOpen = false,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        local DC = ns.Layout:New(2)
+        local function dispelDisabled() return not db.dispelCursorEnabled end
+        local function refreshDispelCursor()
+            if display and display.RefreshDispelCursor then display:RefreshDispelCursor() end
+        end
+
+        W:CreateCheckbox(dispelContent, {
+            label = L["MOUSE_DISPEL_CURSOR_ENABLE"],
+            db = db, key = "dispelCursorEnabled",
+            x = DC:Col(1), y = DC:Row(1) + 5,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                W:ApplyDisableStates(dispelContent)
+                refreshDispelCursor()
+            end
+        })
+
+        W:CreateColorPicker(dispelContent, {
+            label = L["MOUSE_DISPEL_CURSOR_COLOR"], db = db,
+            rKey = "dispelCursorR", gKey = "dispelCursorG", bKey = "dispelCursorB",
+            aKey = "dispelCursorA",
+            x = DC:Col(2), y = DC:Row(1) - 10,
+            disableif = dispelDisabled,
+            onChange = refreshDispelCursor,
+        })
+
+        W:CreateSlider(dispelContent, {
+            label = L["COMMON_LABEL_FONT_SIZE"],
+            min = 10, max = 40, step = 1,
+            x = DC:Col(1), y = DC:Row(2),
+            db = db, key = "dispelCursorFontSize",
+            disableif = dispelDisabled,
+            onChange = refreshDispelCursor,
+        })
+
+        W:CreateSlider(dispelContent, {
+            label = L["MOUSE_DISPEL_CURSOR_OFFSET_X"],
+            min = -80, max = 80, step = 1,
+            x = DC:Col(1), y = DC:Row(3),
+            db = db, key = "dispelCursorOffsetX",
+            disableif = dispelDisabled,
+            onChange = refreshDispelCursor,
+        })
+
+        W:CreateSlider(dispelContent, {
+            label = L["MOUSE_DISPEL_CURSOR_OFFSET_Y"],
+            min = -80, max = 80, step = 1,
+            x = DC:Col(2), y = DC:Row(3),
+            db = db, key = "dispelCursorOffsetY",
+            disableif = dispelDisabled,
+            onChange = refreshDispelCursor,
+        })
+
+        CreateNote(dispelContent, L["MOUSE_DISPEL_CURSOR_NOTE"], 10, DC:Row(4), 560)
+        dispelContent:SetHeight(DC:Height(4))
+        dispelWrap:RecalcHeight()
+
+        local trailShapes = {
             { text = L["MOUSE_TRAIL_SHAPE_GLOW"],    value = "glow" },
             { text = L["MOUSE_TRAIL_SHAPE_CIRCLE"],  value = "circle" },
             { text = L["MOUSE_TRAIL_SHAPE_RING"],    value = "ring" },
@@ -722,7 +799,7 @@ function ns.InitMouseOptions()
         fadeContent:SetHeight(GF:Height(2))
         fadeWrap:RecalcHeight()
 
-        local allSections = { appWrap, gcdWrap, trailWrap, mlWrap, dotWrap, fadeWrap }
+        local allSections = { appWrap, gcdWrap, dispelWrap, trailWrap, mlWrap, dotWrap, fadeWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do
@@ -735,7 +812,7 @@ function ns.InitMouseOptions()
                 section:SetPoint("RIGHT", sectionContainer, "RIGHT", 0, 0)
             end
 
-            local totalH = 100 + 95 + 10
+            local totalH = 100 + 129 + 10
             if db.enabled then
                 for _, s in ipairs(allSections) do
                     totalH = totalH + s:GetHeight() + 12

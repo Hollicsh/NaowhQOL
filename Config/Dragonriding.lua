@@ -13,6 +13,15 @@ local function PlaceSlider(slider, parent, x, y)
     return slider
 end
 
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
+end
+
 function ns:InitDragonriding()
     local p = ns.MainFrame.Content
     local db = NaowhQOL.dragonriding
@@ -29,7 +38,7 @@ function ns:InitDragonriding()
         end
 
         local killArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
-        killArea:SetSize(460, 62)
+        killArea:SetSize(460, 92)
         killArea:SetPoint("TOPLEFT", 10, -75)
         killArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
         killArea:SetBackdropColor(0.01, 0.56, 0.91, 0.08)
@@ -49,6 +58,7 @@ function ns:InitDragonriding()
             onChange = drRefresh,
         })
         unlockCB:SetShown(db.enabled)
+        CreateNote(killArea, L["DRAGON_NOTE"], 15, -64, 420)
 
         local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
@@ -419,7 +429,7 @@ function ns:InitDragonriding()
                 section:SetPoint("RIGHT", sectionContainer, "RIGHT", 0, 0)
             end
 
-            local totalH = 75 + 62 + 10
+            local totalH = 75 + 92 + 10
             if db.enabled then
                 for _, s in ipairs(allSections) do
                     totalH = totalH + s:GetHeight() + 12

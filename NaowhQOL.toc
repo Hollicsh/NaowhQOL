@@ -65,6 +65,10 @@ Modules/CrosshairDisplay.lua
 Modules/MouseRingDisplay.lua
 Modules/CombatLoggerDisplay.lua
 Modules/GcdTrackerDisplay.lua
+Modules/SpellAlerts.lua
+Modules/GlobalCopy.lua
+Modules/DispelGlow.lua
+Modules/PotionReadyDisplay.lua
 Modules/StealthReminderDisplay.lua
 Modules/MovementAlertDisplay.lua
 Modules/RangeCheckDisplay.lua
@@ -99,6 +103,7 @@ Config/BuffWatcherV2.lua
 Config/Dragonriding.lua
 Config/CombatLogger.lua
 Config/GcdTracker.lua
+Config/Alerts.lua
 Config/StealthReminder.lua
 Config/MovementAlert.lua
 Config/RangeCheck.lua

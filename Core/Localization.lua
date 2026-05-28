@@ -7,6 +7,9 @@ local missingKeys = {}
 
 local L = setmetatable({}, {
     __index = function(self, key)
+        if key == nil then
+            return nil
+        end
         local localeTable = locales[currentLocale]
         if localeTable and localeTable[key] then
             return localeTable[key]

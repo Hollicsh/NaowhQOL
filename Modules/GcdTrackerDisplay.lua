@@ -176,8 +176,9 @@ local function SegmentIterate()
 end
 
 local function CalcFade(fraction, fadeStart)
+    fadeStart = math.max(0, math.min(0.95, fadeStart or 0.5))
     if fraction <= fadeStart then return 1.0 end
-    return math.max(0, 1.0 - (fraction - fadeStart) / (1.0 - fadeStart))
+    return math.max(0.05, 1.0 - (fraction - fadeStart) / (1.0 - fadeStart))
 end
 
 local function GetDB()
@@ -235,8 +236,13 @@ local function TrackDowntime()
 end
 
 local function GetSpellIcon(spellId)
-    local info = C_Spell.GetSpellInfo(spellId)
-    return info and info.iconID
+    local ok, info = pcall(C_Spell.GetSpellInfo, spellId)
+    if ok and info and info.iconID then return info.iconID end
+    if C_Spell.GetSpellTexture then
+        local texOK, texture = pcall(C_Spell.GetSpellTexture, spellId)
+        if texOK and texture then return texture end
+    end
+    return 136243
 end
 
 local container = CreateFrame("Frame", "NaowhQOL_GcdTrackerDisplay", UIParent, "BackdropTemplate")
@@ -269,6 +275,11 @@ local function CreateIconFrame()
 end
 
 ReleaseIcon = function(f)
+    f:SetAlpha(1)
+    f.tex:SetAlpha(1)
+    f.tex:SetVertexColor(1, 1, 1, 1)
+    f.tex:SetTexture(nil)
+    f.glow:Hide()
     f:Hide()
     f:ClearAllPoints()
     iconPool[#iconPool + 1] = f
@@ -361,6 +372,8 @@ local function LayoutIcons()
         if not activeIcons[entry] then
             local f = Acquire(iconPool, CreateIconFrame)
             f.tex:SetTexture(entry.icon)
+            f.tex:SetAlpha(1)
+            f:SetAlpha(1)
             f:SetSize(iconSize, iconSize)
             activeIcons[entry] = f
         end

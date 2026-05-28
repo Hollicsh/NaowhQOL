@@ -5,6 +5,15 @@ local cache = {}
 local W = ns.Widgets
 local C = ns.COLORS
 
+local function CreateNote(parent, text, x, y, width)
+    local note = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", x, y)
+    note:SetWidth(width or 520)
+    note:SetJustifyH("LEFT")
+    note:SetText(W.Colorize(text, C.GRAY))
+    return note
+end
+
 function ns:InitModuleOptions()
     local p = ns.MainFrame.Content
 
@@ -122,6 +131,71 @@ function ns:InitModuleOptions()
         clutterContent:SetHeight(185)
         clutterWrap:RecalcHeight()
 
+        local copyDB = NaowhQOL.globalCopy
+        local copyWrap, copyContent = W:CreateCollapsibleSection(sections, {
+            text = L["MODULES_SECTION_GLOBAL_COPY"],
+            startOpen = false,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        W:CreateCheckbox(copyContent, {
+            label = L["MODULES_ENABLE_GLOBAL_COPY"],
+            db = copyDB, key = "enabled",
+            x = 10, y = -5,
+            template = "ChatConfigCheckButtonTemplate",
+            description = L["MODULES_GLOBAL_COPY_DESC"],
+            descWidth = 350,
+            onChange = function()
+                if ns.GlobalCopy then ns.GlobalCopy.Refresh() end
+            end,
+        })
+
+        W:CreateCheckbox(copyContent, {
+            label = L["MODULES_COPY_TOOLTIP_IDS"],
+            db = copyDB, key = "tooltipIds",
+            x = 30, y = -35,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function()
+                if ns.GlobalCopy then ns.GlobalCopy.Refresh() end
+            end,
+        })
+
+        W:CreateDropdown(copyContent, {
+            label = L["MODULES_COPY_MODIFIER"],
+            db = copyDB, key = "modifier",
+            options = {
+                { text = "Ctrl", value = "CTRL" },
+                { text = "Shift", value = "SHIFT" },
+                { text = "Alt", value = "ALT" },
+                { text = "None", value = "NONE" },
+            },
+            x = 10, y = -72,
+            width = 130,
+            onChange = function()
+                if ns.GlobalCopy then ns.GlobalCopy.Refresh() end
+            end,
+        })
+
+        W:CreateTextInput(copyContent, {
+            label = L["MODULES_COPY_KEY"],
+            db = copyDB, key = "key",
+            default = "C",
+            x = 190, y = -72,
+            width = 44,
+            maxLetters = 1,
+            onChange = function(value)
+                copyDB.key = strupper(value or "C")
+                if ns.GlobalCopy then ns.GlobalCopy.Refresh() end
+            end,
+        })
+
+        local copySlashText = copyContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        CreateNote(copyContent, L["MODULES_GLOBAL_COPY_NOTE"], 10, -122, 560)
+        copySlashText:SetPoint("TOPLEFT", 10, -160)
+        copySlashText:SetText(W.Colorize(L["MODULES_COPY_SLASH"], C.GRAY))
+        copyContent:SetHeight(185)
+        copyWrap:RecalcHeight()
+
         local durWrap, durContent = W:CreateCollapsibleSection(sections, {
             text = L["MODULES_SECTION_DEATH"],
             startOpen = false,
@@ -200,7 +274,7 @@ function ns:InitModuleOptions()
         questContent:SetHeight(95)
         questWrap:RecalcHeight()
 
-        local sectionList = { itemsWrap, clutterWrap, durWrap, questWrap }
+        local sectionList = { itemsWrap, clutterWrap, copyWrap, durWrap, questWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(sectionList) do

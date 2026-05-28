@@ -193,6 +193,31 @@ local TYPE_SCHEMAS = {
         gwSoundEnabled = "boolean",
         gwTtsEnabled = "boolean", gwTtsMessage = "string", gwTtsVolume = "number",
     },
+    spellAlerts = {
+        enabled = "boolean", enabledSpecs = "table",
+    },
+    globalCopy = {
+        enabled = "boolean", tooltipIds = "boolean", modifier = "string", key = "string",
+    },
+    dispelGlow = {
+        enabled = "boolean", useDispelColor = "boolean",
+        colorR = "number", colorG = "number", colorB = "number", alpha = "number",
+        glowEnabled = "boolean", glowType = "string",
+        glowLines = "number", glowFrequency = "number", glowLength = "number",
+        glowThickness = "number", glowScale = "number", glowDuration = "number",
+    },
+    potionReady = {
+        enabled = "boolean", unlock = "boolean", font = "string",
+        text = "string", fontSize = "number",
+        colorR = "number", colorG = "number", colorB = "number", alpha = "number",
+        point = "string", x = "number", y = "number", width = "number", height = "number",
+        combatOnly = "boolean", instanceOnly = "boolean", disableOnHealer = "boolean",
+        soundEnabled = "boolean", soundID = "string",
+        glowEnabled = "boolean", glowType = "string",
+        glowR = "number", glowG = "number", glowB = "number",
+        glowLines = "number", glowFrequency = "number", glowLength = "number",
+        glowThickness = "number", glowScale = "number", glowDuration = "number",
+    },
     talentReminder = {
         enabled = "boolean",
         loadouts = "table",
@@ -248,6 +273,38 @@ local function ValidateImportData(key, data)
     end
 
     return true
+end
+
+local function DeepCopy(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for k, v in pairs(value) do
+        copy[DeepCopy(k)] = DeepCopy(v)
+    end
+    return copy
+end
+
+local function MergeTables(target, source)
+    for k, v in pairs(source) do
+        target[DeepCopy(k)] = DeepCopy(v)
+    end
+    return target
+end
+
+local function BuildModuleImportTable(key, incoming, current)
+    if type(incoming) ~= "table" then
+        return DeepCopy(incoming)
+    end
+
+    local base = nil
+    if ns.ModuleDefaults and type(ns.ModuleDefaults[key]) == "table" then
+        base = ns.ModuleDefaults[key]
+    elseif type(current) == "table" then
+        base = current
+    end
+
+    local result = type(base) == "table" and DeepCopy(base) or {}
+    return MergeTables(result, incoming)
 end
 
 function ns.SettingsIO:Register(key, label, getter, setter)
@@ -532,12 +589,9 @@ function ns.SettingsIO:Preview(encoded)
     return found
 end
 
-function ns.SettingsIO:Import(encoded, selectedKeys)
-    local raw = Base64Decode(encoded)
-    local data = Deserialize(raw)
-    if not data then return false, "Invalid import string." end
-
-    for _, m in ipairs(self.modules) do
+local function ValidateImportSelection(settingsIO, data, selectedKeys)
+    selectedKeys = selectedKeys or {}
+    for _, m in ipairs(settingsIO.modules) do
         if selectedKeys[m.key] and data[m.key] then
             local valid, err = ValidateImportData(m.key, data[m.key])
             if not valid then
@@ -546,14 +600,33 @@ function ns.SettingsIO:Import(encoded, selectedKeys)
         end
     end
 
+    return true
+end
+
+function ns.SettingsIO:ImportData(data, selectedKeys)
+    if type(data) ~= "table" then return false, "Invalid import string." end
+    selectedKeys = selectedKeys or {}
+
+    local valid, err = ValidateImportSelection(self, data, selectedKeys)
+    if not valid then return false, err end
+
     for _, m in ipairs(self.modules) do
         if selectedKeys[m.key] and data[m.key] then
-            m.set(data[m.key])
+            local current = m.get()
+            m.set(BuildModuleImportTable(m.key, data[m.key], current))
         end
     end
     self:TriggerRefreshAll()
 
     return true
+end
+
+function ns.SettingsIO:Import(encoded, selectedKeys)
+    local raw = Base64Decode(encoded)
+    local data = Deserialize(raw)
+    if not data then return false, "Invalid import string." end
+
+    return self:ImportData(data, selectedKeys)
 end
 
 ns.SettingsIO.refreshCallbacks = {}
@@ -856,6 +929,10 @@ ns.SettingsIO:RegisterSimple("petTracker",       "Pet Tracker")
 ns.SettingsIO:RegisterSimple("buffWatcherV2",    "Buff Watcher V2")
 ns.SettingsIO:RegisterSimple("buffTracker",      "Buff Tracker")
 ns.SettingsIO:RegisterSimple("movementAlert",    "Movement Alert")
+ns.SettingsIO:RegisterSimple("spellAlerts",      "Spell Alerts")
+ns.SettingsIO:RegisterSimple("globalCopy",       "Global Copy")
+ns.SettingsIO:RegisterSimple("dispelGlow",       "Dispel Glow")
+ns.SettingsIO:RegisterSimple("potionReady",      "Potion Ready")
 ns.SettingsIO:RegisterSimple("talentReminder",   "Talent Reminder")
 ns.SettingsIO:RegisterSimple("raidAlerts",       "Raid Alerts")
 ns.SettingsIO:RegisterSimple("poisonReminder",   "Poison Reminder")
@@ -868,27 +945,45 @@ NaowhQOL_API = {
         if type(str) ~= "string" or str == "" then
             return false, "string required"
         end
+        if not ns.db then return false, "database not initialized" end
 
-        local preview = ns.SettingsIO:Preview(str)
-        if not preview then
+        local raw = Base64Decode(str)
+        local data = Deserialize(raw)
+        if type(data) ~= "table" then
             return false, "invalid import string"
         end
+
+        local found = {}
+        for k in pairs(data) do found[k] = true end
+
         local selectedKeys = {}
         if keys then
             for k in pairs(keys) do
-                if preview[k] then selectedKeys[k] = true end
+                if found[k] then selectedKeys[k] = true end
             end
         else
-            selectedKeys = preview
+            selectedKeys = found
         end
 
-        local ok, err = ns.SettingsIO:Import(str, selectedKeys)
+        local valid, validationErr = ValidateImportSelection(ns.SettingsIO, data, selectedKeys)
+        if not valid then return false, validationErr end
+
+        local hasNamedTarget = type(profileName) == "string" and profileName ~= ""
+        local saveName = hasNamedTarget and profileName or ns.SettingsIO:GetActiveProfile()
+
+        if hasNamedTarget then
+            ns.db:SetProfile(saveName)
+            ns.db:ResetProfile()
+            NaowhQOL = ns.db.profile
+        end
+
+        local ok, err = ns.SettingsIO:ImportData(data, selectedKeys)
         if not ok then return false, err end
 
-        local saveName = (type(profileName) == "string" and profileName ~= "")
-            and profileName
-            or ns.SettingsIO:GetActiveProfile()
-        ns.SettingsIO:SaveProfile(saveName)
+        if ns.db.global then
+            ns.db.global.savedProfiles = ns.db.global.savedProfiles or {}
+            ns.db.global.savedProfiles[saveName] = true
+        end
 
         return true
     end,
@@ -928,27 +1023,35 @@ end
 ---@param profileString string
 ---@param profileKey string
 function NaowhQOL_API:ImportProfile(profileString, profileKey)
-    if not ns.db or not ns.db.sv then return end
+    if not ns.db or not ns.db.sv then return false, "database not initialized" end
+    if type(profileKey) ~= "string" or profileKey == "" then return false, "profile key required" end
     local raw = Base64Decode(profileString)
-    if not raw then return end
+    if not raw then return false, "invalid import string" end
     local deserialized = Deserialize(raw)
-    if type(deserialized) ~= "table" then return end
+    if type(deserialized) ~= "table" then return false, "invalid import string" end
 
-    ns.db.sv.profiles = ns.db.sv.profiles or {}
-    ns.db.sv.profiles[profileKey] = ns.db.sv.profiles[profileKey] or {}
-    for k, v in pairs(deserialized) do
-        ns.db.sv.profiles[profileKey][k] = v
-    end
+    local selectedKeys = {}
+    for k in pairs(deserialized) do selectedKeys[k] = true end
+
+    local valid, validationErr = ValidateImportSelection(ns.SettingsIO, deserialized, selectedKeys)
+    if not valid then return false, validationErr end
+
+    -- Build the target from defaults first so missing modules do not inherit from the active profile.
+    ns.db:SetProfile(profileKey)
+    ns.db:ResetProfile()
+    NaowhQOL = ns.db.profile
 
     if ns.db.global then
         ns.db.global.savedProfiles = ns.db.global.savedProfiles or {}
         ns.db.global.savedProfiles[profileKey] = true
     end
 
+    local ok, err = ns.SettingsIO:ImportData(deserialized, selectedKeys)
+    if not ok then return false, err end
+
     -- Switch to the imported profile. Per WagoUI spec, do NOT call ReloadUI here.
-    ns.db:SetProfile(profileKey)
     NaowhQOL = ns.db.profile
-    if ns.SettingsIO then ns.SettingsIO:TriggerRefreshAll() end
+    return true
 end
 
 ---@param profileString string
