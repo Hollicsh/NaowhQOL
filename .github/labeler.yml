@@ -1,0 +1,98 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# NaowhQOL – Pull Request Labeler Configuration
+# Docs: https://github.com/actions/labeler
+# ──────────────────────────────────────────────────────────────────────────────
+'area: core':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Core.lua
+          - Version.lua
+          - Core/**
+
+'area: config':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Config/**
+
+'area: modules':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Modules/**
+
+'area: ui':
+  - changed-files:
+      - any-glob-to-any-file:
+          - UI/**
+
+'area: data':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Data/**
+
+'area: localization':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Locales/**
+
+'area: assets':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Assets/**
+
+'module: buff-watcher':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Modules/BuffWatcherV2/**
+          - Config/BuffWatcherV2*.lua
+
+'module: combat':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Modules/CombatAlert*.lua
+          - Modules/CombatLogger*.lua
+          - Modules/CombatTimer*.lua
+          - Config/CombatAlert.lua
+          - Config/CombatLogger.lua
+          - Config/CombatTimer.lua
+
+'module: cast-bars':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Modules/FocusCastBar*.lua
+          - Config/FocusCastBar.lua
+          - Modules/GcdTracker*.lua
+          - Config/GcdTracker.lua
+
+'module: range-check':
+  - changed-files:
+      - any-glob-to-any-file:
+          - Modules/RangeCheck*.lua
+          - Config/RangeCheck.lua
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+
+toc:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.toc'
+
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+feature:
+  - head-branch: ['^feat/', '^feature/']
+
+bugfix:
+  - head-branch: ['^fix/', '^bugfix/', '^hotfix/']
+
+chore:
+  - head-branch: ['^chore/', '^refactor/', '^perf/']
+
+release:
+  - base-branch: '^main$'
+    head-branch: '^release/'
