@@ -52,6 +52,7 @@ Data/LayoutUtil.lua
 Core/Init.lua
 Core/PerfMonitor.lua
 Modules/MinimapButton.lua
+Modules/GlobalFonts.lua
 UI/MainFrame.lua
 UI/Sidebar.lua
 Modules/CombatTimerDisplay.lua

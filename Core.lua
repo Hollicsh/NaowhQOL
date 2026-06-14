@@ -350,7 +350,11 @@ local aceDBDefaults = {
         },
 
         general = {
-            globalFont = NAOWH_FONT,
+            globalGameFont = NAOWH_FONT,
+            qolFontOverride = false,
+            qolFont = NAOWH_FONT,
+            combatFontOverride = false,
+            combatFont = NAOWH_FONT,
             disableLoginMessage = false,
         },
 
@@ -735,9 +739,41 @@ local function CleanupSlashCommands()
     sc.commands = cleaned
 end
 
+local function MigrateFontSettings()
+    local general = NaowhQOL and NaowhQOL.general
+    if not general then return end
+
+    local legacyQOLFont = rawget(general, "globalFont")
+    if rawget(general, "globalGameFont") == nil then
+        general.globalGameFont = NAOWH_FONT
+    end
+
+    if rawget(general, "qolFontOverride") == nil then
+        if legacyQOLFont and legacyQOLFont ~= NAOWH_FONT then
+            general.qolFontOverride = true
+            general.qolFont = rawget(general, "qolFont") or legacyQOLFont
+        else
+            general.qolFontOverride = false
+        end
+    end
+
+    general.qolFont = rawget(general, "qolFont") or general.globalGameFont or NAOWH_FONT
+
+    if rawget(general, "combatFontOverride") == nil then
+        general.combatFontOverride = false
+    end
+
+    general.combatFont = rawget(general, "combatFont") or general.globalGameFont or NAOWH_FONT
+
+    if ns.Media and ns.Media.MigrateDB then
+        ns.Media.MigrateDB(general, {"globalGameFont", "qolFont", "combatFont"}, nil, nil)
+    end
+end
+
 function ns:OnProfileChanged()
     NaowhQOL = ns.db.profile
 
+    MigrateFontSettings()
     CleanupSlashCommands()
 
     if NaowhQOL.coTank then
@@ -763,6 +799,10 @@ function ns:OnProfileChanged()
     if ns.SettingsIO then
         ns.SettingsIO:TriggerRefreshAll()
     end
+
+    if ns.GlobalFonts then
+        ns.GlobalFonts:ApplyAll()
+    end
 end
 
 local function InitializeDB()
@@ -773,6 +813,8 @@ local function InitializeDB()
     NaowhQOL = ns.db.profile
 
     NaowhQOL_Profiles = NaowhQOLDB
+
+    MigrateFontSettings()
 
     ns.db.RegisterCallback(ns, "OnProfileChanged", "OnProfileChanged")
     ns.db.RegisterCallback(ns, "OnProfileCopied", "OnProfileChanged")
@@ -824,6 +866,10 @@ local function InitializeDB()
     end
 
     CleanupSlashCommands()
+
+    if ns.GlobalFonts then
+        ns.GlobalFonts:ApplyAll()
+    end
 end
 
 local function DefaultFontPath()

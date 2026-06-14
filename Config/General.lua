@@ -52,6 +52,47 @@ local FONT_MODULES = {
     { db = "potionReady",     key = "font" },
 }
 
+local function GetGlobalFontName(db)
+    if ns.GlobalFonts then
+        return ns.GlobalFonts:GetGlobalFontName()
+    end
+    return db.globalGameFont or ns.Media.DEFAULT_FONT
+end
+
+local function GetQOLFontName(db)
+    if ns.GlobalFonts then
+        return ns.GlobalFonts:GetQOLFontName()
+    end
+    if db.qolFontOverride and db.qolFont then
+        return db.qolFont
+    end
+    return GetGlobalFontName(db)
+end
+
+local function GetCombatFontName(db)
+    if ns.GlobalFonts then
+        return ns.GlobalFonts:GetCombatFontName()
+    end
+    if db.combatFontOverride and db.combatFont then
+        return db.combatFont
+    end
+    return GetGlobalFontName(db)
+end
+
+local function ApplyQOLModuleFont(fontName)
+    if ns.GlobalFonts and ns.GlobalFonts.ApplyQOLFont then
+        ns.GlobalFonts:ApplyQOLFont(fontName)
+        return
+    end
+
+    for _, entry in ipairs(FONT_MODULES) do
+        local modDb = NaowhQOL[entry.db]
+        if modDb then
+            modDb[entry.key] = fontName
+        end
+    end
+end
+
 local MODULE_DISPLAY_NAMES = {
     combatTimer     = "Combat Timer",
     combatAlert     = "Combat Alert",
@@ -171,42 +212,120 @@ function ns:InitGeneral()
         local RelayoutSections
 
         local fontWrap, fontContent = W:CreateCollapsibleSection(sections, {
-            text = L["GENERAL_SECTION_FONT"],
+            text = L["GENERAL_SECTION_FONTS"],
             startOpen = true,
             onCollapse = function() if RelayoutSections then RelayoutSections() end end,
         })
 
         local fontDescLabel = fontContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         fontDescLabel:SetPoint("TOPLEFT", 10, -5)
-        fontDescLabel:SetText(W.Colorize(L["GENERAL_GLOBAL_FONT_DESC"], C.GRAY))
-        fontDescLabel:SetWidth(450)
+        fontDescLabel:SetText(W.Colorize(L["GENERAL_FONT_DESC"], C.GRAY))
+        fontDescLabel:SetWidth(650)
         fontDescLabel:SetJustifyH("LEFT")
 
-        W:CreateFontPicker(fontContent, 10, -30, db.globalFont or ns.Media.DEFAULT_FONT, function(name)
-            db.globalFont = name
+        local function CreateFontLabel(text, y)
+            local label = fontContent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            label:SetPoint("TOPLEFT", 10, y)
+            label:SetText(text)
+            return label
+        end
+
+        local qolPicker
+        local combatPicker
+
+        CreateFontLabel(L["GENERAL_GAME_FONT"], -35)
+        W:CreateFontPicker(fontContent, 10, -58, GetGlobalFontName(db), function(name)
+            db.globalGameFont = name
+            if not db.qolFontOverride then
+                db.qolFont = name
+                if qolPicker then qolPicker:SetFont(name) end
+            end
+            if not db.combatFontOverride then
+                db.combatFont = name
+                if combatPicker then combatPicker:SetFont(name) end
+            end
         end)
 
+        local gameDesc = fontContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        gameDesc:SetPoint("LEFT", fontContent, "TOPLEFT", 325, -71)
+        gameDesc:SetText(W.Colorize(L["GENERAL_GAME_FONT_DESC"], C.GRAY))
+        gameDesc:SetWidth(380)
+        gameDesc:SetJustifyH("LEFT")
+
+        CreateFontLabel(L["GENERAL_QOL_FONT"], -105)
+        local qolOverrideCB
+        qolOverrideCB = W:CreateCheckbox(fontContent, {
+            label = L["GENERAL_QOL_FONT_OVERRIDE"],
+            db = db, key = "qolFontOverride",
+            x = 10, y = -128,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function(checked)
+                if not checked then
+                    db.qolFont = GetGlobalFontName(db)
+                    if qolPicker then qolPicker:SetFont(db.qolFont) end
+                end
+            end,
+        })
+        qolPicker = W:CreateFontPicker(fontContent, 30, -155, GetQOLFontName(db), function(name)
+            db.qolFont = name
+            db.qolFontOverride = true
+            if qolOverrideCB then qolOverrideCB:SetChecked(true) end
+        end)
+
+        local qolDesc = fontContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        qolDesc:SetPoint("LEFT", fontContent, "TOPLEFT", 325, -168)
+        qolDesc:SetText(W.Colorize(L["GENERAL_QOL_FONT_DESC"], C.GRAY))
+        qolDesc:SetWidth(380)
+        qolDesc:SetJustifyH("LEFT")
+
+        CreateFontLabel(L["GENERAL_COMBAT_FONT"], -205)
+        local combatOverrideCB
+        combatOverrideCB = W:CreateCheckbox(fontContent, {
+            label = L["GENERAL_COMBAT_FONT_OVERRIDE"],
+            db = db, key = "combatFontOverride",
+            x = 10, y = -228,
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = function(checked)
+                if not checked then
+                    db.combatFont = GetGlobalFontName(db)
+                    if combatPicker then combatPicker:SetFont(db.combatFont) end
+                end
+            end,
+        })
+        combatPicker = W:CreateFontPicker(fontContent, 30, -255, GetCombatFontName(db), function(name)
+            db.combatFont = name
+            db.combatFontOverride = true
+            if combatOverrideCB then combatOverrideCB:SetChecked(true) end
+        end)
+
+        local combatDesc = fontContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        combatDesc:SetPoint("LEFT", fontContent, "TOPLEFT", 325, -268)
+        combatDesc:SetText(W.Colorize(L["GENERAL_COMBAT_FONT_DESC"], C.GRAY))
+        combatDesc:SetWidth(380)
+        combatDesc:SetJustifyH("LEFT")
+
         local applyBtn = W:CreateButton(fontContent, {
-            text = L["GENERAL_APPLY_GLOBAL_FONT"],
+            text = L["GENERAL_APPLY_FONTS"],
             width = 200, height = 26,
         })
-        applyBtn:SetPoint("TOPLEFT", fontContent, "TOPLEFT", 10, -75)
+        applyBtn:SetPoint("TOPLEFT", fontContent, "TOPLEFT", 10, -300)
         applyBtn:SetScript("OnClick", function()
-            local fontName = db.globalFont
-            if not fontName then return end
-            for _, entry in ipairs(FONT_MODULES) do
-                local modDb = NaowhQOL[entry.db]
-                if modDb then
-                    modDb[entry.key] = fontName
-                end
+            db.globalGameFont = db.globalGameFont or ns.Media.DEFAULT_FONT
+            db.qolFont = db.qolFont or db.globalGameFont
+            db.combatFont = db.combatFont or db.globalGameFont
+
+            ApplyQOLModuleFont(GetQOLFontName(db))
+            if ns.GlobalFonts then
+                ns.GlobalFonts:ApplyAll()
             end
             if ns.SettingsIO then ns.SettingsIO:MarkDirty() end
             W:InvalidateAllCachedPanels()
             RefreshAllModuleDisplays()
-            ns:Log(L["GENERAL_GLOBAL_FONT_APPLIED"], "00ff00")
+            ns:Log(L["GENERAL_FONTS_APPLIED"], "00ff00")
+            StaticPopup_Show("NAOWH_QOL_RELOAD")
         end)
 
-        fontContent:SetHeight(110)
+        fontContent:SetHeight(340)
         fontWrap:RecalcHeight()
 
         local lockWrap, lockContent = W:CreateCollapsibleSection(sections, {
