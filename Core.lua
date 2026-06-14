@@ -350,9 +350,8 @@ local aceDBDefaults = {
         },
 
         general = {
-            globalGameFont = NAOWH_FONT,
-            qolFontOverride = false,
-            qolFont = NAOWH_FONT,
+            globalFont = NAOWH_FONT,
+            applyGameFontToBlizzard = false,
             combatFontOverride = false,
             combatFont = NAOWH_FONT,
             disableLoginMessage = false,
@@ -744,29 +743,27 @@ local function MigrateFontSettings()
     if not general then return end
 
     local legacyQOLFont = rawget(general, "globalFont")
-    if rawget(general, "globalGameFont") == nil then
-        general.globalGameFont = NAOWH_FONT
-    end
+    general.globalFont = legacyQOLFont
+        or rawget(general, "qolFont")
+        or rawget(general, "globalGameFont")
+        or NAOWH_FONT
 
-    if rawget(general, "qolFontOverride") == nil then
-        if legacyQOLFont and legacyQOLFont ~= NAOWH_FONT then
-            general.qolFontOverride = true
-            general.qolFont = rawget(general, "qolFont") or legacyQOLFont
-        else
-            general.qolFontOverride = false
-        end
+    if rawget(general, "applyGameFontToBlizzard") == nil then
+        general.applyGameFontToBlizzard = false
     end
-
-    general.qolFont = rawget(general, "qolFont") or general.globalGameFont or NAOWH_FONT
 
     if rawget(general, "combatFontOverride") == nil then
         general.combatFontOverride = false
     end
 
-    general.combatFont = rawget(general, "combatFont") or general.globalGameFont or NAOWH_FONT
+    general.combatFont = rawget(general, "combatFont") or general.globalFont or NAOWH_FONT
+
+    general.globalGameFont = nil
+    general.qolFontOverride = nil
+    general.qolFont = nil
 
     if ns.Media and ns.Media.MigrateDB then
-        ns.Media.MigrateDB(general, {"globalGameFont", "qolFont", "combatFont"}, nil, nil)
+        ns.Media.MigrateDB(general, {"globalFont", "combatFont"}, nil, nil)
     end
 end
 

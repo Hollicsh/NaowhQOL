@@ -160,14 +160,10 @@ end
 
 function M:GetGlobalFontName()
     local db = GetGeneralDB()
-    return db.globalGameFont or DEFAULT_FONT
+    return db.globalFont or db.qolFont or db.globalGameFont or DEFAULT_FONT
 end
 
 function M:GetQOLFontName()
-    local db = GetGeneralDB()
-    if db.qolFontOverride and db.qolFont then
-        return db.qolFont
-    end
     return self:GetGlobalFontName()
 end
 
@@ -177,6 +173,11 @@ function M:GetCombatFontName()
         return db.combatFont
     end
     return self:GetGlobalFontName()
+end
+
+function M:IsGameFontEnabled()
+    local db = GetGeneralDB()
+    return db.applyGameFontToBlizzard == true
 end
 
 local function ApplyFontObject(fontObject, fontPath, fallbackSize, fallbackFlags)
@@ -200,6 +201,10 @@ local function ApplyFontObject(fontObject, fontPath, fallbackSize, fallbackFlags
 end
 
 function M:ApplyGameFont()
+    if not self:IsGameFontEnabled() then
+        return
+    end
+
     local fontPath = ResolveFont(self:GetGlobalFontName())
 
     _G.STANDARD_TEXT_FONT = fontPath
@@ -212,6 +217,11 @@ function M:ApplyGameFont()
 end
 
 function M:ApplyCombatFont()
+    local db = GetGeneralDB()
+    if not db.combatFontOverride and not self:IsGameFontEnabled() then
+        return
+    end
+
     local fontPath = ResolveFont(self:GetCombatFontName())
 
     _G.DAMAGE_TEXT_FONT = fontPath
