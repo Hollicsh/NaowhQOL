@@ -237,6 +237,8 @@ ns:RegisterLocale("ruRU", {
     DRAGON_ICON_BORDER_COLOR = "Цвет рамки иконки",
     DRAGON_ICON_BORDER_OPACITY = "Прозрачность рамки иконки",
     DRAGON_ICON_BORDER_SIZE = "Размер рамки иконки",
+    DRAGON_ICON_FONT = "Шрифт иконки",
+    DRAGON_ICON_FONT_SIZE = "Размер шрифта иконки",
     DRAGON_SPEED_TEXT_OFFSET_X = "Смещение текста скорости по оси X",
     DRAGON_SPEED_TEXT_OFFSET_Y = "Смещение текста скорости по оси Y",
 
@@ -348,6 +350,9 @@ ns:RegisterLocale("ruRU", {
     MODULES_COPY_KEY = "Клавиша:",
     MODULES_COPY_SLASH = "Слеш-команды: /copy, /ncopy или /naocopy [Название фрейма]",
     MODULES_SECTION_DEATH = "СМЕРТЬ/ПРОЧНОСТЬ/РЕМОНТ",
+    MODULES_SECTION_COMBAT = "БОЙ",
+    MODULES_COMBAT_CURSOR_CLIP = "Блокировать курсор в бою",
+    MODULES_COMBAT_CURSOR_CLIP_DESC = "Удерживает курсор в окне WoW во время боя",
     MODULES_DONT_RELEASE = "Не отпускать дух",
     MODULES_DONT_RELEASE_DESC = "Удерживайте Alt 1 сек. для выпуска духа",
     MODULES_DONT_RELEASE_TIMER = "Удерживайте Alt %.1f",

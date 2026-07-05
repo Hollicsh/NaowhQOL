@@ -1,5 +1,6 @@
 nul
 *.bak
+Tools/
 
 # External libs (added dynamically in release)
 Libs/LibStub/
