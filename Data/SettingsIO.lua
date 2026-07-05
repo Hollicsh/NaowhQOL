@@ -57,6 +57,7 @@ local TYPE_SCHEMAS = {
         bgColorR = "number", bgColorG = "number", bgColorB = "number", bgAlpha = "number",
         surgeIconSize = "number", surgeAnchor = "string",
         surgeOffsetX = "number", surgeOffsetY = "number",
+        surgeIconFont = "string", surgeIconFontSize = "number",
         anchorFrame = "string", anchorTo = "string", matchAnchorWidth = "boolean",
     },
     misc = {
@@ -66,6 +67,7 @@ local TYPE_SCHEMAS = {
         hideZoneText = "boolean", autoRepair = "boolean", guildRepair = "boolean",
         durabilityWarning = "boolean", durabilityThreshold = "number",
         autoSlotKeystone = "boolean", skipQueueConfirm = "boolean",
+        combatCursorClip = "boolean",
     },
     gcdTracker = {
         enabled = "boolean", unlock = "boolean", duration = "number",

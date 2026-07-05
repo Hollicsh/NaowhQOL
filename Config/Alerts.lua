@@ -6,7 +6,7 @@ local W = ns.Widgets
 local C = ns.COLORS
 
 local function RefreshAll()
-    if ns.SpellAlerts then ns.SpellAlerts.Apply() end
+    if ns.SpellAlerts then ns.SpellAlerts.Apply(true) end
     if ns.DispelGlow then ns.DispelGlow.Refresh() end
     if ns.PotionReadyDisplay then ns.PotionReadyDisplay.Update() end
 end

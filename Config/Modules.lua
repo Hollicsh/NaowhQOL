@@ -252,6 +252,28 @@ function ns:InitModuleOptions()
         durContent:SetHeight(225)
         durWrap:RecalcHeight()
 
+        local combatWrap, combatContent = W:CreateCollapsibleSection(sections, {
+            text = L["MODULES_SECTION_COMBAT"],
+            startOpen = false,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+        })
+
+        W:CreateCheckbox(combatContent, {
+            label = L["MODULES_COMBAT_CURSOR_CLIP"],
+            db = db, key = "combatCursorClip",
+            x = 10, y = -5, template = "ChatConfigCheckButtonTemplate",
+            description = L["MODULES_COMBAT_CURSOR_CLIP_DESC"],
+            descWidth = 350,
+            onChange = function(enabled)
+                if not enabled and ns.BattleCursorClip then
+                    ns.BattleCursorClip.Restore()
+                end
+            end,
+        })
+
+        combatContent:SetHeight(55)
+        combatWrap:RecalcHeight()
+
         local questWrap, questContent = W:CreateCollapsibleSection(sections, {
             text = L["MODULES_SECTION_QUESTING"],
             startOpen = false,
@@ -274,7 +296,7 @@ function ns:InitModuleOptions()
         questContent:SetHeight(95)
         questWrap:RecalcHeight()
 
-        local sectionList = { itemsWrap, clutterWrap, copyWrap, durWrap, questWrap }
+        local sectionList = { itemsWrap, clutterWrap, copyWrap, durWrap, combatWrap, questWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(sectionList) do

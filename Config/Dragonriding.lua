@@ -413,7 +413,24 @@ function ns:InitDragonriding()
             { db = db, key = "iconBorderSize", moduleName = "dragonriding" })
         PlaceSlider(iconBorderSizeSlider, iconContent, GI:Col(1), GI:Row(4))
 
-        iconContent:SetHeight(GI:Height(4))
+        local iconFontLabel = iconContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        iconFontLabel:SetPoint("TOPLEFT", iconContent, "TOPLEFT", GI:Col(1), GI:Row(5) + 5)
+        iconFontLabel:SetText(W.Colorize(L["DRAGON_ICON_FONT"], C.BLUE))
+
+        W:CreateFontPicker(iconContent, GI:Col(1), GI:Row(5) - 15,
+            db.surgeIconFont or ns.Media.DEFAULT_FONT,
+            function(name)
+                db.surgeIconFont = name
+                drRefresh()
+            end)
+
+        local iconFontSizeSlider = W:CreateAdvancedSlider(iconContent,
+            W.Colorize(L["DRAGON_ICON_FONT_SIZE"], C.ORANGE), 6, 32, -65, 1, false,
+            function(val) db.surgeIconFontSize = val; drRefresh() end,
+            { db = db, key = "surgeIconFontSize", moduleName = "dragonriding" })
+        PlaceSlider(iconFontSizeSlider, iconContent, GI:Col(2), GI:Row(5))
+
+        iconContent:SetHeight(GI:Height(5))
         iconWrap:RecalcHeight()
 
         local allSections = { layWrap, anchorWrap, appWrap, behWrap, featWrap, iconWrap }

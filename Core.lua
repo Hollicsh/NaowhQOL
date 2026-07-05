@@ -77,6 +77,7 @@ local DRAGONRIDING_DEFAULTS = {
     speedFont = NAOWH_FONT, speedFontSize = 12,
     speedTextOffsetX = 0, speedTextOffsetY = 0,
     surgeIconSize = 0, surgeAnchor = "RIGHT", surgeOffsetX = 6, surgeOffsetY = 0,
+    surgeIconFont = NAOWH_FONT, surgeIconFontSize = 11,
     anchorFrame = "UIParent", anchorTo = "BOTTOM", matchAnchorWidth = false,
     bgColorR = 0.12, bgColorG = 0.12, bgColorB = 0.12, bgAlpha = 0.8,
     borderColorR = 0, borderColorG = 0, borderColorB = 0, borderAlpha = 1.0, borderSize = 1,
@@ -406,6 +407,7 @@ local aceDBDefaults = {
             deathReleaseProtection = false,
             ahCurrentExpansion = false,
             hideMinimapIcon = false,
+            combatCursorClip = false,
         },
 
         slashCommands = {
@@ -487,6 +489,9 @@ local aceDBDefaults = {
             lastSection = "classBuffs",
             chatReportEnabled = false,
         },
+
+        cvarManaged = {},
+        cvarExternal = {},
     },
     char = {
         specProfiles = {},

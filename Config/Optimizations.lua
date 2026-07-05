@@ -372,6 +372,9 @@ function ns:ApplyFPSOptimization()
     for _, setting in ipairs(OPTIMAL_FPS_CVARS) do
         if pcall(SetCVar, setting.cvar, setting.optimal) then
             successCount = successCount + 1
+            if ns.CVarSync then
+                ns.CVarSync:RecordApplied(setting.cvar, setting.optimal)
+            end
         else
             failCount = failCount + 1
         end
@@ -414,9 +417,17 @@ function ns:ApplySingleCVar(cvar, value)
         if value == "0" then
             pcall(SetCVar, "maxFPSToggle", "0")
             pcall(SetCVar, "maxFPS", "0")
+            if ns.CVarSync then
+                ns.CVarSync:RecordApplied("maxFPSToggle", "0")
+                ns.CVarSync:RecordApplied("maxFPS", "0")
+            end
         else
             pcall(SetCVar, "maxFPSToggle", "1")
             pcall(SetCVar, "maxFPS", tostring(value))
+            if ns.CVarSync then
+                ns.CVarSync:RecordApplied("maxFPSToggle", "1")
+                ns.CVarSync:RecordApplied("maxFPS", value)
+            end
         end
 
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
@@ -426,6 +437,9 @@ function ns:ApplySingleCVar(cvar, value)
 
     local applySuccess = pcall(SetCVar, cvar, tostring(value))
     if applySuccess then
+        if ns.CVarSync then
+            ns.CVarSync:RecordApplied(cvar, value)
+        end
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
             .. W.Colorize(string_format(L["OPT_MSG_CVAR_SET"], cvar, tostring(value)), C.SUCCESS))
         return true
@@ -463,6 +477,9 @@ function ns:RevertSingleCVar(cvar)
     local success = pcall(SetCVar, cvar, tostring(savedValue))
 
     if success then
+        if ns.CVarSync then
+            ns.CVarSync:RecordApplied(cvar, savedValue)
+        end
         print(W.Colorize("Naowh QOL:", C.BLUE) .. " "
             .. W.Colorize(string_format(L["OPT_MSG_CVAR_REVERTED"], cvar, tostring(savedValue)), C.SUCCESS))
         NaowhQOL.individualBackups[cvar] = nil
@@ -945,13 +962,21 @@ function ns:InitOptOptions()
             print("|cffff6600NaowhQOL:|r Failed to get SpellQueueWindow CVar")
             spellQueueValue = 50
         end
+        if ns.CVarSync then
+            ns.CVarSync:AdoptLive("SpellQueueWindow", "spellQueueWindow")
+            spellQueueValue = tonumber(GetCVar("SpellQueueWindow")) or spellQueueValue
+        end
 
         local queueSlider = W:CreateAdvancedSlider(advContent,
             W.Colorize(L["OPT_SQW_LABEL"], C.BLUE), 50, 500, -5, 1, false,
             function(val)
-                SetCVar("SpellQueueWindow", val)
-                if not NaowhQOL then NaowhQOL = {} end
-                NaowhQOL.spellQueueWindow = val
+                if ns.CVarSync then
+                    ns.CVarSync:Apply("SpellQueueWindow", val, "spellQueueWindow")
+                else
+                    SetCVar("SpellQueueWindow", val)
+                    if not NaowhQOL then NaowhQOL = {} end
+                    NaowhQOL.spellQueueWindow = val
+                end
             end, { value = spellQueueValue })
         PlaceSlider(queueSlider, advContent, 110, -5)
 

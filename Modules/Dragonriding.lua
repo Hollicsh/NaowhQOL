@@ -43,7 +43,9 @@ local DEFAULTS = {
     speedFont = "Naowh",
     speedFontSize = 12, speedTextOffsetX = 0, speedTextOffsetY = 0,
     surgeIconSize = 0, surgeAnchor = "RIGHT",
-    surgeOffsetX = 6, surgeOffsetY = 0, anchorFrame = "UIParent", anchorTo = "BOTTOM",
+    surgeOffsetX = 6, surgeOffsetY = 0,
+    surgeIconFont = "Naowh", surgeIconFontSize = 11,
+    anchorFrame = "UIParent", anchorTo = "BOTTOM",
     matchAnchorWidth = false,
     bgColorR = 0.12, bgColorG = 0.12, bgColorB = 0.12, bgAlpha = 0.8,
     borderColorR = 0, borderColorG = 0, borderColorB = 0, borderAlpha = 1, borderSize = 1,
@@ -70,7 +72,7 @@ local speedBar, speedText, speedTextFrame, thrillTick
 local chargeBars = {}
 local chargeDividers = {}
 local secondWindBars = {}
-local surgeFrame, surgeCooldown, surgeBorder
+local surgeFrame, surgeCooldown, surgeCooldownText, surgeBorder
 local eventFrame
 local pendingCdmShow = false
 local pendingCdmHide = false
@@ -338,6 +340,14 @@ local function UpdateLayout()
             local ibR, ibG, ibB = W.GetEffectiveColor(db, "iconBorderColorR", "iconBorderColorG", "iconBorderColorB", "iconBorderColorUseClassColor")
             surgeBorder:SetBackdropBorderColor(ibR, ibG, ibB, Get("iconBorderAlpha"))
         end
+
+        if surgeCooldownText then
+            surgeCooldownText:SetFont(
+                ns.Media.ResolveFont(Get("surgeIconFont")),
+                Get("surgeIconFontSize") or 11,
+                "OUTLINE"
+            )
+        end
     end
 
     local barTex = ns.Media.ResolveBar(Get("barStyle")) or BAR_TEXTURE
@@ -389,14 +399,35 @@ local function UpdateSecondWind(charges, totalFilled)
     end
 end
 
+local function UpdateSurgeCooldownText(startTime, duration)
+    if not surgeCooldownText then return end
+    if startTime <= 0 or duration <= 0 then
+        surgeCooldownText:SetText("")
+        return
+    end
+    local remaining = duration - (GetTime() - startTime)
+    if remaining <= 0 then
+        surgeCooldownText:SetText("")
+    elseif remaining >= 10 then
+        surgeCooldownText:SetFormattedText("%d", math.ceil(remaining))
+    else
+        surgeCooldownText:SetFormattedText("%.1f", remaining)
+    end
+end
+
 local function UpdateWhirlingSurge(startTime, duration)
     if not Get("showWhirlingSurge") or not surgeFrame then
         if surgeFrame then surgeFrame:Hide() end
+        if surgeCooldownText then surgeCooldownText:SetText("") end
         return
     end
     surgeFrame:Show()
     if startTime > 0 and duration > 0 then
         surgeCooldown:SetCooldown(startTime, duration)
+        UpdateSurgeCooldownText(startTime, duration)
+    else
+        surgeCooldown:Clear()
+        if surgeCooldownText then surgeCooldownText:SetText("") end
     end
 end
 
@@ -713,7 +744,12 @@ local function BuildUI()
     surgeCooldown:SetDrawEdge(false)
     surgeCooldown:SetDrawBling(false)
     surgeCooldown:SetSwipeColor(0, 0, 0, 0.8)
-    surgeCooldown:SetHideCountdownNumbers(false)
+    surgeCooldown:SetHideCountdownNumbers(true)
+
+    surgeCooldownText = surgeFrame:CreateFontString(nil, "OVERLAY")
+    surgeCooldownText:SetPoint("CENTER", surgeFrame, "CENTER", 0, 0)
+    surgeCooldownText:SetFont(ns.Media.ResolveFont(Get("surgeIconFont")), Get("surgeIconFontSize"), "OUTLINE")
+    surgeCooldownText:SetTextColor(1, 1, 1, 1)
 
     surgeBorder = CreateFrame("Frame", nil, surgeFrame, "BackdropTemplate")
     surgeBorder:SetFrameLevel(surgeFrame:GetFrameLevel() + 3)

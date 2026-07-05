@@ -237,6 +237,8 @@ ns:RegisterLocale("enUS", {
     DRAGON_ICON_BORDER_COLOR = "Icon Border Color",
     DRAGON_ICON_BORDER_OPACITY = "Icon Border Opacity",
     DRAGON_ICON_BORDER_SIZE = "Icon Border Size",
+    DRAGON_ICON_FONT = "Icon Font",
+    DRAGON_ICON_FONT_SIZE = "Icon Font Size",
     DRAGON_SPEED_TEXT_OFFSET_X = "Speed Text X",
     DRAGON_SPEED_TEXT_OFFSET_Y = "Speed Text Y",
 
@@ -348,6 +350,9 @@ ns:RegisterLocale("enUS", {
     MODULES_COPY_KEY = "Key:",
     MODULES_COPY_SLASH = "Slash commands: /copy, /ncopy, or /naocopy [FrameName]",
     MODULES_SECTION_DEATH = "DEATH / DURABILITY / REPAIR",
+    MODULES_SECTION_COMBAT = "COMBAT",
+    MODULES_COMBAT_CURSOR_CLIP = "Lock Cursor in Combat",
+    MODULES_COMBAT_CURSOR_CLIP_DESC = "Clip the mouse to the WoW window while in combat",
     MODULES_DONT_RELEASE = "Don't Release",
     MODULES_DONT_RELEASE_DESC = "Hold Alt 1s to release spirit",
     MODULES_DONT_RELEASE_TIMER = "Hold Alt %.1f",
