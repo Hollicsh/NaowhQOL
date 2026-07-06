@@ -72,7 +72,9 @@ local speedBar, speedText, speedTextFrame, thrillTick
 local chargeBars = {}
 local chargeDividers = {}
 local secondWindBars = {}
-local surgeFrame, surgeCooldown, surgeCooldownText, surgeBorder
+local surgeFrame, surgeCooldown, surgeTextFrame, surgeCooldownText, surgeBorder
+local surgeCdStart, surgeCdDuration = 0, 0
+local lastSurgeDisplayText = ""
 local eventFrame
 local pendingCdmShow = false
 local pendingCdmHide = false
@@ -348,6 +350,9 @@ local function UpdateLayout()
                 "OUTLINE"
             )
         end
+        if surgeTextFrame and surgeCooldown then
+            surgeTextFrame:SetFrameLevel(surgeCooldown:GetFrameLevel() + 2)
+        end
     end
 
     local barTex = ns.Media.ResolveBar(Get("barStyle")) or BAR_TEXTURE
@@ -399,35 +404,59 @@ local function UpdateSecondWind(charges, totalFilled)
     end
 end
 
+local function FormatSurgeRemaining(remaining)
+    if remaining <= 0 then return "" end
+    if remaining < 3 then
+        return string.format("%.1f", remaining)
+    end
+    return tostring(math.ceil(remaining))
+end
+
 local function UpdateSurgeCooldownText(startTime, duration)
     if not surgeCooldownText then return end
     if startTime <= 0 or duration <= 0 then
-        surgeCooldownText:SetText("")
+        if lastSurgeDisplayText ~= "" then
+            lastSurgeDisplayText = ""
+            surgeCooldownText:SetText("")
+        end
         return
     end
     local remaining = duration - (GetTime() - startTime)
-    if remaining <= 0 then
+    local text = FormatSurgeRemaining(remaining)
+    if text ~= lastSurgeDisplayText then
+        lastSurgeDisplayText = text
+        surgeCooldownText:SetText(text)
+    end
+end
+
+local function ClearSurgeCooldown()
+    surgeCdStart = 0
+    surgeCdDuration = 0
+    lastSurgeDisplayText = ""
+    if surgeCooldown then
+        surgeCooldown:Clear()
+    end
+    if surgeCooldownText then
         surgeCooldownText:SetText("")
-    elseif remaining >= 10 then
-        surgeCooldownText:SetFormattedText("%d", math.ceil(remaining))
-    else
-        surgeCooldownText:SetFormattedText("%.1f", remaining)
     end
 end
 
 local function UpdateWhirlingSurge(startTime, duration)
     if not Get("showWhirlingSurge") or not surgeFrame then
         if surgeFrame then surgeFrame:Hide() end
-        if surgeCooldownText then surgeCooldownText:SetText("") end
+        ClearSurgeCooldown()
         return
     end
     surgeFrame:Show()
     if startTime > 0 and duration > 0 then
-        surgeCooldown:SetCooldown(startTime, duration)
+        if startTime ~= surgeCdStart or duration ~= surgeCdDuration then
+            surgeCdStart = startTime
+            surgeCdDuration = duration
+            surgeCooldown:SetCooldown(startTime, duration)
+        end
         UpdateSurgeCooldownText(startTime, duration)
     else
-        surgeCooldown:Clear()
-        if surgeCooldownText then surgeCooldownText:SetText("") end
+        ClearSurgeCooldown()
     end
 end
 
@@ -745,9 +774,15 @@ local function BuildUI()
     surgeCooldown:SetDrawBling(false)
     surgeCooldown:SetSwipeColor(0, 0, 0, 0.8)
     surgeCooldown:SetHideCountdownNumbers(true)
+    surgeCooldown:SetFrameLevel(surgeFrame:GetFrameLevel() + 1)
 
-    surgeCooldownText = surgeFrame:CreateFontString(nil, "OVERLAY")
-    surgeCooldownText:SetPoint("CENTER", surgeFrame, "CENTER", 0, 0)
+    surgeTextFrame = CreateFrame("Frame", nil, surgeFrame)
+    surgeTextFrame:SetAllPoints(surgeFrame)
+    surgeTextFrame:EnableMouse(false)
+    surgeTextFrame:SetFrameLevel(surgeCooldown:GetFrameLevel() + 2)
+
+    surgeCooldownText = surgeTextFrame:CreateFontString(nil, "OVERLAY")
+    surgeCooldownText:SetPoint("CENTER", surgeTextFrame, "CENTER", 0, 0)
     surgeCooldownText:SetFont(ns.Media.ResolveFont(Get("surgeIconFont")), Get("surgeIconFontSize"), "OUTLINE")
     surgeCooldownText:SetTextColor(1, 1, 1, 1)
 
