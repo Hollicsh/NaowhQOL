@@ -211,6 +211,9 @@ local FOCUS_CAST_BAR_DEFAULTS = {
     textColorR = 1, textColorG = 1, textColorB = 1, hideFriendlyCasts = false,
     showEmpowerStages = true, showShieldIcon = true, showInterruptTick = true, tickColorR = 1, tickColorG = 1, tickColorB = 1, tickColorUseClassColor = false, colorNonInterrupt = true,
     nonIntColorR = 0.8, nonIntColorG = 0.2, nonIntColorB = 0.2,
+    showCastTarget = true, hideNonInterruptible = false,
+    interruptedFadeTime = 0.75, showInterrupter = false,
+    interruptedColorR = 0.51, interruptedColorG = 0.51, interruptedColorB = 0.51,
     soundEnabled = false, sound = "Raid Warning", ttsEnabled = false, ttsMessage = "Interrupt", ttsVolume = 50, ttsRate = 0,
     hideOnCooldown = false,
 }

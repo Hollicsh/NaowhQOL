@@ -1026,6 +1026,23 @@ function ns:InitBuffWatcherV2()
         rcContent:SetHeight(math.abs(rcG:Row(3)) + 40)
         rcWrap:RecalcHeight()
 
+        local function rcApplyPosition()
+            local frame = ns.BWV2ReportCard and ns.BWV2ReportCard.frame
+            if frame and db.reportCardPosition then
+                ns.Widgets.ApplyFramePosition(frame, db.reportCardPosition)
+            end
+            rcPreview()
+        end
+
+        local rcPosWrap = W:CreatePositionSection(sectionContainer, {
+            title = L["BWV2_REPORT_CARD_POSITION"],
+            db = db,
+            tableKey = "reportCardPosition",
+            pointKey = "point",
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = rcApplyPosition,
+        })
+
         local bdaWrap, bdaContent = W:CreateCollapsibleSection(sectionContainer, {
             text = L["BWV2_SECTION_BUFF_DROP"] or "BUFF DROP ALERT",
             startOpen = (lastSection == "buffDropAlert"),
@@ -1460,6 +1477,23 @@ function ns:InitBuffWatcherV2()
         bdaContent:SetHeight(math.abs(bdaRow9Y) + 55)
         bdaWrap:RecalcHeight()
 
+        local function bdaApplyPosition()
+            local frame = ns.BWV2BuffDropAlert and ns.BWV2BuffDropAlert.frame
+            if frame and db.buffDropPosition then
+                ns.Widgets.ApplyFramePosition(frame, db.buffDropPosition)
+            end
+            bdaPreview()
+        end
+
+        local bdaPosWrap = W:CreatePositionSection(sectionContainer, {
+            title = L["BWV2_BUFF_DROP_POSITION"],
+            db = db,
+            tableKey = "buffDropPosition",
+            pointKey = "point",
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = bdaApplyPosition,
+        })
+
         local threshWrap, threshContent = W:CreateCollapsibleSection(sectionContainer, {
             text = L["BWV2_SECTION_THRESHOLDS"],
             startOpen = (lastSection == "thresholds"),
@@ -1588,9 +1622,17 @@ function ns:InitBuffWatcherV2()
             rcWrap:SetPoint("TOPLEFT", sectionContainer, "TOPLEFT", 0, yOffset)
             yOffset = yOffset - rcWrap:GetHeight() - 5
 
+            rcPosWrap:ClearAllPoints()
+            rcPosWrap:SetPoint("TOPLEFT", sectionContainer, "TOPLEFT", 0, yOffset)
+            yOffset = yOffset - rcPosWrap:GetHeight() - 5
+
             bdaWrap:ClearAllPoints()
             bdaWrap:SetPoint("TOPLEFT", sectionContainer, "TOPLEFT", 0, yOffset)
             yOffset = yOffset - bdaWrap:GetHeight() - 5
+
+            bdaPosWrap:ClearAllPoints()
+            bdaPosWrap:SetPoint("TOPLEFT", sectionContainer, "TOPLEFT", 0, yOffset)
+            yOffset = yOffset - bdaPosWrap:GetHeight() - 5
 
             threshWrap:ClearAllPoints()
             threshWrap:SetPoint("TOPLEFT", sectionContainer, "TOPLEFT", 0, yOffset)

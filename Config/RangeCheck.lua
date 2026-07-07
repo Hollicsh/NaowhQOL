@@ -44,7 +44,7 @@ function ns:InitRangeCheck()
         local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sectionContainer:SetHeight(400)
+        sectionContainer:SetHeight(500)
 
         local RelayoutSections
 
@@ -156,7 +156,18 @@ function ns:InitRangeCheck()
         appContent:SetHeight(80 + (#brackets * 28) + 10)
         appWrap:RecalcHeight()
 
-        local allSections = { behWrap, appWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "rangeCheck",
+            pointKey = "rangePoint",
+            xKey = "rangeX",
+            yKey = "rangeY",
+            display = rangeDisplay,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+            onChange = refreshRange,
+        })
+
+        local allSections = { behWrap, appWrap, posWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

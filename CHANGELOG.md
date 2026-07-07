@@ -1,7 +1,13 @@
 # Changelog
 
-## [20260706.01]
+## [20260707.01]
 
-### Bugfix
-**Dragon Riding icon countdown**
-- Fixed Whirling Surge cooldown text drawing behind the swipe, flickering when the spell was used, and showing decimals (e.g. 8.7) when whole seconds are expected.
+### Improvements
+**Focus Cast Bar**
+- Cast target name now shown beside the spell.
+- Bar color now reflects kick ready, kick on CD, and non-interruptible state together.
+- Brief interrupted confirmation with optional interrupter name.
+- Interrupt cooldown tick updates live during casts.
+
+**Position Controls**
+- X/Y offset and anchor point controls added for draggable modules (combat timer, combat alert, focus cast bar, GCD tracker, pet tracker, CRez, emote detection, potion ready, stealth/stance, movement alerts, range check, buff watcher report card and buff drop alert).

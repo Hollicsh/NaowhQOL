@@ -72,7 +72,7 @@ function ns:InitCRez()
         local rezSections = CreateFrame("Frame", nil, sc)
         rezSections:SetPoint("TOPLEFT", rezKillArea, "BOTTOMLEFT", 0, -10)
         rezSections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        rezSections:SetHeight(300)
+        rezSections:SetHeight(400)
 
         local rezAppWrap, rezAppContent = W:CreateCollapsibleSection(rezSections, {
             text = L["COMMON_SECTION_APPEARANCE"] or "Appearance",
@@ -142,7 +142,16 @@ function ns:InitCRez()
         rezAppContent:SetHeight(G:Height(6))
         rezAppWrap:RecalcHeight()
 
-        local rezSectionList = { rezAppWrap }
+        local posWrap = W:CreatePositionSection(rezSections, {
+            db = db,
+            moduleName = "cRez",
+            pointKey = "point",
+            display = rezDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshRez,
+        })
+
+        local rezSectionList = { rezAppWrap, posWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(rezSectionList) do

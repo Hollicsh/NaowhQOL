@@ -661,9 +661,43 @@ function ns:InitMovementAlert()
         gwColContent:SetHeight(LG:Height(5))
         gwColWrap:RecalcHeight()
 
-        local movementSectionList = { spellsWrap, appWrap }
-        local tsSectionList = { tsColWrap }
-        local gwSectionList = { gwColWrap }
+        local movementPosWrap = W:CreatePositionSection(movementSections, {
+            db = db,
+            moduleName = "movementAlert",
+            title = L["MOVEMENT_POSITION_MAIN"],
+            pointKey = "point",
+            display = movementDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshMovement,
+        })
+
+        local tsPosWrap = W:CreatePositionSection(tsSections, {
+            db = db,
+            moduleName = "movementAlert",
+            title = L["MOVEMENT_POSITION_SPIRAL"],
+            pointKey = "tsPoint",
+            xKey = "tsX",
+            yKey = "tsY",
+            display = timeSpiralDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshTimeSpiral,
+        })
+
+        local gwPosWrap = W:CreatePositionSection(gwSections, {
+            db = db,
+            moduleName = "movementAlert",
+            title = L["MOVEMENT_POSITION_GATEWAY"],
+            pointKey = "gwPoint",
+            xKey = "gwX",
+            yKey = "gwY",
+            display = ns.GatewayShardDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshGateway,
+        })
+
+        local movementSectionList = { spellsWrap, appWrap, movementPosWrap }
+        local tsSectionList = { tsColWrap, tsPosWrap }
+        local gwSectionList = { gwColWrap, gwPosWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(movementSectionList) do

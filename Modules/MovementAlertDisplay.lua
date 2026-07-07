@@ -1683,6 +1683,8 @@ loader:SetScript("OnEvent", ns.PerfMonitor:Wrap("Movement Alert", function(self,
 end))
 
 ns.MovementAlertDisplay = movementFrame
+ns.MovementTimeSpiralDisplay = timeSpiralFrame
+ns.MovementGatewayDisplay = gatewayFrame
 ns.TimeSpiralDisplay = timeSpiralFrame
 ns.GatewayShardDisplay = gatewayFrame
 ns.MOVEMENT_ABILITIES = MOVEMENT_ABILITIES

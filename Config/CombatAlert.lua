@@ -257,7 +257,16 @@ function ns:InitCombatAlerts()
         leaveContent:SetHeight(GL:Height(6))
         leaveWrap:RecalcHeight()
 
-        local allSections = { appWrap, enterWrap, leaveWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "combatAlert",
+            pointKey = "point",
+            display = display,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+            onChange = refresh,
+        })
+
+        local allSections = { appWrap, enterWrap, leaveWrap, posWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

@@ -1910,6 +1910,128 @@ function ns.Widgets:CreateBarStylePicker(parent, x, y, currentBar, onSelect)
     return frame
 end
 
+function ns.Widgets.ResetDisplayPosition(display)
+    if not display then return end
+    if display.posInitialized ~= nil then display.posInitialized = false end
+    if display.initialized ~= nil then display.initialized = false end
+end
+
+function ns.Widgets.ApplyFramePosition(frame, store, opts)
+    if not frame or not store then return end
+    opts = opts or {}
+    local pointKey = opts.pointKey or "point"
+    local anchorToKey = opts.anchorToKey
+    local xKey = opts.xKey or "x"
+    local yKey = opts.yKey or "y"
+    local point = store[pointKey] or "CENTER"
+    local anchorTo = anchorToKey and (store[anchorToKey] or point) or point
+    frame:ClearAllPoints()
+    frame:SetPoint(point, UIParent, anchorTo, store[xKey] or 0, store[yKey] or 0)
+end
+
+function ns.Widgets:CreatePositionControls(parent, opts)
+    opts = opts or {}
+    local W = ns.Widgets
+    local L = ns.L
+    local C = ns.COLORS
+    local db = opts.db
+    local tableKey = opts.tableKey
+    local xKey = opts.xKey or "x"
+    local yKey = opts.yKey or "y"
+    local pointKey = opts.pointKey
+    local anchorToKey = opts.anchorToKey
+    local min = opts.min or -2000
+    local max = opts.max or 2000
+    local moduleName = opts.moduleName
+
+    local function ensureStore()
+        if tableKey then
+            db[tableKey] = db[tableKey] or {
+                point = opts.defaultPoint or "CENTER",
+                x = 0,
+                y = 0,
+            }
+            return db[tableKey]
+        end
+        return db
+    end
+
+    local function applyChange()
+        if opts.display then W.ResetDisplayPosition(opts.display) end
+        if opts.onChange then opts.onChange() end
+    end
+
+    local G = ns.Layout:New(2)
+    local row = 1
+    local store = ensureStore()
+
+    if pointKey then
+        W:CreateDropdown(parent, {
+            label = L["COMMON_ANCHOR_POINT"],
+            db = store,
+            key = pointKey,
+            options = ns.LayoutUtil.ANCHOR_POINTS,
+            x = G:Col(1),
+            y = G:Row(row),
+            width = opts.dropdownWidth or 130,
+            onChange = applyChange,
+        })
+        if anchorToKey then
+            W:CreateDropdown(parent, {
+                label = L["COMMON_ANCHOR_TARGET"],
+                db = store,
+                key = anchorToKey,
+                options = ns.LayoutUtil.ANCHOR_POINTS,
+                x = G:Col(2),
+                y = G:Row(row),
+                width = opts.dropdownWidth or 130,
+                onChange = applyChange,
+            })
+        end
+        row = row + 1
+    end
+
+    local function placeSlider(slider, col)
+        local frame = slider:GetParent()
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", parent, "TOPLEFT", G:Col(col), G:Row(row))
+    end
+
+    local xOpts = tableKey and { value = store[xKey] or 0 } or { db = db, key = xKey, moduleName = moduleName }
+    local xSlider = W:CreateAdvancedSlider(parent,
+        W.Colorize(L["COMMON_OFFSET_X"], C.ORANGE), min, max, G:SliderY(row), 1, false,
+        function(val)
+            ensureStore()[xKey] = val
+            applyChange()
+        end,
+        xOpts)
+    placeSlider(xSlider, 1)
+
+    local yOpts = tableKey and { value = store[yKey] or 0 } or { db = db, key = yKey, moduleName = moduleName }
+    local ySlider = W:CreateAdvancedSlider(parent,
+        W.Colorize(L["COMMON_OFFSET_Y"], C.ORANGE), min, max, G:SliderY(row), 1, false,
+        function(val)
+            ensureStore()[yKey] = val
+            applyChange()
+        end,
+        yOpts)
+    placeSlider(ySlider, 2)
+
+    return G:Height(row)
+end
+
+function ns.Widgets:CreatePositionSection(parent, opts)
+    local L = ns.L
+    local wrap, content = self:CreateCollapsibleSection(parent, {
+        text = opts.title or L["COMMON_SECTION_POSITION"],
+        startOpen = opts.startOpen == true,
+        onCollapse = opts.onCollapse,
+    })
+    content:SetHeight(self:CreatePositionControls(content, opts))
+    wrap:RecalcHeight()
+    return wrap, content
+end
+
 function ns.Widgets.MakeDraggable(frame, opts)
     local db = opts.db
     local unlockKey = opts.unlockKey or "unlock"

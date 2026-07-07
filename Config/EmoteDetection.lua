@@ -44,7 +44,7 @@ function ns:InitEmoteDetection()
         local sections = CreateFrame("Frame", nil, sc)
         sections:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sections:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sections:SetHeight(400)
+        sections:SetHeight(500)
 
         local RelayoutAll
 
@@ -403,7 +403,16 @@ function ns:InitEmoteDetection()
         autoContent:SetHeight(200)
         autoWrap:RecalcHeight()
 
-        local sectionList = { appWrap, filterWrap, soundWrap, autoWrap }
+        local posWrap = W:CreatePositionSection(sections, {
+            db = db,
+            moduleName = "emoteDetection",
+            pointKey = "point",
+            display = display,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshDisplay,
+        })
+
+        local sectionList = { appWrap, filterWrap, soundWrap, autoWrap, posWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(sectionList) do

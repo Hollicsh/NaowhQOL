@@ -91,6 +91,12 @@ spellNameText:SetFont(ns.DefaultFontPath(), 12, "OUTLINE")
 spellNameText:SetPoint("LEFT", textFrame, "LEFT", 4, 0)
 spellNameText:SetJustifyH("LEFT")
 
+local castTargetText = textFrame:CreateFontString(nil, "OVERLAY")
+castTargetText:SetFont(ns.DefaultFontPath(), 12, "OUTLINE")
+castTargetText:SetPoint("LEFT", spellNameText, "RIGHT", 4, 0)
+castTargetText:SetJustifyH("LEFT")
+castTargetText:Hide()
+
 local castTimeText = textFrame:CreateFontString(nil, "OVERLAY")
 castTimeText:SetFont(ns.DefaultFontPath(), 12, "OUTLINE")
 castTimeText:SetPoint("RIGHT", textFrame, "RIGHT", -4, 0)
@@ -101,7 +107,21 @@ local empowerMarkers = {}
 local resizeHandle
 local isCasting = false
 local isChanneling = false
+local isInterruptedFade = false
+local interruptedFadeTimer = nil
 local cachedInterruptSpellId = nil
+
+local function IsSecretValue(value)
+    return issecretvalue and issecretvalue(value) or false
+end
+
+local function ClearInterruptedFade()
+    if interruptedFadeTimer then
+        interruptedFadeTimer:Cancel()
+        interruptedFadeTimer = nil
+    end
+    isInterruptedFade = false
+end
 
 local function GetInterruptSpellId()
     if cachedInterruptSpellId then
@@ -122,35 +142,109 @@ local function GetInterruptSpellId()
     return cachedInterruptSpellId
 end
 
-local function UpdateBarColor()
+local function GetCastNotInterruptible()
+    if isCasting then
+        local _, _, _, _, _, _, _, notInt = UnitCastingInfo("focus")
+        return notInt
+    elseif isChanneling then
+        local _, _, _, _, _, _, notInt = UnitChannelInfo("focus")
+        return notInt
+    end
+    return nil
+end
+
+local function IsKickReady()
+    local spellId = GetInterruptSpellId()
+    if not spellId then return false end
+
+    local cooldownDuration = C_Spell.GetSpellCooldownDuration(spellId)
+    if not cooldownDuration then return false end
+
+    return cooldownDuration:IsZero()
+end
+
+local function UpdateCastBarVisuals(notInterruptible)
     local db = NaowhQOL.focusCastBar
     if not db then return end
 
-    local spellId = GetInterruptSpellId()
-    if not spellId then
-        progressBar:SetStatusBarColor(db.barColorCdR, db.barColorCdG, db.barColorCdB)
-        return
-    end
-
-    local cooldownDuration = C_Spell.GetSpellCooldownDuration(spellId)
-    if not cooldownDuration then
-        progressBar:SetStatusBarColor(db.barColorCdR, db.barColorCdG, db.barColorCdB)
-        return
-    end
-
-    local isReady = cooldownDuration:IsZero()
     local barTexture = progressBar:GetStatusBarTexture()
-
     local bcR, bcG, bcB = W.GetEffectiveColor(db, "barColorR", "barColorG", "barColorB", "barColorUseClassColor")
     local readyColor = CreateColor(bcR, bcG, bcB, 1)
     local cdcR, cdcG, cdcB = W.GetEffectiveColor(db, "barColorCdR", "barColorCdG", "barColorCdB", "barColorCdUseClassColor")
     local cdColor = CreateColor(cdcR, cdcG, cdcB, 1)
+    local niR, niG, niB = W.GetEffectiveColor(db, "nonIntColorR", "nonIntColorG", "nonIntColorB", "nonIntColorUseClassColor")
+    local nonIntColor = CreateColor(niR, niG, niB, 1)
+    local intR, intG, intB = W.GetEffectiveColor(db, "interruptedColorR", "interruptedColorG", "interruptedColorB")
+    local interruptedColor = CreateColor(intR, intG, intB, 1)
 
-    barTexture:SetVertexColorFromBoolean(isReady, readyColor, cdColor)
-
-    if db.hideOnCooldown then
-        castBarFrame:SetAlphaFromBoolean(isReady)
+    if isInterruptedFade then
+        barTexture:SetVertexColor(interruptedColor:GetRGBA())
+        return
     end
+
+    local isReady = IsKickReady()
+    local color = C_CurveUtil.EvaluateColorFromBoolean(isReady, readyColor, cdColor)
+
+    if (isCasting or isChanneling) and db.colorNonInterrupt then
+        if notInterruptible == nil then
+            notInterruptible = GetCastNotInterruptible()
+        end
+        if notInterruptible ~= nil then
+            color = C_CurveUtil.EvaluateColorFromBoolean(notInterruptible, nonIntColor, color)
+        end
+    end
+
+    barTexture:SetVertexColor(color:GetRGBA())
+
+    if db.hideOnCooldown and (isCasting or isChanneling) then
+        castBarFrame:SetAlphaFromBoolean(isReady, 1, 0)
+    else
+        castBarFrame:SetAlpha(1)
+    end
+
+    if db.hideNonInterruptible and (isCasting or isChanneling) then
+        if notInterruptible == nil then
+            notInterruptible = GetCastNotInterruptible()
+        end
+        if notInterruptible ~= nil then
+            castBarFrame:SetAlphaFromBoolean(notInterruptible, 0, castBarFrame:GetAlpha())
+        end
+    end
+end
+
+local function UpdateBarColor()
+    UpdateCastBarVisuals()
+end
+
+local function UpdateCastTargetText()
+    local db = NaowhQOL.focusCastBar
+    if not db or not db.showCastTarget or isInterruptedFade then
+        castTargetText:SetText("")
+        castTargetText:Hide()
+        return
+    end
+
+    if not isCasting then
+        castTargetText:SetText("")
+        castTargetText:Hide()
+        return
+    end
+
+    local target = UnitSpellTargetName("focus")
+    if not target then
+        castTargetText:SetText("")
+        castTargetText:Hide()
+        return
+    end
+
+    local displayName = target
+    if not IsSecretValue(target) then
+        displayName = (select(1, UnitName(target))) or target
+    end
+
+    local targetClass = UnitSpellTargetClass("focus") or "PRIEST"
+    castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(displayName))
+    castTargetText:Show()
 end
 
 local function UpdateInterruptTick()
@@ -241,12 +335,9 @@ local function UpdateInterruptibleDisplay()
         shieldIcon:Hide()
     end
 
-    if db.colorNonInterrupt then
-        local niR, niG, niB = W.GetEffectiveColor(db, "nonIntColorR", "nonIntColorG", "nonIntColorB", "nonIntColorUseClassColor")
-        nonIntOverlay:SetVertexColor(niR, niG, niB, 1)
-        nonIntOverlay:SetAlphaFromBoolean(notInterruptible, 1, 0)
-    else
-        nonIntOverlay:SetAlpha(0)
+    nonIntOverlay:SetAlpha(0)
+    if isCasting or isChanneling then
+        UpdateCastBarVisuals(notInterruptible)
     end
 end
 
@@ -338,12 +429,15 @@ local function UpdateLayout()
     local fontPath = ns.Media.ResolveFont(db.font)
     local fontSize = db.fontSize or 12
     spellNameText:SetFont(fontPath, fontSize, "OUTLINE")
+    castTargetText:SetFont(fontPath, fontSize, "OUTLINE")
     castTimeText:SetFont(fontPath, fontSize, "OUTLINE")
     local tcR, tcG, tcB = W.GetEffectiveColor(db, "textColorR", "textColorG", "textColorB", "textColorUseClassColor")
     spellNameText:SetTextColor(tcR, tcG, tcB)
+    castTargetText:SetTextColor(tcR, tcG, tcB)
     castTimeText:SetTextColor(tcR, tcG, tcB)
 
     spellNameText:SetWordWrap(false)
+    castTargetText:SetWordWrap(false)
     local truncateLimit = db.spellNameTruncate or 0
     if truncateLimit > 0 then
         local charWidth = fontSize * 0.6
@@ -354,8 +448,20 @@ local function UpdateLayout()
 
     if db.showSpellName then
         spellNameText:Show()
+        if db.showCastTarget then
+            castTargetText:ClearAllPoints()
+            castTargetText:SetPoint("LEFT", spellNameText, "RIGHT", 4, 0)
+        end
     else
         spellNameText:Hide()
+        if db.showCastTarget then
+            castTargetText:ClearAllPoints()
+            castTargetText:SetPoint("LEFT", textFrame, "LEFT", 4, 0)
+        end
+    end
+
+    if not db.showCastTarget then
+        castTargetText:Hide()
     end
 
     if db.showTimeRemaining then
@@ -425,12 +531,77 @@ local function IsFocusFriendly()
     return UnitExists("focus") and UnitIsFriend("player", "focus")
 end
 
+local function StopCast()
+    ClearInterruptedFade()
+    isCasting = false
+    isChanneling = false
+    currentNotInterruptible = nil
+    hasSecretInterruptible = false
+    HideEmpowerStages()
+    shieldIcon:SetAlpha(0)
+    nonIntOverlay:SetAlpha(0)
+    interruptBar:Hide()
+    castTargetText:SetText("")
+    castTargetText:Hide()
+    local db = NaowhQOL.focusCastBar
+    if not db or not db.unlock then
+        castBarFrame:Hide()
+    end
+end
+
+local function ShowInterrupted(guid)
+    local db = NaowhQOL.focusCastBar
+    if not db or not db.enabled then return end
+
+    ClearInterruptedFade()
+    isCasting = false
+    isChanneling = false
+
+    local fadeTime = db.interruptedFadeTime
+    if fadeTime == nil then fadeTime = 0.75 end
+    if fadeTime <= 0 then
+        StopCast()
+        return
+    end
+
+    isInterruptedFade = true
+
+    if db.showInterrupter and guid then
+        local name = UnitNameFromGUID(guid)
+        local _, class = GetPlayerInfoByGUID(guid)
+        if name then
+            local classColor = C_ClassColor.GetClassColor(class or "PRIEST")
+            spellNameText:SetText(L["FOCUS_INTERRUPTED"] .. ": " .. classColor:WrapTextInColorCode(name))
+        else
+            spellNameText:SetText(L["FOCUS_INTERRUPTED"])
+        end
+    else
+        spellNameText:SetText(L["FOCUS_INTERRUPTED"])
+    end
+
+    castTargetText:SetText("")
+    castTargetText:Hide()
+    shieldIcon:Hide()
+    nonIntOverlay:SetAlpha(0)
+    interruptBar:Hide()
+    UpdateCastBarVisuals(false)
+    castBarFrame:SetAlpha(1)
+    castBarFrame:Show()
+
+    interruptedFadeTimer = C_Timer.NewTimer(fadeTime, function()
+        interruptedFadeTimer = nil
+        isInterruptedFade = false
+        StopCast()
+    end)
+end
+
 local function StartCast(notInterruptible, texture, text, startTime, endTime)
     local db = NaowhQOL.focusCastBar
     if not db or not db.enabled then return end
 
     if db.hideFriendlyCasts and IsFocusFriendly() then return end
 
+    ClearInterruptedFade()
     isCasting = true
     isChanneling = false
     currentNotInterruptible = notInterruptible
@@ -444,11 +615,9 @@ local function StartCast(notInterruptible, texture, text, startTime, endTime)
         spellNameText:SetText(text)
     end
 
+    UpdateCastTargetText()
     HideEmpowerStages()
-
-    if not db.colorNonInterrupt then
-        UpdateBarColor()
-    end
+    UpdateCastBarVisuals(notInterruptible)
 
     local duration = UnitCastingDuration("focus")
     if duration then
@@ -473,6 +642,7 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
 
     if db.hideFriendlyCasts and IsFocusFriendly() then return end
 
+    ClearInterruptedFade()
     isCasting = false
     isChanneling = true
     currentNotInterruptible = notInterruptible
@@ -486,6 +656,8 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
         spellNameText:SetText(text)
     end
 
+    castTargetText:SetText("")
+    castTargetText:Hide()
     HideEmpowerStages()
     if numEmpowerStages then
         pcall(function()
@@ -495,9 +667,7 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
         end)
     end
 
-    if not db.colorNonInterrupt then
-        UpdateBarColor()
-    end
+    UpdateCastBarVisuals(notInterruptible)
 
     local duration = UnitChannelDuration("focus")
     if duration then
@@ -514,21 +684,6 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
     UpdateInterruptTick()
 
     PlayAudioAlert()
-end
-
-local function StopCast()
-    isCasting = false
-    isChanneling = false
-    currentNotInterruptible = nil
-    hasSecretInterruptible = false
-    HideEmpowerStages()
-    shieldIcon:SetAlpha(0)
-    nonIntOverlay:SetAlpha(0)
-    interruptBar:Hide()
-    local db = NaowhQOL.focusCastBar
-    if not db or not db.unlock then
-        castBarFrame:Hide()
-    end
 end
 
 local function CheckFocusCast()
@@ -574,6 +729,8 @@ function castBarFrame:UpdateDisplay()
         if resizeHandle then resizeHandle:Show() end
 
         spellNameText:SetText(L["FOCUS_PREVIEW_CAST"])
+        castTargetText:SetText(C_ClassColor.GetClassColor("WARRIOR"):WrapTextInColorCode(L["FOCUS_PREVIEW_TARGET"]))
+        castTargetText:Show()
         castTimeText:SetText(L["FOCUS_PREVIEW_TIME"])
         progressBar:SetValue(0.5)
         iconTexture:SetTexture(136243)
@@ -582,7 +739,7 @@ function castBarFrame:UpdateDisplay()
         castBarFrame:SetBackdrop(nil)
         if resizeHandle then resizeHandle:Hide() end
 
-        if not isCasting and not isChanneling then
+        if not isCasting and not isChanneling and not isInterruptedFade then
             castBarFrame:Hide()
         end
     end
@@ -612,7 +769,13 @@ castBarFrame:SetScript("OnUpdate", ns.PerfMonitor:Wrap("Focus Cast Bar", functio
     local db = NaowhQOL.focusCastBar
     if not db or not db.enabled then return end
 
-    UpdateBarColor()
+    if isInterruptedFade then
+        updateElapsed = 0
+        return
+    end
+
+    UpdateCastBarVisuals()
+    UpdateInterruptTick()
 
     if db.showTimeRemaining then
         local duration
@@ -705,11 +868,27 @@ loader:SetScript("OnEvent", function(self, event, unit, ...)
         local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID, _, numStages = UnitChannelInfo("focus")
         StartChannel(notInterruptible, numStages, texture, text, startTime, endTime)
 
+    elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
+        local _, _, _, guid = ...
+        if guid then
+            ShowInterrupted(guid)
+        elseif not interruptedFadeTimer then
+            StopCast()
+        end
+
+    elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        local _, _, _, guid = ...
+        if guid then
+            ShowInterrupted(guid)
+        elseif not interruptedFadeTimer then
+            StopCast()
+        end
+
     elseif event == "UNIT_SPELLCAST_STOP"
-        or event == "UNIT_SPELLCAST_CHANNEL_STOP"
-        or event == "UNIT_SPELLCAST_FAILED"
-        or event == "UNIT_SPELLCAST_INTERRUPTED" then
-        StopCast()
+        or event == "UNIT_SPELLCAST_FAILED" then
+        if not interruptedFadeTimer then
+            StopCast()
+        end
 
     elseif event == "UNIT_SPELLCAST_INTERRUPTIBLE" then
         currentNotInterruptible = false

@@ -299,9 +299,21 @@ function ns:InitAlerts()
             width = 150,
             onChange = RefreshAll,
         })
-        CreateNote(potContent, L["ALERTS_POTION_READY_NOTE"], 10, -352, 560)
 
-        potContent:SetHeight(402)
+        local potPosFrame = CreateFrame("Frame", nil, potContent)
+        potPosFrame:SetPoint("TOPLEFT", 0, -330)
+        potPosFrame:SetSize(500, 120)
+        W:CreatePositionControls(potPosFrame, {
+            db = potDB,
+            moduleName = "potionReady",
+            pointKey = "point",
+            display = ns.PotionReadyDisplay and ns.PotionReadyDisplay.Frame,
+            onChange = RefreshAll,
+        })
+
+        CreateNote(potContent, L["ALERTS_POTION_READY_NOTE"], 10, -440, 560)
+
+        potContent:SetHeight(490)
         potWrap:RecalcHeight()
 
         RelayoutSections = function()

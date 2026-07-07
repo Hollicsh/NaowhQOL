@@ -61,7 +61,7 @@ function ns:InitCombatTimer()
         local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sectionContainer:SetHeight(400)
+        sectionContainer:SetHeight(500)
 
         local RelayoutSections
 
@@ -140,7 +140,16 @@ function ns:InitCombatTimer()
         appContent:SetHeight(GA:Height(3))
         appWrap:RecalcHeight()
 
-        local allSections = { optWrap, appWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "combatTimer",
+            pointKey = "point",
+            display = display,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+            onChange = refresh,
+        })
+
+        local allSections = { optWrap, appWrap, posWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

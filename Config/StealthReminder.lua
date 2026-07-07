@@ -197,6 +197,16 @@ function ns:InitStealthReminder()
         colContent:SetHeight(305)
         colWrap:RecalcHeight()
 
+        local stealthPosWrap = W:CreatePositionSection(stealthSections, {
+            db = db,
+            moduleName = "stealthReminder",
+            title = L["STEALTH_POSITION"],
+            pointKey = "point",
+            display = ns.StealthReminderDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshStealth,
+        })
+
         local stanceKillArea = CreateFrame("Frame", nil, sc, "BackdropTemplate")
         stanceKillArea:SetSize(460, 88)
         stanceKillArea:SetBackdrop({ bgFile = [[Interface\Buttons\WHITE8x8]] })
@@ -321,8 +331,20 @@ function ns:InitStealthReminder()
         stColContent:SetHeight(250)
         stColWrap:RecalcHeight()
 
-        local stealthSectionList = { colWrap }
-        local stanceSectionList = { stColWrap }
+        local stancePosWrap = W:CreatePositionSection(stanceSections, {
+            db = db,
+            moduleName = "stealthReminder",
+            title = L["STANCE_POSITION"],
+            pointKey = "stancePoint",
+            xKey = "stanceX",
+            yKey = "stanceY",
+            display = ns.StanceReminderDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refreshStance,
+        })
+
+        local stealthSectionList = { colWrap, stealthPosWrap }
+        local stanceSectionList = { stColWrap, stancePosWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(stealthSectionList) do

@@ -395,7 +395,16 @@ function ns:InitGcdTracker()
         blkContent:SetHeight(110)
         blkWrap:RecalcHeight()
 
-        local allSections = { dspWrap, tlWrap, zoneWrap, blkWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "gcdTracker",
+            pointKey = "point",
+            display = display,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+            onChange = onUpdate,
+        })
+
+        local allSections = { dspWrap, tlWrap, zoneWrap, blkWrap, posWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

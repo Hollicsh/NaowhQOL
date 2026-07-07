@@ -56,7 +56,7 @@ function ns:InitFocusCastBar()
         local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sectionContainer:SetHeight(1000)
+        sectionContainer:SetHeight(1100)
 
         local RelayoutSections
 
@@ -181,14 +181,22 @@ function ns:InitFocusCastBar()
         })
 
         W:CreateCheckbox(textContent, {
-            label = L["FOCUS_SHOW_TIME"],
-            db = db, key = "showTimeRemaining",
+            label = L["FOCUS_SHOW_CAST_TARGET"],
+            db = db, key = "showCastTarget",
             x = GT:Col(2), y = GT:Row(1),
             template = "ChatConfigCheckButtonTemplate",
             onChange = onUpdate
         })
 
-        W:CreateFontPicker(textContent, GT:Col(1), GT:Row(2), db.font, function(name)
+        W:CreateCheckbox(textContent, {
+            label = L["FOCUS_SHOW_TIME"],
+            db = db, key = "showTimeRemaining",
+            x = GT:Col(1), y = GT:Row(2),
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = onUpdate
+        })
+
+        W:CreateFontPicker(textContent, GT:Col(1), GT:Row(3), db.font, function(name)
             db.font = name
             onUpdate()
         end)
@@ -197,12 +205,12 @@ function ns:InitFocusCastBar()
             W.Colorize(L["COMMON_LABEL_FONT_SIZE"], C.ORANGE), 8, 24, -65, 1, false,
             function(val) db.fontSize = val; onUpdate() end,
             { db = db, key = "fontSize", moduleName = "focusCastBar" })
-        PlaceSlider(fontSizeSlider, textContent, GT:Col(2), GT:Row(2))
+        PlaceSlider(fontSizeSlider, textContent, GT:Col(2), GT:Row(3))
 
         W:CreateColorPicker(textContent, {
             label = L["COMMON_LABEL_TEXT_COLOR"], db = db,
             rKey = "textColorR", gKey = "textColorG", bKey = "textColorB",
-            x = GT:Col(1), y = GT:Row(3),
+            x = GT:Col(1), y = GT:Row(4),
             onChange = onUpdate
         })
 
@@ -210,9 +218,9 @@ function ns:InitFocusCastBar()
             W.Colorize(L["FOCUS_SPELL_TRUNCATE"], C.ORANGE), 0, 20, -125, 1, false,
             function(val) db.spellNameTruncate = val; onUpdate() end,
             { db = db, key = "spellNameTruncate", moduleName = "focusCastBar" })
-        PlaceSlider(truncateSlider, textContent, GT:Col(2), GT:Row(3))
+        PlaceSlider(truncateSlider, textContent, GT:Col(2), GT:Row(4))
 
-        textContent:SetHeight(GT:Height(3))
+        textContent:SetHeight(GT:Height(4))
         textWrap:RecalcHeight()
 
         local behWrap, behContent = W:CreateCollapsibleSection(sectionContainer, {
@@ -279,7 +287,36 @@ function ns:InitFocusCastBar()
             onChange = onUpdate
         })
 
-        behContent:SetHeight(GB:Height(4))
+        W:CreateCheckbox(behContent, {
+            label = L["FOCUS_HIDE_NONINT"],
+            db = db, key = "hideNonInterruptible",
+            x = GB:Col(1), y = GB:Row(5),
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = onUpdate
+        })
+
+        W:CreateColorPicker(behContent, {
+            label = L["FOCUS_INTERRUPTED_COLOR"], db = db,
+            rKey = "interruptedColorR", gKey = "interruptedColorG", bKey = "interruptedColorB",
+            x = GB:Col(2), y = GB:Row(5),
+            onChange = onUpdate
+        })
+
+        local fadeSlider = W:CreateAdvancedSlider(behContent,
+            W.Colorize(L["FOCUS_INTERRUPTED_FADE"], C.ORANGE), 0, 2, -125, 0.25, false,
+            function(val) db.interruptedFadeTime = val end,
+            { db = db, key = "interruptedFadeTime", moduleName = "focusCastBar" })
+        PlaceSlider(fadeSlider, behContent, GB:Col(1), GB:Row(6))
+
+        W:CreateCheckbox(behContent, {
+            label = L["FOCUS_SHOW_INTERRUPTER"],
+            db = db, key = "showInterrupter",
+            x = GB:Col(2), y = GB:Row(6),
+            template = "ChatConfigCheckButtonTemplate",
+            onChange = onUpdate
+        })
+
+        behContent:SetHeight(GB:Height(6))
         behWrap:RecalcHeight()
 
         local audioWrap, audioContent = W:CreateCollapsibleSection(sectionContainer, {
@@ -368,7 +405,17 @@ function ns:InitFocusCastBar()
         audioContent:SetHeight(GA:Height(6))
         audioWrap:RecalcHeight()
 
-        local allSections = { appWrap, iconWrap, textWrap, behWrap, audioWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "focusCastBar",
+            pointKey = "point",
+            anchorToKey = "anchorTo",
+            display = display,
+            onCollapse = function() if RelayoutSections then RelayoutSections() end end,
+            onChange = onUpdate,
+        })
+
+        local allSections = { appWrap, iconWrap, textWrap, behWrap, audioWrap, posWrap }
 
         RelayoutSections = function()
             for i, section in ipairs(allSections) do

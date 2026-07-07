@@ -50,7 +50,7 @@ function ns:InitPetTracker()
         local sectionContainer = CreateFrame("Frame", nil, sc)
         sectionContainer:SetPoint("TOPLEFT", killArea, "BOTTOMLEFT", 0, -10)
         sectionContainer:SetPoint("RIGHT", sc, "RIGHT", -10, 0)
-        sectionContainer:SetHeight(500)
+        sectionContainer:SetHeight(600)
 
         local RelayoutAll
 
@@ -315,7 +315,16 @@ function ns:InitPetTracker()
         textContent:SetHeight(225)
         textWrap:RecalcHeight()
 
-        local allSections = { behaviorWrap, appWrap, textWrap }
+        local posWrap = W:CreatePositionSection(sectionContainer, {
+            db = db,
+            moduleName = "petTracker",
+            pointKey = "point",
+            display = petDisplay,
+            onCollapse = function() if RelayoutAll then RelayoutAll() end end,
+            onChange = refresh,
+        })
+
+        local allSections = { behaviorWrap, appWrap, textWrap, posWrap }
 
         RelayoutAll = function()
             for i, section in ipairs(allSections) do
