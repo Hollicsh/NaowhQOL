@@ -110,6 +110,11 @@ local isChanneling = false
 local isInterruptedFade = false
 local interruptedFadeTimer = nil
 local cachedInterruptSpellId = nil
+local interruptTickSnapshot = nil
+
+local function ResetInterruptTickSnapshot()
+    interruptTickSnapshot = nil
+end
 
 local function IsSecretValue(value)
     return issecretvalue and issecretvalue(value) or false
@@ -283,10 +288,19 @@ local function UpdateInterruptTick()
         return
     end
 
+    if interruptCooldown:IsZero() then
+        interruptBar:Hide()
+        return
+    end
+
+    if interruptTickSnapshot == nil then
+        interruptTickSnapshot = interruptCooldown:GetRemainingDuration()
+    end
+
     local totalDuration = castDuration:GetTotalDuration()
     interruptBar:SetMinMaxValues(0, totalDuration)
     interruptBar:SetReverseFill(isChanneling)
-    interruptBar:SetValue(interruptCooldown:GetRemainingDuration())
+    interruptBar:SetValue(interruptTickSnapshot)
 
     interruptTick:ClearAllPoints()
     local barTexture = interruptBar:GetStatusBarTexture()
@@ -300,9 +314,7 @@ local function UpdateInterruptTick()
     local tickR, tickG, tickB = W.GetEffectiveColor(db, "tickColorR", "tickColorG", "tickColorB", "tickColorUseClassColor")
     interruptTick:SetVertexColor(tickR, tickG, tickB, 0.9)
     interruptBar:Show()
-
-    local isReady = interruptCooldown:IsZero()
-    interruptBar:SetAlphaFromBoolean(isReady, 0, 1)
+    interruptBar:SetAlpha(1)
 end
 
 local function UpdateInterruptibleDisplay()
@@ -533,6 +545,7 @@ end
 
 local function StopCast()
     ClearInterruptedFade()
+    ResetInterruptTickSnapshot()
     isCasting = false
     isChanneling = false
     currentNotInterruptible = nil
@@ -604,6 +617,7 @@ local function StartCast(notInterruptible, texture, text, startTime, endTime)
     ClearInterruptedFade()
     isCasting = true
     isChanneling = false
+    ResetInterruptTickSnapshot()
     currentNotInterruptible = notInterruptible
     hasSecretInterruptible = true
 
@@ -645,6 +659,7 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
     ClearInterruptedFade()
     isCasting = false
     isChanneling = true
+    ResetInterruptTickSnapshot()
     currentNotInterruptible = notInterruptible
     hasSecretInterruptible = true
 
@@ -775,7 +790,6 @@ castBarFrame:SetScript("OnUpdate", ns.PerfMonitor:Wrap("Focus Cast Bar", functio
     end
 
     UpdateCastBarVisuals()
-    UpdateInterruptTick()
 
     if db.showTimeRemaining then
         local duration
@@ -861,10 +875,12 @@ loader:SetScript("OnEvent", function(self, event, unit, ...)
     end
 
     if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_DELAYED" then
+        ResetInterruptTickSnapshot()
         local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo("focus")
         StartCast(notInterruptible, texture, text, startTime, endTime)
 
     elseif event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
+        ResetInterruptTickSnapshot()
         local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID, _, numStages = UnitChannelInfo("focus")
         StartChannel(notInterruptible, numStages, texture, text, startTime, endTime)
 
