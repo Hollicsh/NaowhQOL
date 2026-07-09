@@ -288,10 +288,7 @@ local function UpdateInterruptTick()
         return
     end
 
-    if interruptCooldown:IsZero() then
-        interruptBar:Hide()
-        return
-    end
+    local kickReady = interruptCooldown:IsZero()
 
     if interruptTickSnapshot == nil then
         interruptTickSnapshot = interruptCooldown:GetRemainingDuration()
@@ -314,7 +311,7 @@ local function UpdateInterruptTick()
     local tickR, tickG, tickB = W.GetEffectiveColor(db, "tickColorR", "tickColorG", "tickColorB", "tickColorUseClassColor")
     interruptTick:SetVertexColor(tickR, tickG, tickB, 0.9)
     interruptBar:Show()
-    interruptBar:SetAlpha(1)
+    interruptBar:SetAlphaFromBoolean(kickReady, 0, 1)
 end
 
 local function UpdateInterruptibleDisplay()
@@ -645,9 +642,8 @@ local function StartCast(notInterruptible, texture, text, startTime, endTime)
 
     castBarFrame:Show()
     UpdateInterruptibleDisplay()
-    UpdateInterruptTick()
-
     PlayAudioAlert()
+    UpdateInterruptTick()
 end
 
 local function StartChannel(notInterruptible, numEmpowerStages, texture, text, startTime, endTime)
@@ -696,9 +692,8 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
 
     castBarFrame:Show()
     UpdateInterruptibleDisplay()
-    UpdateInterruptTick()
-
     PlayAudioAlert()
+    UpdateInterruptTick()
 end
 
 local function CheckFocusCast()

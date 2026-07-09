@@ -467,6 +467,47 @@ local CDM_VIEWER_NAMES = {
     "BuffBarCooldownViewer",
 }
 
+local function SetFrameTreeAlpha(frame, alpha)
+    if not frame or not frame.SetAlpha then return end
+    frame:SetAlpha(alpha)
+    for _, child in ipairs({ frame:GetChildren() }) do
+        SetFrameTreeAlpha(child, alpha)
+    end
+end
+
+local function IsEllesmereCdmGlobal(name, frame)
+    return type(name) == "string"
+        and type(frame) == "table"
+        and frame.SetAlpha
+        and (name:find("^ECME_CDMBar_", 1, true) or name:find("^ECME_TBB", 1, true))
+end
+
+local function RestoreEllesmereCdmFrame(frame, name)
+    if name:find("^ECME_TBBWrap", 1, true) then
+        frame:SetAlpha(1)
+    elseif name:find("^ECME_TBB", 1, true) then
+        frame:SetAlpha(frame._opacityTarget or 1)
+    end
+end
+
+local function SetEllesmereCdmAlpha(alpha)
+    if not C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then return end
+
+    for name, frame in pairs(_G) do
+        if IsEllesmereCdmGlobal(name, frame) then
+            if alpha == 0 then
+                SetFrameTreeAlpha(frame, 0)
+            else
+                RestoreEllesmereCdmFrame(frame, name)
+            end
+        end
+    end
+
+    if alpha == 1 and _G._ECME_ApplyVisibility then
+        pcall(_G._ECME_ApplyVisibility)
+    end
+end
+
 local function SetCdmAlpha(alpha)
     for _, vName in ipairs(CDM_VIEWER_NAMES) do
         local viewer = _G[vName]
@@ -485,6 +526,7 @@ local function SetCdmAlpha(alpha)
             if container then container:SetAlpha(alpha) end
         end
     end
+    SetEllesmereCdmAlpha(alpha)
 end
 
 local cdmHidden = false
@@ -516,6 +558,19 @@ local function ShowCooldownManager()
     end
 end
 
+local ERB_RESOURCE_BAR_NAMES = {
+    "ERB_PrimaryBar",
+    "ERB_SecondaryFrame",
+}
+
+local function SetEllesmereResourceBarAlpha(alpha)
+    if not C_AddOns.IsAddOnLoaded("EllesmereUIResourceBars") then return end
+    for _, barName in ipairs(ERB_RESOURCE_BAR_NAMES) do
+        local bar = _G[barName]
+        if bar then bar:SetAlpha(alpha) end
+    end
+end
+
 local function SetResourceBarAlpha(alpha)
     if C_AddOns.IsAddOnLoaded("Ayije_CDM") then
         local cdm = _G["Ayije_CDM"]
@@ -531,10 +586,12 @@ local function SetResourceBarAlpha(alpha)
                 end
             end
         end
-    elseif C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
+    end
+    if C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
         if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(alpha) end
         if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(alpha) end
     end
+    SetEllesmereResourceBarAlpha(alpha)
 end
 
 local bcmHidden = false
