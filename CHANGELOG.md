@@ -12,3 +12,6 @@
 - EllesmereUI Integration
   - Hide Cooldown Manager While Mounted now detects and hides EllesmereUI cooldown manager bars
   - Hide Resource Bars While Mounted now hides EllesmereUI power and class resource bars
+
+### Localization
+- Added Russian translations for new items provided by native speaker.
