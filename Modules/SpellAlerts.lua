@@ -34,8 +34,10 @@ local function Apply(force)
     local desired
 
     if not db or not db.enabled then
+        -- Module off: restore Blizzard overlays for all specs.
         desired = "1"
     else
+        -- Module on: only checked specializations get overlays (default = none).
         db.enabledSpecs = db.enabledSpecs or {}
         local specID = GetSpecID()
         local enabled = specID and db.enabledSpecs[specID] == true

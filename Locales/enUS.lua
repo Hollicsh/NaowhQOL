@@ -847,7 +847,7 @@ ns:RegisterLocale("enUS", {
     ALERTS_CURRENT_SPEC = "Current Spec",
     ALERTS_ENABLE_CURRENT_SPEC = "Enable overlays for %s",
     ALERTS_SPELL_ALERT_OPACITY = "Overlay Opacity",
-    ALERTS_SPELL_ALERTS_NOTE = "Note: Controls Blizzard's built-in spell activation overlays per specialization for every class. Turning this module off restores overlays.",
+    ALERTS_SPELL_ALERTS_NOTE = "Note: When enabled, only checked specializations show Blizzard spell alerts (none checked = alerts off). Disable the module to restore overlays for all specs.",
     ALERTS_DISPEL_GLOW = "DISPEL GLOW",
     ALERTS_ENABLE_DISPEL_GLOW = "Enable Dispel Glow",
     ALERTS_USE_DISPEL_COLOR = "Use Dispel Type Color",

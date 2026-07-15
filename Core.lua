@@ -106,7 +106,7 @@ local GCD_TRACKER_DEFAULTS = {
 }
 
 local SPELL_ALERTS_DEFAULTS = {
-    enabled = false,
+    enabled = true,
     enabledSpecs = {},
 }
 

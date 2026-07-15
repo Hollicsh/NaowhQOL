@@ -479,13 +479,13 @@ local function IsEllesmereCdmGlobal(name, frame)
     return type(name) == "string"
         and type(frame) == "table"
         and frame.SetAlpha
-        and (name:find("^ECME_CDMBar_", 1, true) or name:find("^ECME_TBB", 1, true))
+        and (name:find("^ECME_CDMBar_") or name:find("^ECME_TBB"))
 end
 
 local function RestoreEllesmereCdmFrame(frame, name)
-    if name:find("^ECME_TBBWrap", 1, true) then
+    if name:find("^ECME_TBBWrap") then
         frame:SetAlpha(1)
-    elseif name:find("^ECME_TBB", 1, true) then
+    elseif name:find("^ECME_TBB") then
         frame:SetAlpha(frame._opacityTarget or 1)
     end
 end
@@ -531,10 +531,12 @@ end
 
 local cdmHidden = false
 local function HideCooldownManager()
-    if cdmHidden then return end
     local success = pcall(function()
-        StashPositionAndReanchor()
+        if not cdmHidden then
+            StashPositionAndReanchor()
+        end
         cdmHidden = true
+        -- Re-apply alpha every call so other UIs cannot fight the hide.
         SetCdmAlpha(0)
     end)
     if not success and InCombatLockdown() then
@@ -563,11 +565,40 @@ local ERB_RESOURCE_BAR_NAMES = {
     "ERB_SecondaryFrame",
 }
 
+-- Only bars we actually hid while skyriding. Avoids forcing Visibility-Never
+-- Ellesmere bars visible on dismount (they flash until the next UI refresh).
+local erbTouched = {}
+
 local function SetEllesmereResourceBarAlpha(alpha)
     if not C_AddOns.IsAddOnLoaded("EllesmereUIResourceBars") then return end
-    for _, barName in ipairs(ERB_RESOURCE_BAR_NAMES) do
+
+    if alpha == 0 then
+        for _, barName in ipairs(ERB_RESOURCE_BAR_NAMES) do
+            local bar = _G[barName]
+            if bar and bar.SetAlpha then
+                local currentAlpha = bar:GetAlpha() or 0
+                -- Skip bars Ellesmere already has off; touching them makes dismount restore flash them on.
+                if bar:IsShown() and currentAlpha > 0 then
+                    if erbTouched[barName] == nil then
+                        erbTouched[barName] = currentAlpha
+                    end
+                    bar:SetAlpha(0)
+                end
+            end
+        end
+        return
+    end
+
+    for barName, restoreAlpha in pairs(erbTouched) do
         local bar = _G[barName]
-        if bar then bar:SetAlpha(alpha) end
+        if bar and bar.SetAlpha then
+            bar:SetAlpha(restoreAlpha)
+        end
+        erbTouched[barName] = nil
+    end
+    -- Let Ellesmere re-apply Visibility Never / user settings after our temporary hide.
+    if _G._ERB_ApplyVisibility then
+        pcall(_G._ERB_ApplyVisibility)
     end
 end
 
@@ -596,7 +627,7 @@ end
 
 local bcmHidden = false
 local function HideBCM()
-    if bcmHidden then return end
+    -- Always re-apply alpha so other UIs cannot fight the hide for a single frame.
     local success = pcall(function()
         bcmHidden = true
         SetResourceBarAlpha(0)

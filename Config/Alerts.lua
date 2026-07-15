@@ -73,7 +73,7 @@ function ns:InitAlerts()
         })
         sectionList[#sectionList + 1] = spellWrap
 
-        W:CreateCheckbox(spellContent, {
+        local masterCb = W:CreateCheckbox(spellContent, {
             label = L["ALERTS_ENABLE_SPELL_ALERTS"],
             db = spellDB, key = "enabled",
             x = 10, y = -5,
@@ -126,6 +126,11 @@ function ns:InitAlerts()
                         template = "ChatConfigCheckButtonTemplate",
                         onChange = function(checked)
                             spellDB.enabledSpecs[spec.id] = checked and true or nil
+                            -- Checking a spec while the master was off should take control.
+                            if checked and not spellDB.enabled then
+                                spellDB.enabled = true
+                                masterCb:SetChecked(true)
+                            end
                             RefreshAll()
                         end,
                     })

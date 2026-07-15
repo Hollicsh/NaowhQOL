@@ -128,6 +128,43 @@ local function ClearInterruptedFade()
     isInterruptedFade = false
 end
 
+local function FreezeProgressBar()
+    local timerDuration = progressBar.GetTimerDuration and progressBar:GetTimerDuration()
+    local value
+    if timerDuration then
+        if isChanneling then
+            value = timerDuration:GetRemainingPercent()
+        else
+            value = timerDuration:GetElapsedPercent()
+        end
+    end
+    if value == nil then
+        value = progressBar:GetValue()
+    end
+    if value == nil then
+        value = 1
+    end
+
+    -- Replace the live cast timer with a frozen duration so the grey hold does not keep filling.
+    if C_DurationUtil and C_DurationUtil.CreateDuration then
+        local frozen = C_DurationUtil.CreateDuration()
+        local ok = pcall(function()
+            -- modRate 0 keeps elapsed/remaining from advancing.
+            if isChanneling then
+                frozen:SetTimeFromStart(GetTime() - (1 - value), 1, 0)
+                progressBar:SetTimerDuration(frozen, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.RemainingTime)
+            else
+                frozen:SetTimeFromStart(GetTime() - value, 1, 0)
+                progressBar:SetTimerDuration(frozen, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.ElapsedTime)
+            end
+        end)
+        if ok then return end
+    end
+
+    progressBar:SetMinMaxValues(0, 1)
+    progressBar:SetValue(value)
+end
+
 local function GetInterruptSpellId()
     if cachedInterruptSpellId then
         return cachedInterruptSpellId
@@ -289,12 +326,43 @@ local function UpdateInterruptTick()
     end
 
     local kickReady = interruptCooldown:IsZero()
+    if kickReady then
+        interruptBar:Hide()
+        return
+    end
 
     if interruptTickSnapshot == nil then
-        interruptTickSnapshot = interruptCooldown:GetRemainingDuration()
+        local kickRemaining = interruptCooldown:GetRemainingDuration()
+        local castElapsed = castDuration:GetElapsedDuration()
+        if castElapsed ~= nil and kickRemaining ~= nil then
+            -- Mark absolute time from cast start when kick becomes ready.
+            interruptTickSnapshot = castElapsed + kickRemaining
+        else
+            interruptTickSnapshot = kickRemaining
+        end
+    end
+
+    if interruptTickSnapshot == nil then
+        interruptBar:Hide()
+        return
     end
 
     local totalDuration = castDuration:GetTotalDuration()
+    if totalDuration == nil then
+        interruptBar:Hide()
+        return
+    end
+
+    -- Hide when kick will not come off CD during this cast (avoids clamping to the end).
+    local withinCast = true
+    if not IsSecretValue(interruptTickSnapshot) and not IsSecretValue(totalDuration) then
+        withinCast = interruptTickSnapshot <= totalDuration and interruptTickSnapshot >= 0
+    end
+    if not withinCast then
+        interruptBar:Hide()
+        return
+    end
+
     interruptBar:SetMinMaxValues(0, totalDuration)
     interruptBar:SetReverseFill(isChanneling)
     interruptBar:SetValue(interruptTickSnapshot)
@@ -311,7 +379,7 @@ local function UpdateInterruptTick()
     local tickR, tickG, tickB = W.GetEffectiveColor(db, "tickColorR", "tickColorG", "tickColorB", "tickColorUseClassColor")
     interruptTick:SetVertexColor(tickR, tickG, tickB, 0.9)
     interruptBar:Show()
-    interruptBar:SetAlphaFromBoolean(kickReady, 0, 1)
+    interruptBar:SetAlpha(1)
 end
 
 local function UpdateInterruptibleDisplay()
@@ -563,10 +631,6 @@ local function ShowInterrupted(guid)
     local db = NaowhQOL.focusCastBar
     if not db or not db.enabled then return end
 
-    ClearInterruptedFade()
-    isCasting = false
-    isChanneling = false
-
     local fadeTime = db.interruptedFadeTime
     if fadeTime == nil then fadeTime = 0.75 end
     if fadeTime <= 0 then
@@ -574,9 +638,13 @@ local function ShowInterrupted(guid)
         return
     end
 
+    FreezeProgressBar()
+    ClearInterruptedFade()
+    isCasting = false
+    isChanneling = false
     isInterruptedFade = true
 
-    if db.showInterrupter and guid then
+    if db.showInterrupter and guid and guid ~= "" then
         local name = UnitNameFromGUID(guid)
         local _, class = GetPlayerInfoByGUID(guid)
         if name then
@@ -591,6 +659,7 @@ local function ShowInterrupted(guid)
 
     castTargetText:SetText("")
     castTargetText:Hide()
+    castTimeText:SetText("")
     shieldIcon:Hide()
     nonIntOverlay:SetAlpha(0)
     interruptBar:Hide()
@@ -880,17 +949,15 @@ loader:SetScript("OnEvent", function(self, event, unit, ...)
         StartChannel(notInterruptible, numStages, texture, text, startTime, endTime)
 
     elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
-        local _, _, _, guid = ...
-        if guid then
-            ShowInterrupted(guid)
-        elseif not interruptedFadeTimer then
-            StopCast()
-        end
+        -- Payload: castGUID, spellID, interruptedBy, castBarID
+        local _, _, interruptedBy = ...
+        ShowInterrupted(interruptedBy)
 
     elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-        local _, _, _, guid = ...
-        if guid then
-            ShowInterrupted(guid)
+        -- Payload: castGUID, spellID, interruptedBy, castBarID
+        local _, _, interruptedBy = ...
+        if interruptedBy and interruptedBy ~= "" then
+            ShowInterrupted(interruptedBy)
         elseif not interruptedFadeTimer then
             StopCast()
         end
