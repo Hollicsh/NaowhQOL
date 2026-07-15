@@ -604,7 +604,7 @@ local ERB_RESOURCE_BAR_NAMES = {
 
 local erbTouched = {}
 
-local function SetEllesmereResourceBarAlpha(alpha)
+local function SetEllesmereResourceBarAlpha(alpha, releasing)
     if not C_AddOns.IsAddOnLoaded("EllesmereUIResourceBars") then return end
 
     if alpha == 0 then
@@ -623,19 +623,26 @@ local function SetEllesmereResourceBarAlpha(alpha)
         return
     end
 
-    for barName, restoreAlpha in pairs(erbTouched) do
+    for _, barName in ipairs(ERB_RESOURCE_BAR_NAMES) do
         local bar = _G[barName]
         if bar and bar.SetAlpha then
+            local restoreAlpha = erbTouched[barName]
+            if restoreAlpha == nil then
+                restoreAlpha = bar._opacityTarget
+            end
+            if restoreAlpha == nil then
+                restoreAlpha = 1
+            end
             bar:SetAlpha(restoreAlpha)
+            erbTouched[barName] = nil
         end
-        erbTouched[barName] = nil
     end
-    if _G._ERB_ApplyVisibility then
+    if releasing and _G._ERB_ApplyVisibility then
         pcall(_G._ERB_ApplyVisibility)
     end
 end
 
-local function SetResourceBarAlpha(alpha)
+local function SetResourceBarAlpha(alpha, releasing)
     if C_AddOns.IsAddOnLoaded("Ayije_CDM") then
         local cdm = _G["Ayije_CDM"]
         if cdm then
@@ -655,7 +662,7 @@ local function SetResourceBarAlpha(alpha)
         if BCDM_PowerBar then BCDM_PowerBar:SetAlpha(alpha) end
         if BCDM_SecondaryPowerBar then BCDM_SecondaryPowerBar:SetAlpha(alpha) end
     end
-    SetEllesmereResourceBarAlpha(alpha)
+    SetEllesmereResourceBarAlpha(alpha, releasing)
 end
 
 local bcmHidden = false
@@ -672,10 +679,10 @@ local function HideBCM()
 end
 
 local function ShowBCM()
-    if not bcmHidden then return end
     local success = pcall(function()
+        local releasing = bcmHidden
         bcmHidden = false
-        SetResourceBarAlpha(1)
+        SetResourceBarAlpha(1, releasing)
     end)
     if not success and InCombatLockdown() then
         bcmHidden = true
