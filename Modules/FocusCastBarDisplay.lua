@@ -325,11 +325,8 @@ local function UpdateInterruptTick()
         return
     end
 
+    -- IsZero() can return a secret boolean; never branch on it in Lua.
     local kickReady = interruptCooldown:IsZero()
-    if kickReady then
-        interruptBar:Hide()
-        return
-    end
 
     if interruptTickSnapshot == nil then
         local kickRemaining = interruptCooldown:GetRemainingDuration()
@@ -354,13 +351,12 @@ local function UpdateInterruptTick()
     end
 
     -- Hide when kick will not come off CD during this cast (avoids clamping to the end).
-    local withinCast = true
+    -- Skip the comparison when either value is secret.
     if not IsSecretValue(interruptTickSnapshot) and not IsSecretValue(totalDuration) then
-        withinCast = interruptTickSnapshot <= totalDuration and interruptTickSnapshot >= 0
-    end
-    if not withinCast then
-        interruptBar:Hide()
-        return
+        if interruptTickSnapshot > totalDuration or interruptTickSnapshot < 0 then
+            interruptBar:Hide()
+            return
+        end
     end
 
     interruptBar:SetMinMaxValues(0, totalDuration)
@@ -379,7 +375,8 @@ local function UpdateInterruptTick()
     local tickR, tickG, tickB = W.GetEffectiveColor(db, "tickColorR", "tickColorG", "tickColorB", "tickColorUseClassColor")
     interruptTick:SetVertexColor(tickR, tickG, tickB, 0.9)
     interruptBar:Show()
-    interruptBar:SetAlpha(1)
+    -- Secret-safe: hide tick when kick is ready, show when on CD.
+    interruptBar:SetAlphaFromBoolean(kickReady, 0, 1)
 end
 
 local function UpdateInterruptibleDisplay()
@@ -644,7 +641,7 @@ local function ShowInterrupted(guid)
     isChanneling = false
     isInterruptedFade = true
 
-    if db.showInterrupter and guid and guid ~= "" then
+    if db.showInterrupter and not IsSecretValue(guid) and guid and guid ~= "" then
         local name = UnitNameFromGUID(guid)
         local _, class = GetPlayerInfoByGUID(guid)
         if name then
@@ -955,8 +952,11 @@ loader:SetScript("OnEvent", function(self, event, unit, ...)
 
     elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
         -- Payload: castGUID, spellID, interruptedBy, castBarID
+        -- interruptedBy can be a secret string; never boolean-test or compare it directly.
         local _, _, interruptedBy = ...
-        if interruptedBy and interruptedBy ~= "" then
+        if IsSecretValue(interruptedBy) then
+            ShowInterrupted(interruptedBy)
+        elseif interruptedBy and interruptedBy ~= "" then
             ShowInterrupted(interruptedBy)
         elseif not interruptedFadeTimer then
             StopCast()
