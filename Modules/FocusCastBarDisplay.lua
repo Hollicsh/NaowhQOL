@@ -120,6 +120,11 @@ local function IsSecretValue(value)
     return issecretvalue and issecretvalue(value) or false
 end
 
+-- True when value is usable in Lua conditionals/arithmetic (nil or a normal non-secret).
+local function CanUseInLua(value)
+    return value ~= nil and not IsSecretValue(value)
+end
+
 local function ClearInterruptedFade()
     if interruptedFadeTimer then
         interruptedFadeTimer:Cancel()
@@ -145,8 +150,8 @@ local function FreezeProgressBar()
         value = 1
     end
 
-    -- Replace the live cast timer with a frozen duration so the grey hold does not keep filling.
-    if C_DurationUtil and C_DurationUtil.CreateDuration then
+    -- Arithmetic on secret percents is illegal; freeze via SetValue (accepts secrets).
+    if CanUseInLua(value) and C_DurationUtil and C_DurationUtil.CreateDuration then
         local frozen = C_DurationUtil.CreateDuration()
         local ok = pcall(function()
             -- modRate 0 keeps elapsed/remaining from advancing.
@@ -225,13 +230,14 @@ local function UpdateCastBarVisuals(notInterruptible)
     end
 
     local isReady = IsKickReady()
+    -- EvaluateColorFromBoolean / SetAlphaFromBoolean accept secret booleans.
     local color = C_CurveUtil.EvaluateColorFromBoolean(isReady, readyColor, cdColor)
 
     if (isCasting or isChanneling) and db.colorNonInterrupt then
-        if notInterruptible == nil then
+        if not IsSecretValue(notInterruptible) and notInterruptible == nil then
             notInterruptible = GetCastNotInterruptible()
         end
-        if notInterruptible ~= nil then
+        if IsSecretValue(notInterruptible) or notInterruptible ~= nil then
             color = C_CurveUtil.EvaluateColorFromBoolean(notInterruptible, nonIntColor, color)
         end
     end
@@ -245,10 +251,10 @@ local function UpdateCastBarVisuals(notInterruptible)
     end
 
     if db.hideNonInterruptible and (isCasting or isChanneling) then
-        if notInterruptible == nil then
+        if not IsSecretValue(notInterruptible) and notInterruptible == nil then
             notInterruptible = GetCastNotInterruptible()
         end
-        if notInterruptible ~= nil then
+        if IsSecretValue(notInterruptible) or notInterruptible ~= nil then
             castBarFrame:SetAlphaFromBoolean(notInterruptible, 0, castBarFrame:GetAlpha())
         end
     end
@@ -273,19 +279,31 @@ local function UpdateCastTargetText()
     end
 
     local target = UnitSpellTargetName("focus")
+    -- Never boolean-test a secret string.
+    if IsSecretValue(target) then
+        local targetClass = UnitSpellTargetClass("focus")
+        if CanUseInLua(targetClass) then
+            castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(target))
+        else
+            castTargetText:SetText(target)
+        end
+        castTargetText:Show()
+        return
+    end
+
     if not target then
         castTargetText:SetText("")
         castTargetText:Hide()
         return
     end
 
-    local displayName = target
-    if not IsSecretValue(target) then
-        displayName = (select(1, UnitName(target))) or target
+    local displayName = (select(1, UnitName(target))) or target
+    local targetClass = UnitSpellTargetClass("focus")
+    if CanUseInLua(targetClass) then
+        castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(displayName))
+    else
+        castTargetText:SetText(displayName)
     end
-
-    local targetClass = UnitSpellTargetClass("focus") or "PRIEST"
-    castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(displayName))
     castTargetText:Show()
 end
 
@@ -331,8 +349,9 @@ local function UpdateInterruptTick()
     if interruptTickSnapshot == nil then
         local kickRemaining = interruptCooldown:GetRemainingDuration()
         local castElapsed = castDuration:GetElapsedDuration()
-        if castElapsed ~= nil and kickRemaining ~= nil then
-            -- Mark absolute time from cast start when kick becomes ready.
+        -- Cannot add secret numbers in tainted Lua. Sum only when both are plain;
+        -- otherwise pass kick remaining through (correct at cast start; StatusBar accepts secrets).
+        if CanUseInLua(castElapsed) and CanUseInLua(kickRemaining) then
             interruptTickSnapshot = castElapsed + kickRemaining
         else
             interruptTickSnapshot = kickRemaining
@@ -351,14 +370,14 @@ local function UpdateInterruptTick()
     end
 
     -- Hide when kick will not come off CD during this cast (avoids clamping to the end).
-    -- Skip the comparison when either value is secret.
-    if not IsSecretValue(interruptTickSnapshot) and not IsSecretValue(totalDuration) then
+    if CanUseInLua(interruptTickSnapshot) and CanUseInLua(totalDuration) then
         if interruptTickSnapshot > totalDuration or interruptTickSnapshot < 0 then
             interruptBar:Hide()
             return
         end
     end
 
+    -- SetMinMaxValues / SetValue accept secret durations.
     interruptBar:SetMinMaxValues(0, totalDuration)
     interruptBar:SetReverseFill(isChanneling)
     interruptBar:SetValue(interruptTickSnapshot)
@@ -396,7 +415,7 @@ local function UpdateInterruptibleDisplay()
         return
     end
 
-    if notInterruptible == nil then
+    if not IsSecretValue(notInterruptible) and notInterruptible == nil then
         shieldIcon:Hide()
         nonIntOverlay:SetAlpha(0)
         return
@@ -602,7 +621,11 @@ local currentNotInterruptible = nil
 local hasSecretInterruptible = false
 
 local function IsFocusFriendly()
-    return UnitExists("focus") and UnitIsFriend("player", "focus")
+    if not UnitExists("focus") then return false end
+    local isFriend = UnitIsFriend("player", "focus")
+    -- Secret friendliness: do not hide casts when we cannot evaluate.
+    if IsSecretValue(isFriend) then return false end
+    return isFriend and true or false
 end
 
 local function StopCast()
@@ -688,7 +711,8 @@ local function StartCast(notInterruptible, texture, text, startTime, endTime)
         iconTexture:SetTexture(texture)
     end
 
-    if db.showSpellName and text then
+    -- Spell name may be a secret string; SetText accepts secrets, boolean-test does not.
+    if db.showSpellName and (IsSecretValue(text) or text) then
         spellNameText:SetText(text)
     end
 
@@ -701,8 +725,8 @@ local function StartCast(notInterruptible, texture, text, startTime, endTime)
         progressBar:SetMinMaxValues(0, 1)
         progressBar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.ElapsedTime)
         if db.showTimeRemaining then
-            local remain = duration:GetRemainingDuration()
-            castTimeText:SetFormattedText('%.1f', remain)
+            -- SetFormattedText accepts secret numbers.
+            castTimeText:SetFormattedText('%.1f', duration:GetRemainingDuration())
         end
     end
 
@@ -729,14 +753,18 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
         iconTexture:SetTexture(texture)
     end
 
-    if db.showSpellName and text then
+    if db.showSpellName and (IsSecretValue(text) or text) then
         spellNameText:SetText(text)
     end
 
     castTargetText:SetText("")
     castTargetText:Hide()
     HideEmpowerStages()
-    if numEmpowerStages then
+    if CanUseInLua(numEmpowerStages) then
+        if numEmpowerStages > 0 then
+            UpdateEmpowerStages(numEmpowerStages)
+        end
+    elseif IsSecretValue(numEmpowerStages) then
         pcall(function()
             if numEmpowerStages > 0 then
                 UpdateEmpowerStages(numEmpowerStages)
@@ -751,8 +779,7 @@ local function StartChannel(notInterruptible, numEmpowerStages, texture, text, s
         progressBar:SetMinMaxValues(0, 1)
         progressBar:SetTimerDuration(duration, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.RemainingTime)
         if db.showTimeRemaining then
-            local remain = duration:GetRemainingDuration()
-            castTimeText:SetFormattedText('%.1f', remain)
+            castTimeText:SetFormattedText('%.1f', duration:GetRemainingDuration())
         end
     end
 
@@ -860,8 +887,8 @@ castBarFrame:SetScript("OnUpdate", ns.PerfMonitor:Wrap("Focus Cast Bar", functio
             duration = UnitChannelDuration("focus")
         end
         if duration then
-            local remain = duration:GetRemainingDuration()
-            castTimeText:SetFormattedText('%.1f', remain)
+            -- SetFormattedText accepts secret remaining durations.
+            castTimeText:SetFormattedText('%.1f', duration:GetRemainingDuration())
         end
     end
 

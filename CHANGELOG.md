@@ -1,8 +1,7 @@
 # Changelog
 
-## [20260715.02]
+## [20260715.03]
 
-###  Hotfix
+### Hotfix
 **Focus Cast Bar**
-- Fix secret-value errors on kick-ready tick and channel-stop `interruptedBy` checks 
-
+- inserted is secret helper on eveery secret kick CD, cast elapsed, interrupter GUID, cast target, spell name, or friendliness
