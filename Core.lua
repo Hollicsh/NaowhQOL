@@ -83,6 +83,7 @@ local DRAGONRIDING_DEFAULTS = {
     borderColorR = 0, borderColorG = 0, borderColorB = 0, borderAlpha = 1.0, borderSize = 1,
     iconBorderColorR = 0, iconBorderColorG = 0, iconBorderColorB = 0, iconBorderAlpha = 1.0, iconBorderSize = 1,
     hideCdmWhileMounted = false,
+    hideBcmWhileMounted = false,
 }
 
 local BUFF_TRACKER_DEFAULTS = {

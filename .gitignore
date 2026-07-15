@@ -14,3 +14,4 @@ Libs/LibCustomGlow-1.0/
 
 # Commenting out due to LUA plugins generating vscode settings
 .vscode/settings.json
+.cursor/

@@ -1,7 +1,8 @@
 # Changelog
 
-## [20260715.03]
+## [20260715.04]
 
 ### Hotfix
-**Focus Cast Bar**
-- inserted is secret helper on eveery secret kick CD, cast elapsed, interrupter GUID, cast target, spell name, or friendliness
+**Dragonriding**
+- Fix FPS tank while skyriding with Hide Cooldown Manager While Mounted + EllesmereUI
+- Fix Hide Resource Bars While Mounted still hiding after unchecking

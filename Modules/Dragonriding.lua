@@ -467,11 +467,16 @@ local CDM_VIEWER_NAMES = {
     "BuffBarCooldownViewer",
 }
 
-local function SetFrameTreeAlpha(frame, alpha)
+local ellesmereCdmRoots = {}
+local ellesmereCdmFlat = {}
+local ellesmereCdmCacheDirty = true
+
+local function CollectFrameTree(frame, into)
     if not frame or not frame.SetAlpha then return end
-    frame:SetAlpha(alpha)
-    for _, child in ipairs({ frame:GetChildren() }) do
-        SetFrameTreeAlpha(child, alpha)
+    into[#into + 1] = frame
+    local children = { frame:GetChildren() }
+    for i = 1, #children do
+        CollectFrameTree(children[i], into)
     end
 end
 
@@ -480,6 +485,25 @@ local function IsEllesmereCdmGlobal(name, frame)
         and type(frame) == "table"
         and frame.SetAlpha
         and (name:find("^ECME_CDMBar_") or name:find("^ECME_TBB"))
+end
+
+local function InvalidateEllesmereCdmCache()
+    ellesmereCdmCacheDirty = true
+end
+
+local function RefreshEllesmereCdmCache()
+    wipe(ellesmereCdmRoots)
+    wipe(ellesmereCdmFlat)
+    ellesmereCdmCacheDirty = false
+
+    if not C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then return end
+
+    for name, frame in pairs(_G) do
+        if IsEllesmereCdmGlobal(name, frame) then
+            ellesmereCdmRoots[#ellesmereCdmRoots + 1] = { frame = frame, name = name }
+            CollectFrameTree(frame, ellesmereCdmFlat)
+        end
+    end
 end
 
 local function RestoreEllesmereCdmFrame(frame, name)
@@ -493,17 +517,30 @@ end
 local function SetEllesmereCdmAlpha(alpha)
     if not C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then return end
 
-    for name, frame in pairs(_G) do
-        if IsEllesmereCdmGlobal(name, frame) then
-            if alpha == 0 then
-                SetFrameTreeAlpha(frame, 0)
-            else
-                RestoreEllesmereCdmFrame(frame, name)
+    if ellesmereCdmCacheDirty then
+        RefreshEllesmereCdmCache()
+    end
+
+    if alpha == 0 then
+        for i = 1, #ellesmereCdmFlat do
+            local frame = ellesmereCdmFlat[i]
+            if frame and frame.SetAlpha then
+                frame:SetAlpha(0)
             end
+        end
+        return
+    end
+
+    for i = 1, #ellesmereCdmRoots do
+        local entry = ellesmereCdmRoots[i]
+        if entry and entry.frame then
+            RestoreEllesmereCdmFrame(entry.frame, entry.name)
         end
     end
 
-    if alpha == 1 and _G._ECME_ApplyVisibility then
+    InvalidateEllesmereCdmCache()
+
+    if _G._ECME_ApplyVisibility then
         pcall(_G._ECME_ApplyVisibility)
     end
 end
@@ -534,9 +571,9 @@ local function HideCooldownManager()
     local success = pcall(function()
         if not cdmHidden then
             StashPositionAndReanchor()
+            InvalidateEllesmereCdmCache()
         end
         cdmHidden = true
-        -- Re-apply alpha every call so other UIs cannot fight the hide.
         SetCdmAlpha(0)
     end)
     if not success and InCombatLockdown() then
@@ -565,8 +602,6 @@ local ERB_RESOURCE_BAR_NAMES = {
     "ERB_SecondaryFrame",
 }
 
--- Only bars we actually hid while skyriding. Avoids forcing Visibility-Never
--- Ellesmere bars visible on dismount (they flash until the next UI refresh).
 local erbTouched = {}
 
 local function SetEllesmereResourceBarAlpha(alpha)
@@ -577,7 +612,6 @@ local function SetEllesmereResourceBarAlpha(alpha)
             local bar = _G[barName]
             if bar and bar.SetAlpha then
                 local currentAlpha = bar:GetAlpha() or 0
-                -- Skip bars Ellesmere already has off; touching them makes dismount restore flash them on.
                 if bar:IsShown() and currentAlpha > 0 then
                     if erbTouched[barName] == nil then
                         erbTouched[barName] = currentAlpha
@@ -596,7 +630,6 @@ local function SetEllesmereResourceBarAlpha(alpha)
         end
         erbTouched[barName] = nil
     end
-    -- Let Ellesmere re-apply Visibility Never / user settings after our temporary hide.
     if _G._ERB_ApplyVisibility then
         pcall(_G._ERB_ApplyVisibility)
     end
@@ -627,7 +660,6 @@ end
 
 local bcmHidden = false
 local function HideBCM()
-    -- Always re-apply alpha so other UIs cannot fight the hide for a single frame.
     local success = pcall(function()
         bcmHidden = true
         SetResourceBarAlpha(0)
@@ -666,12 +698,8 @@ local OnUpdate = ns.PerfMonitor:Wrap("Dragonriding", function(self, dt)
         eventFrame:SetScript("OnUpdate", nil)
         prevSpeed = 0
         lastColorState = nil
-        if Get("hideCdmWhileMounted") then
-            ShowCooldownManager()
-        end
-        if Get("hideBcmWhileMounted") then
-            ShowBCM()
-        end
+        ShowCooldownManager()
+        ShowBCM()
         return
     end
 
@@ -689,12 +717,8 @@ local OnUpdate = ns.PerfMonitor:Wrap("Dragonriding", function(self, dt)
         mainFrame:Hide()
         if speedTextFrame then speedTextFrame:Hide() end
         eventFrame:SetScript("OnUpdate", nil)
-        if Get("hideCdmWhileMounted") then
-            ShowCooldownManager()
-        end
-        if Get("hideBcmWhileMounted") then
-            ShowBCM()
-        end
+        ShowCooldownManager()
+        ShowBCM()
         return
     end
 
@@ -704,9 +728,13 @@ local OnUpdate = ns.PerfMonitor:Wrap("Dragonriding", function(self, dt)
 
     if Get("hideCdmWhileMounted") then
         HideCooldownManager()
+    else
+        ShowCooldownManager()
     end
     if Get("hideBcmWhileMounted") then
         HideBCM()
+    else
+        ShowBCM()
     end
 
     UpdateSpeedBar(GetForwardSpeed())
@@ -954,6 +982,12 @@ function ns:RefreshDragonridingLayout(showPreview)
         if showPreview then
             ShowPreview()
         end
+        if not Get("hideCdmWhileMounted") then
+            ShowCooldownManager()
+        end
+        if not Get("hideBcmWhileMounted") then
+            ShowBCM()
+        end
     else
         if mainFrame then
             mainFrame:Hide()
@@ -963,6 +997,8 @@ function ns:RefreshDragonridingLayout(showPreview)
         if speedTextFrame then speedTextFrame:Hide() end
         eventFrame:SetScript("OnUpdate", nil)
         UnregisterDynamicEvents()
+        ShowCooldownManager()
+        ShowBCM()
     end
 end
 
@@ -1022,19 +1058,24 @@ eventFrame:SetScript("OnEvent", function(self, event)
             ShowCooldownManager()
         elseif pendingCdmHide then
             pendingCdmHide = false
-            HideCooldownManager()
+            if Get("hideCdmWhileMounted") then
+                HideCooldownManager()
+            end
         end
         if pendingBcmShow then
             pendingBcmShow = false
             ShowBCM()
         elseif pendingBcmHide then
             pendingBcmHide = false
-            HideBCM()
+            if Get("hideBcmWhileMounted") then
+                HideBCM()
+            end
         end
         return
     end
 
     if event == "PLAYER_ENTERING_WORLD" then
+        InvalidateEllesmereCdmCache()
         if uiBuilt and IsAnchoredToCDM() then
             C_Timer.After(0.5, function()
                 if mainFrame then
