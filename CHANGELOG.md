@@ -1,7 +1,5 @@
 # Changelog
-## [20260715.05]
+## [20260716.01]
 ### Hotfix
 **Dragonriding**
-- Fix Ellesmere ERB bars stuck at alpha 0 when mounted with the option off, for real this time <:monkaS:353915076480073738>
-### Localization
-- Update RU locale from native speaker
+- Fix mana/power bar flashing on non-mana classes: only hide/restore bars that were actually visible (respect Ellesmere `SetElementVisibility` / `hidePowerIfResource`)
