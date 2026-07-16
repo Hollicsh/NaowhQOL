@@ -646,6 +646,7 @@ function ns.Widgets:CreateCheckbox(parent, opts)
 
     cb:SetScript("OnEnter", function(self)
         self.isHovered = true
+        if not self:IsEnabled() then return end
         SetHoverState(self)
         if opts.tooltip then
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -657,6 +658,7 @@ function ns.Widgets:CreateCheckbox(parent, opts)
 
     cb:SetScript("OnLeave", function(self)
         self.isHovered = false
+        if not self:IsEnabled() then return end
         UpdateVisualState(self)
         self.Text:SetTextColor(1, 1, 1, 1)
         if opts.tooltip then

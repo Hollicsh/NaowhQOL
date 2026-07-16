@@ -22,6 +22,47 @@ local function CreateNote(parent, text, x, y, width)
     return note
 end
 
+local function EuiHidesResourceBarsWhileMounted()
+    if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("EllesmereUIResourceBars")) then
+        return false
+    end
+    local function hides(cfg)
+        return cfg ~= nil and (cfg.visHideMounted or cfg.visHideDragonriding) and true or false
+    end
+    local pp = _G._ERB_ResolvePowerCfg and _G._ERB_ResolvePowerCfg()
+    local sp = _G._ERB_ResolveSecondaryCfg and _G._ERB_ResolveSecondaryCfg()
+    return hides(pp) or hides(sp)
+end
+
+local function EuiHidesCdmWhileMounted()
+    if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager")) then
+        return false
+    end
+    local db = _G._ECME_AceDB
+    local bars = db and db.profile and db.profile.cdmBars and db.profile.cdmBars.bars
+    if type(bars) ~= "table" then return false end
+    for _, bar in ipairs(bars) do
+        if bar and bar.enabled ~= false and (bar.visHideMounted or bar.visHideDragonriding) then
+            return true
+        end
+    end
+    return false
+end
+
+local function UpdateEuiOptionLock(cb, controlled, mutedText, normalText)
+    if controlled then
+        cb:Disable()
+        if cb.desc then
+            cb.desc:SetText(W.Colorize(mutedText, C.GRAY))
+        end
+    else
+        cb:Enable()
+        if cb.desc then
+            cb.desc:SetText(W.Colorize(normalText, C.GRAY))
+        end
+    end
+end
+
 function ns:InitDragonriding()
     local p = ns.MainFrame.Content
     local db = NaowhQOL.dragonriding
@@ -306,7 +347,7 @@ function ns:InitDragonriding()
             onChange = drRefresh
         })
 
-        W:CreateCheckbox(behContent, {
+        local cdmCB = W:CreateCheckbox(behContent, {
             label = L["DRAGON_HIDE_COOLDOWN"],
             db = db, key = "hideCdmWhileMounted",
             x = 10, y = -105,
@@ -315,7 +356,7 @@ function ns:InitDragonriding()
             onChange = drRefresh
         })
 
-        W:CreateCheckbox(behContent, {
+        local bcmCB = W:CreateCheckbox(behContent, {
             label = L["DRAGON_HIDE_BCM"],
             db = db, key = "hideBcmWhileMounted",
             x = 10, y = -130,
@@ -323,6 +364,19 @@ function ns:InitDragonriding()
             description = L["DRAGON_HIDE_BCM_DESC"],
             onChange = drRefresh
         })
+
+        local function UpdateCdmLock()
+            UpdateEuiOptionLock(cdmCB, EuiHidesCdmWhileMounted(),
+                L["DRAGON_HIDE_CDM_EUI"], L["DRAGON_HIDE_COOLDOWN_DESC"])
+        end
+        local function UpdateBcmLock()
+            UpdateEuiOptionLock(bcmCB, EuiHidesResourceBarsWhileMounted(),
+                L["DRAGON_HIDE_BCM_EUI"], L["DRAGON_HIDE_BCM_DESC"])
+        end
+        UpdateCdmLock()
+        UpdateBcmLock()
+        cdmCB:HookScript("OnShow", UpdateCdmLock)
+        bcmCB:HookScript("OnShow", UpdateBcmLock)
 
         behContent:SetHeight(160)
         behWrap:RecalcHeight()
