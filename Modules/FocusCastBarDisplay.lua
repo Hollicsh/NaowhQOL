@@ -125,6 +125,17 @@ local function CanUseInLua(value)
     return value ~= nil and not IsSecretValue(value)
 end
 
+local function ColorizeByClass(text, classToken)
+    if not CanUseInLua(classToken) then
+        return text
+    end
+    local classColor = C_ClassColor.GetClassColor(classToken)
+    if not classColor then
+        return text
+    end
+    return classColor:WrapTextInColorCode(text)
+end
+
 local function ClearInterruptedFade()
     if interruptedFadeTimer then
         interruptedFadeTimer:Cancel()
@@ -143,18 +154,17 @@ local function FreezeProgressBar()
             value = timerDuration:GetElapsedPercent()
         end
     end
-    if value == nil then
+    -- Secret percents cannot be compared with ==.
+    if not IsSecretValue(value) and value == nil then
         value = progressBar:GetValue()
     end
-    if value == nil then
+    if not IsSecretValue(value) and value == nil then
         value = 1
     end
 
-    -- Arithmetic on secret percents is illegal; freeze via SetValue (accepts secrets).
     if CanUseInLua(value) and C_DurationUtil and C_DurationUtil.CreateDuration then
         local frozen = C_DurationUtil.CreateDuration()
         local ok = pcall(function()
-            -- modRate 0 keeps elapsed/remaining from advancing.
             if isChanneling then
                 frozen:SetTimeFromStart(GetTime() - (1 - value), 1, 0)
                 progressBar:SetTimerDuration(frozen, Enum.StatusBarInterpolation.Immediate, Enum.StatusBarTimerDirection.RemainingTime)
@@ -166,6 +176,9 @@ local function FreezeProgressBar()
         if ok then return end
     end
 
+    if progressBar.ClearTimerDuration then
+        progressBar:ClearTimerDuration()
+    end
     progressBar:SetMinMaxValues(0, 1)
     progressBar:SetValue(value)
 end
@@ -281,12 +294,7 @@ local function UpdateCastTargetText()
     local target = UnitSpellTargetName("focus")
     -- Never boolean-test a secret string.
     if IsSecretValue(target) then
-        local targetClass = UnitSpellTargetClass("focus")
-        if CanUseInLua(targetClass) then
-            castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(target))
-        else
-            castTargetText:SetText(target)
-        end
+        castTargetText:SetText(ColorizeByClass(target, UnitSpellTargetClass("focus")))
         castTargetText:Show()
         return
     end
@@ -298,12 +306,7 @@ local function UpdateCastTargetText()
     end
 
     local displayName = (select(1, UnitName(target))) or target
-    local targetClass = UnitSpellTargetClass("focus")
-    if CanUseInLua(targetClass) then
-        castTargetText:SetText(C_ClassColor.GetClassColor(targetClass):WrapTextInColorCode(displayName))
-    else
-        castTargetText:SetText(displayName)
-    end
+    castTargetText:SetText(ColorizeByClass(displayName, UnitSpellTargetClass("focus")))
     castTargetText:Show()
 end
 
@@ -664,12 +667,11 @@ local function ShowInterrupted(guid)
     isChanneling = false
     isInterruptedFade = true
 
-    if db.showInterrupter and not IsSecretValue(guid) and guid and guid ~= "" then
+    if db.showInterrupter and guid then
         local name = UnitNameFromGUID(guid)
         local _, class = GetPlayerInfoByGUID(guid)
-        if name then
-            local classColor = C_ClassColor.GetClassColor(class or "PRIEST")
-            spellNameText:SetText(L["FOCUS_INTERRUPTED"] .. ": " .. classColor:WrapTextInColorCode(name))
+        if IsSecretValue(name) or name then
+            spellNameText:SetText(L["FOCUS_INTERRUPTED"] .. ": " .. ColorizeByClass(name, class))
         else
             spellNameText:SetText(L["FOCUS_INTERRUPTED"])
         end
