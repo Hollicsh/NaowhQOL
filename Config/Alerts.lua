@@ -142,6 +142,11 @@ function ns:InitAlerts()
         end
 
         CreateNote(spellContent, L["ALERTS_SPELL_ALERTS_NOTE"], 10, y, 560)
+        y = y - 35
+        if ns.SpellAlerts and ns.SpellAlerts.IsProcGlowsLoaded and ns.SpellAlerts.IsProcGlowsLoaded() then
+            CreateNote(spellContent, L["ALERTS_SPELL_ALERTS_PROCGLOWS"], 10, y, 560)
+            y = y - 35
+        end
         spellContent:SetHeight(math.abs(y) + 45)
         spellWrap:RecalcHeight()
 

@@ -120,7 +120,9 @@ ns:RegisterLocale("enUS", {
     GENERAL_QOL_FONT_DESC = "This is the only global font NaowhQOL stores by default.",
     GENERAL_COMBAT_FONT = "Combat Font",
     GENERAL_COMBAT_FONT_OVERRIDE = "Use a separate combat font",
-    GENERAL_COMBAT_FONT_DESC = "When disabled, combat text stays Blizzard default unless game UI font replacement is enabled.",
+    GENERAL_COMBAT_FONT_DESC = "When disabled, combat text stays Blizzard default unless game UI font replacement is enabled. Floating combat text needs a logout to character select after applying.",
+    GENERAL_COMBAT_FONT_RELOG = "Floating combat text needs a logout to character select to take effect. This is a WoW engine limit — /reload is not enough.",
+    GENERAL_COMBAT_FONT_LOCKED = "%s Combat Text Font detected. Set it to Blizzard Default there to use this feature.",
     GENERAL_APPLY_FONTS = "Apply Fonts",
     GENERAL_FONTS_APPLIED = "Fonts applied.",
 
@@ -850,6 +852,7 @@ ns:RegisterLocale("enUS", {
     ALERTS_ENABLE_CURRENT_SPEC = "Enable overlays for %s",
     ALERTS_SPELL_ALERT_OPACITY = "Overlay Opacity",
     ALERTS_SPELL_ALERTS_NOTE = "Note: When enabled, only checked specializations show Blizzard spell alerts (none checked = alerts off). Disable the module to restore overlays for all specs.",
+    ALERTS_SPELL_ALERTS_PROCGLOWS = "Note: ProcGlows is loaded. Spell alert overlays stay enabled so ProcGlows action-bar glows can work. Per-spec hiding is paused while ProcGlows is present.",
     ALERTS_DISPEL_GLOW = "DISPEL GLOW",
     ALERTS_ENABLE_DISPEL_GLOW = "Enable Dispel Glow",
     ALERTS_USE_DISPEL_COLOR = "Use Dispel Type Color",

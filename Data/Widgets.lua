@@ -1741,6 +1741,11 @@ function ns.Widgets:CreateFontPicker(parent, x, y, currentFont, onSelect)
     frame.SetFont = SetFont
     frame.GetFont = function() return currentFont end
     frame.GetFontPath = function() return currentFont end
+    frame.Enable = function() selBtn:Enable() end
+    frame.Disable = function()
+        panel:Hide()
+        selBtn:Disable()
+    end
 
     selText:SetText(ns.FontList.GetName(currentFont or ns.Media.DEFAULT_FONT))
 

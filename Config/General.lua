@@ -259,11 +259,18 @@ function ns:InitGeneral()
         gameDesc:SetJustifyH("LEFT")
 
         CreateFontLabel(L["GENERAL_COMBAT_FONT"], -150)
+
+        local combatWarn = fontContent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        combatWarn:SetPoint("TOPLEFT", fontContent, "TOPLEFT", 10, -168)
+        combatWarn:SetWidth(650)
+        combatWarn:SetJustifyH("LEFT")
+        combatWarn:Hide()
+
         local combatOverrideCB
         combatOverrideCB = W:CreateCheckbox(fontContent, {
             label = L["GENERAL_COMBAT_FONT_OVERRIDE"],
             db = db, key = "combatFontOverride",
-            x = 10, y = -173,
+            x = 10, y = -193,
             template = "ChatConfigCheckButtonTemplate",
             onChange = function(checked)
                 if not checked then
@@ -272,23 +279,40 @@ function ns:InitGeneral()
                 end
             end,
         })
-        combatPicker = W:CreateFontPicker(fontContent, 30, -200, GetCombatFontName(db), function(name)
+        combatPicker = W:CreateFontPicker(fontContent, 30, -220, GetCombatFontName(db), function(name)
             db.combatFont = name
             db.combatFontOverride = true
             if combatOverrideCB then combatOverrideCB:SetChecked(true) end
         end)
 
         local combatDesc = fontContent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        combatDesc:SetPoint("LEFT", fontContent, "TOPLEFT", 325, -213)
-        combatDesc:SetText(W.Colorize(L["GENERAL_COMBAT_FONT_DESC"], C.GRAY))
+        combatDesc:SetPoint("LEFT", fontContent, "TOPLEFT", 325, -233)
         combatDesc:SetWidth(380)
         combatDesc:SetJustifyH("LEFT")
+        combatDesc:SetText(W.Colorize(L["GENERAL_COMBAT_FONT_DESC"], C.GRAY))
+
+        local function UpdateCombatFontLock()
+            local owner = ns.GlobalFonts and ns.GlobalFonts:GetExternalCombatFontOwner()
+            local locked = owner ~= nil
+            if locked then
+                combatOverrideCB:Disable()
+                if combatPicker.Disable then combatPicker:Disable() end
+                combatWarn:SetText(W.Colorize(L["GENERAL_COMBAT_FONT_LOCKED"]:format(owner), C.RED))
+                combatWarn:Show()
+            else
+                combatOverrideCB:Enable()
+                if combatPicker.Enable then combatPicker:Enable() end
+                combatWarn:Hide()
+            end
+        end
+        UpdateCombatFontLock()
+        fontContent:HookScript("OnShow", UpdateCombatFontLock)
 
         local applyBtn = W:CreateButton(fontContent, {
             text = L["GENERAL_APPLY_FONTS"],
             width = 200, height = 26,
         })
-        applyBtn:SetPoint("TOPLEFT", fontContent, "TOPLEFT", 10, -245)
+        applyBtn:SetPoint("TOPLEFT", fontContent, "TOPLEFT", 10, -265)
         applyBtn:SetScript("OnClick", function()
             db.globalFont = db.globalFont or ns.Media.DEFAULT_FONT
             db.combatFont = db.combatFont or db.globalFont
@@ -301,10 +325,17 @@ function ns:InitGeneral()
             W:InvalidateAllCachedPanels()
             RefreshAllModuleDisplays()
             ns:Log(L["GENERAL_FONTS_APPLIED"], "00ff00")
-            StaticPopup_Show("NAOWH_QOL_RELOAD")
+
+            local owner = ns.GlobalFonts and ns.GlobalFonts:GetExternalCombatFontOwner()
+            local combatEnabled = ns.GlobalFonts and ns.GlobalFonts:IsCombatFontEnabled() and not owner
+            if combatEnabled and ns.ShowCombatFontRelogPopup then
+                ns.ShowCombatFontRelogPopup()
+            else
+                StaticPopup_Show("NAOWH_QOL_RELOAD")
+            end
         end)
 
-        fontContent:SetHeight(285)
+        fontContent:SetHeight(310)
         fontWrap:RecalcHeight()
 
         local lockWrap, lockContent = W:CreateCollapsibleSection(sections, {

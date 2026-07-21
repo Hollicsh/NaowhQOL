@@ -180,6 +180,26 @@ function M:IsGameFontEnabled()
     return db.applyGameFontToBlizzard == true
 end
 
+function M:IsCombatFontEnabled()
+    local db = GetGeneralDB()
+    return db.combatFontOverride == true or self:IsGameFontEnabled()
+end
+
+function M:GetExternalCombatFontOwner()
+    local fctFont = _G.EllesmereUIDB and _G.EllesmereUIDB.fctFont
+    if type(fctFont) == "string" and fctFont ~= "" then
+        return "EllesmereUI"
+    end
+
+    local E = _G.ElvUI and _G.ElvUI[1]
+    local private = E and E.private and E.private.general
+    if private and private.replaceCombatFont then
+        return "ElvUI"
+    end
+
+    return nil
+end
+
 local function ApplyFontObject(fontObject, fontPath, fallbackSize, fallbackFlags)
     if not fontObject or type(fontObject.SetFont) ~= "function" then
         return false
@@ -217,8 +237,10 @@ function M:ApplyGameFont()
 end
 
 function M:ApplyCombatFont()
-    local db = GetGeneralDB()
-    if not db.combatFontOverride and not self:IsGameFontEnabled() then
+    if not self:IsCombatFontEnabled() then
+        return
+    end
+    if self:GetExternalCombatFontOwner() then
         return
     end
 
@@ -245,7 +267,14 @@ function M:ApplyAll()
     self:ApplyCombatFont()
 end
 
+local EXTERNAL_COMBAT_ADDONS = {
+    EllesmereUI = true,
+    ElvUI = true,
+    Blizzard_CombatText = true,
+}
+
 local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", function(_, event, loadedAddon)
@@ -253,13 +282,22 @@ frame:SetScript("OnEvent", function(_, event, loadedAddon)
         return
     end
 
-    if event == "PLAYER_ENTERING_WORLD" then
+    if event == "PLAYER_LOGIN" then
+        M:ApplyCombatFont()
+        C_Timer.After(0, function()
+            if ns.GlobalFonts then
+                ns.GlobalFonts:ApplyCombatFont()
+            end
+        end)
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        M:ApplyCombatFont()
         C_Timer.After(0.25, function()
             if ns.GlobalFonts then
                 ns.GlobalFonts:ApplyAll()
             end
         end)
-    elseif loadedAddon and loadedAddon:match("^Blizzard_") then
+    elseif loadedAddon and (EXTERNAL_COMBAT_ADDONS[loadedAddon] or loadedAddon:match("^Blizzard_")) then
+        M:ApplyCombatFont()
         C_Timer.After(0, function()
             if ns.GlobalFonts then
                 ns.GlobalFonts:ApplyAll()

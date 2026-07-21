@@ -13,6 +13,21 @@ local function GetSpecID()
     return GetSpecializationInfo(specIndex)
 end
 
+local function IsAddOnLoadedSafe(name)
+    if C_AddOns and C_AddOns.IsAddOnLoaded then
+        return C_AddOns.IsAddOnLoaded(name)
+    end
+    local legacy = _G.IsAddOnLoaded
+    if legacy then
+        return legacy(name)
+    end
+    return false
+end
+
+local function IsProcGlowsLoaded()
+    return IsAddOnLoadedSafe("ProcGlows")
+end
+
 local function SetOverlayCVar(enabled)
     local setter = SetCVar or (C_CVar and C_CVar.SetCVar)
     if setter then
@@ -30,18 +45,21 @@ local function GetOverlayLive()
 end
 
 local function Apply(force)
-    local db = GetDB()
     local desired
 
-    if not db or not db.enabled then
-        -- Module off: restore Blizzard overlays for all specs.
+    -- ProcGlows hooks ActionButtonSpellAlertManager; overlays must stay on.
+    if IsProcGlowsLoaded() then
         desired = "1"
     else
-        -- Module on: only checked specializations get overlays (default = none).
-        db.enabledSpecs = db.enabledSpecs or {}
-        local specID = GetSpecID()
-        local enabled = specID and db.enabledSpecs[specID] == true
-        desired = enabled and "1" or "0"
+        local db = GetDB()
+        if not db or not db.enabled then
+            desired = "1"
+        else
+            db.enabledSpecs = db.enabledSpecs or {}
+            local specID = GetSpecID()
+            local enabled = specID and db.enabledSpecs[specID] == true
+            desired = enabled and "1" or "0"
+        end
     end
 
     if not force and ns.CVarSync and ns.CVarSync:IsExternal("displaySpellActivationOverlays") then
@@ -70,11 +88,16 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 frame:RegisterEvent("PLAYER_TALENT_UPDATE")
-frame:SetScript("OnEvent", function()
+frame:RegisterEvent("ADDON_LOADED")
+frame:SetScript("OnEvent", function(_, event, loadedAddon)
+    if event == "ADDON_LOADED" and loadedAddon ~= "ProcGlows" then
+        return
+    end
     C_Timer.After(0, Apply)
 end)
 
 ns.SpellAlerts = {
     Apply = Apply,
     GetSpecID = GetSpecID,
+    IsProcGlowsLoaded = IsProcGlowsLoaded,
 }

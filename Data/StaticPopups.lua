@@ -30,6 +30,23 @@ CreateReloadPopup("NAOWH_QOL_RELOAD_IMPORT",
     L["POPUP_SETTINGS_IMPORTED"],
     L["POPUP_RELOAD_WARNING"])
 
+function ns.ShowCombatFontRelogPopup()
+    StaticPopupDialogs["NAOWH_QOL_COMBAT_FONT_RELOG"] = {
+        text = W.Colorize("Naowh QOL", C.BLUE) .. "\n\n"
+            .. W.Colorize(L["GENERAL_FONTS_APPLIED"], C.WHITE) .. "\n\n"
+            .. W.Colorize(L["GENERAL_COMBAT_FONT_RELOG"], C.ORANGE)
+            .. "\n\n" .. W.Colorize(L["POPUP_RELOAD_WARNING"], C.GRAY),
+        button1 = W.Colorize(L["COMMON_RELOAD_UI"], C.SUCCESS),
+        button2 = L["COMMON_LATER"],
+        OnAccept = function() ReloadUI() end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+    StaticPopup_Show("NAOWH_QOL_COMBAT_FONT_RELOG")
+end
+
 CreateReloadPopup("NAOWH_PROFILER_ENABLE",
     L["POPUP_PROFILER_ENABLE"],
     L["POPUP_PROFILER_OVERHEAD"],
